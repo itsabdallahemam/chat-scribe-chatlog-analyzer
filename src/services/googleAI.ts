@@ -226,7 +226,6 @@ export const isValidApiKey = async (apiKey: string): Promise<boolean> => {
 // Function to list available models
 export const listAvailableModels = async (apiKey: string): Promise<string[]> => {
   try {
-    const genAI = new GoogleGenerativeAI(apiKey);
     // The Google AI API doesn't have a direct method to list models
     // For now, we'll return a static list of commonly available models
     return [
