@@ -196,7 +196,7 @@ const createGoogleAIClient = (apiKey: string) => {
           console.error("Error evaluating chatlog:", error);
           // Add a placeholder result with error indication
           results.push({
-            chatlog: chatlog.substring(0, 50) + "...",
+            chatlog: chatlog ? chatlog.substring(0, 50) + "..." : "Unknown chatlog",
             coherence: 0,
             politeness: 0,
             relevance: 0,
@@ -252,7 +252,7 @@ export const evaluateChatlogs = async (
         modelId,
         promptTemplate,
         rubricText,
-        chatlog
+        chatlog || "" // Ensure chatlog is never undefined
       );
       results.push(result);
     } catch (error) {
