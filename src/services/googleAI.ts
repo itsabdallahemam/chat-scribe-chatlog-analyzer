@@ -189,7 +189,7 @@ const createGoogleAIClient = (apiKey: string) => {
             modelId,
             promptTemplate,
             rubricText,
-            chatlog
+            chatlog || "" // Ensure chatlog is never undefined
           );
           results.push(result);
         } catch (error) {
