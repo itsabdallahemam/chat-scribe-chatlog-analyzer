@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -143,6 +145,15 @@ const SettingsPage: React.FC = () => {
       <div className="grid gap-8">
         <Card className="p-6">
           <h2 className="text-lg font-medium mb-4">Google AI API Key</h2>
+          
+          <Alert variant="warning" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Security Notice</AlertTitle>
+            <AlertDescription>
+              Your API key will be stored in browser local storage. This is intended for personal, development,
+              or testing use only. For production environments, a secure backend should be used.
+            </AlertDescription>
+          </Alert>
           
           <div className="grid gap-4">
             <div className="flex items-center gap-4">

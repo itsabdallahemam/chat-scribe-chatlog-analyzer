@@ -15,11 +15,11 @@ export const fetchModels = async (apiKey: string) => {
   
   // Mock response for API models
   return [
-    { display_name: "gemini-1.0-pro", id: "models/gemini-1.0-pro" },
-    { display_name: "gemini-1.0-pro-vision", id: "models/gemini-1.0-pro-vision" },
-    { display_name: "gemini-1.5-pro", id: "models/gemini-1.5-pro" },
-    { display_name: "gemini-1.5-flash", id: "models/gemini-1.5-flash" },
-    { display_name: "gemma-7b-it", id: "models/gemma-7b-it" },
+    { display_name: "Gemini 1.5 Pro", id: "models/gemini-1.5-pro" },
+    { display_name: "Gemini 1.5 Flash", id: "models/gemini-1.5-flash" },
+    { display_name: "Gemma 7B IT", id: "models/gemma-7b-it" },
+    { display_name: "Gemma 3 27B Instruct", id: "models/gemma-3-27b-it" },
+    { display_name: "Gemini 2.5 Pro Preview", id: "models/gemini-2.5-pro-preview" },
   ];
 };
 
@@ -40,7 +40,10 @@ export const testModel = async (apiKey: string, modelId: string, prompt: string)
   }
 
   // Return a mock response based on the model ID and prompt
-  return `This is a simulated response from ${modelId} for prompt: "${prompt}".\n\nIn a real implementation, this would make an actual API call to Google's Generative AI API.`;
+  return JSON.stringify({
+    status: `Test successful for ${modelId}`,
+    sample_response: `This is a placeholder test response from the selected model for prompt: "${prompt.substring(0, 50)}${prompt.length > 50 ? '...' : ''}"`
+  }, null, 2);
 };
 
 export const evaluateChatlog = async (
