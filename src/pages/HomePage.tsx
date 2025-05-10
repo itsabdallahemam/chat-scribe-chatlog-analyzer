@@ -2,29 +2,15 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageTitle from '@/components/PageTitle';
-import { Progress } from '@/components/ui/progress'; // Assuming you have this
+import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { useChatlog } from '@/contexts/ChatlogContext';
-// Using evaluateSingleChatlog for iterative processing to support pause/cancel
-import { evaluateSingleChatlog } from '@/services/googleAI';
-import { parseCSV } from '@/utils/csvParser'; // Assuming this is your robust parser
+import { evaluateSingleChatlog, RawEvaluationResultFromAPI } from '@/services/googleAI';
+import { parseCSV } from '@/utils/csvParser';
 import { useToast } from '@/hooks/use-toast';
-
-// Type for the raw result from googleAI.ts's evaluateChatlog/evaluateSingleChatlog
-interface RawEvaluationResultFromAPI {
-  original_chatlog: string;
-  scores: {
-    Coherence: number;
-    Politeness: number;
-    Relevance: number;
-    Resolution: number;
-  } | null;
-  error: string | null;
-  raw_response?: string | null;
-}
 
 // Type expected by the ChatlogContext for evaluationResults
 interface EvaluationResultForContext {
@@ -33,8 +19,6 @@ interface EvaluationResultForContext {
   politeness: number;
   relevance: number;
   resolution: number;
-  // You could add an optional error field here if you want to store per-item errors in context
-  // item_error?: string | null;
 }
 
 const HomePage: React.FC = () => {
@@ -171,9 +155,6 @@ const HomePage: React.FC = () => {
         } else {
           failedEvals++;
           console.warn(`Evaluation failed for chatlog index ${i}: ${apiResult.error || 'Unknown error'}. Chatlog: ${currentChatlog.substring(0,100)}... Raw Response: ${apiResult.raw_response?.substring(0,100)}`);
-          // Optionally add a placeholder to processedResultsForContext or skip
-          // For now, we only add successful evaluations to the context to avoid NaN issues.
-          // If you want to show errors in the dashboard, the context and dashboard need to handle items with missing scores.
         }
         setProgress(Math.round(((i + 1) / chatlogsToProcess.length) * 100));
       }
@@ -204,9 +185,8 @@ const HomePage: React.FC = () => {
       setGlobalError(errorMessage);
       setCurrentStatus(`Error: ${errorMessage}`);
       toast({ title: "Evaluation Failed", description: errorMessage, variant: "destructive" });
-      resetProcessState(); // Reset state on major error
-    } 
-    // `finally` block removed to allow conditional reset based on success/failure/cancellation
+      resetProcessState();
+    }
   };
 
   const handlePauseResume = () => {

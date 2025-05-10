@@ -1,3 +1,4 @@
+
 // src/services/googleAI.ts
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
@@ -9,6 +10,19 @@ export interface EvaluationResult {
   resolution: number;
   chatlog: string;
   error?: string;
+}
+
+// Define the interface for raw evaluation result from API
+export interface RawEvaluationResultFromAPI {
+  original_chatlog: string;
+  scores: {
+    Coherence: number;
+    Politeness: number;
+    Relevance: number;
+    Resolution: number;
+  } | null;
+  error: string | null;
+  raw_response?: string | null;
 }
 
 // Constants for prompt engineering
@@ -61,7 +75,7 @@ class GoogleAIClient {
 
   async generateContent(prompt: string): Promise<string | null> {
     try {
-      const model = this.genAI.getModel({ model: this.model });
+      const model = this.genAI.getGenerativeModel({ model: this.model });
       const result = await model.generateContent(prompt);
       const response = result.response;
       if (!response.text) {
@@ -155,13 +169,49 @@ export const evaluateChatlog = async (chatlog: string, apiKey: string, model: st
       politeness: 0,
       relevance: 0,
       resolution: 0,
-      chatlog: chatlog,
+      chatlog: chatlog || "",
       error: error.message || "Evaluation failed",
     };
   }
 };
 
-// Function to check API key validity by listing models
+// Function to evaluate a single chatlog (interface for HomePage.tsx)
+export const evaluateSingleChatlog = async (
+  apiKey: string, 
+  model: string,
+  promptTemplate: string,
+  rubricText: string,
+  chatlog: string
+): Promise<RawEvaluationResultFromAPI> => {
+  try {
+    console.info(`Evaluating LIVE chatlog with model: ${model}`);
+    
+    // For now, using the same evaluation function
+    const result = await evaluateChatlog(chatlog, apiKey, model);
+    
+    return {
+      original_chatlog: chatlog,
+      scores: {
+        Coherence: result.coherence,
+        Politeness: result.politeness,
+        Relevance: result.relevance,
+        Resolution: result.resolution
+      },
+      error: result.error || null,
+      raw_response: null
+    };
+  } catch (error: any) {
+    console.error("Error evaluating chatlog:", error);
+    return {
+      original_chatlog: chatlog,
+      scores: null,
+      error: `Failed to evaluate chatlog: ${error.message || "Unknown error"}`,
+      raw_response: null
+    };
+  }
+};
+
+// Function to check API key validity
 export const isValidApiKey = async (apiKey: string): Promise<boolean> => {
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
@@ -177,10 +227,46 @@ export const isValidApiKey = async (apiKey: string): Promise<boolean> => {
 export const listAvailableModels = async (apiKey: string): Promise<string[]> => {
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
-    const models = await genAI.listModels();
-    return models.map(model => model.name);
+    // The Google AI API doesn't have a direct method to list models
+    // For now, we'll return a static list of commonly available models
+    return [
+      'models/gemini-1.0-pro',
+      'models/gemini-1.5-pro',
+      'models/gemma-3-27b-it'
+    ];
   } catch (error) {
     console.error("Failed to list models:", error);
     return [];
+  }
+};
+
+// Functions used by SettingsPage.tsx
+export const fetchModels = async (apiKey: string): Promise<{id: string, display_name: string}[]> => {
+  try {
+    // Get model strings
+    const modelStrings = await listAvailableModels(apiKey);
+    
+    // Convert to the format expected by SettingsPage
+    return modelStrings.map(modelString => {
+      const name = modelString.split('/').pop() || modelString;
+      return {
+        id: modelString,
+        display_name: name
+      };
+    });
+  } catch (error) {
+    console.error("Error fetching models:", error);
+    return [];
+  }
+};
+
+export const testModel = async (apiKey: string, modelId: string, prompt: string): Promise<string> => {
+  try {
+    const client = new GoogleAIClient(apiKey, modelId);
+    const response = await client.generateContent(prompt);
+    return response || "No response from model";
+  } catch (error: any) {
+    console.error("Error testing model:", error);
+    throw new Error(`Model test failed: ${error.message || "Unknown error"}`);
   }
 };
