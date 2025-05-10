@@ -1,13 +1,12 @@
-// src/pages/DashboardPage.tsx
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageTitle from '@/components/PageTitle';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import StatCard from '@/components/StatCard';
-// import ResolutionPieChart from '@/components/ResolutionPieChart'; // Using direct Recharts Pie
 import { useChatlog } from '@/contexts/ChatlogContext';
 import { Button } from '@/components/ui/button';
-// import { DataTable } from '@/components/DataTable'; // Keep commented for now
+import { DataTable } from '@/components/DataTable';
 
 // Import Recharts components
 import {
@@ -24,18 +23,22 @@ const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const { evaluationResults, selectedModel } = useChatlog();
 
-  // ... (if (!evaluationResults || evaluationResults.length === 0) block - keep as is) ...
   if (!evaluationResults || evaluationResults.length === 0) {
     return (
-      <div className="text-center py-16 bg-app-bg text-app-text">
-        <PageTitle title="Dashboard" description="No evaluations yet." />
-        <h3 className="text-xl font-medium mb-4">No Evaluation Results</h3>
-        <p className="text-muted-foreground mb-6">
-          Please upload or paste chatlogs on the home page to see evaluation results.
-        </p>
-        <button onClick={() => navigate('/')} className="bg-app-blue hover:bg-app-blue-light text-white px-4 py-2 rounded">
-          Go to Home Page
-        </button>
+      <div className="flex flex-col items-center justify-center h-[80vh] bg-app-bg text-app-text">
+        <div className="max-w-md text-center">
+          <PageTitle title="Dashboard" description="No evaluations yet." />
+          <h3 className="text-xl font-medium mb-4">No Evaluation Results</h3>
+          <p className="text-muted-foreground mb-6">
+            Please upload or paste chatlogs on the home page to see evaluation results.
+          </p>
+          <Button 
+            onClick={() => navigate('/')} 
+            className="bg-app-blue hover:bg-app-blue-light text-white"
+          >
+            Go to Home Page
+          </Button>
+        </div>
       </div>
     );
   }
@@ -83,100 +86,205 @@ const DashboardPage: React.FC = () => {
   const politenessDistribution = getScoreDistribution('politeness');
   const relevanceDistribution = getScoreDistribution('relevance');
 
-  // --- Colors for charts (keep as is) ---
+  // --- Colors for charts ---
   const PIE_RESOLVED_COLOR = "#0A2463";
   const PIE_UNRESOLVED_COLOR = "#FFD166";
   const BAR_CHART_COLOR = "#247BA0"; // app-blue-light
 
   return (
-    <div className="space-y-8 p-4 md:p-6 bg-app-bg min-h-screen text-app-text">
+    <div className="space-y-6 p-4 md:p-6 bg-app-bg min-h-screen text-app-text">
       <PageTitle
-        title={`Evaluation Summary for ${totalLogs} Chatlogs`}
-        description={`Using ${selectedModel ? selectedModel.split('/').pop()?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Selected Model'}`}
+        title={`Dashboard Overview`}
+        description={`Analyzing ${totalLogs} chatlogs with ${selectedModel ? selectedModel.split('/').pop()?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Selected Model'}`}
       />
 
-      {/* Section 1: Top Stat Cards (Keep as is) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard title="Avg. Coherence" value={isNaN(avgCoherence) ? "N/A" : avgCoherence.toFixed(2)} description="Out of 5" />
-        {/* ... other StatCards ... */}
-        <StatCard title="Avg. Politeness" value={isNaN(avgPoliteness) ? "N/A" : avgPoliteness.toFixed(2)} description="Out of 5" />
-        <StatCard title="Avg. Relevance" value={isNaN(avgRelevance) ? "N/A" : avgRelevance.toFixed(2)} description="Out of 5" />
-        <StatCard title="Resolution Rate" value={isNaN(resolutionRate) ? "N/A" : `${resolutionRate.toFixed(1)}%`} description={`${resolvedCount} of ${validResults.length} validly scored logs resolved`} />
-      </div>
-      
-      {/* Section 2: Resolution Pie Chart and Quick Actions (Keep as is) */}
+      {/* Main content grid with bento box layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2 bg-card text-card-foreground">
-          {/* ... Pie Chart Card Content ... */}
-          <CardHeader>
-            <CardTitle>Resolution Overview</CardTitle>
-            <CardDescription className="text-muted-foreground">Breakdown of resolved vs. unresolved chatlogs (from validly scored items).</CardDescription>
-          </CardHeader>
-          <CardContent className="h-[300px] md:h-[350px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={[{ name: 'Resolved', value: resolvedCount }, { name: 'Unresolved', value: unresolvedCount }]}
-                  cx="50%" cy="50%" labelLine={false} outerRadius={100} fill="#8884d8" dataKey="value"
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                >
-                  <Cell key={`cell-resolved`} fill={PIE_RESOLVED_COLOR} />
-                  <Cell key={`cell-unresolved`} fill={PIE_UNRESOLVED_COLOR} />
-                </Pie>
-                <Tooltip wrapperStyle={{ color: '#333' }} />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-        <Card className="bg-card text-card-foreground">
-          {/* ... Quick Actions Card Content ... */}
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription className="text-muted-foreground">Navigate to detailed views.</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col space-y-3">
-            <Button onClick={() => navigate('/satisfaction')} className="w-full bg-app-blue hover:bg-app-blue-light text-white">View Customer Satisfaction</Button>
-            <Button onClick={() => navigate('/cpr-details')} className="w-full bg-app-blue hover:bg-app-blue-light text-white">View CPR Details</Button>
-            <Button onClick={() => navigate('/resolution-details')} className="w-full bg-app-blue hover:bg-app-blue-light text-white">View Resolution Details</Button>
-          </CardContent>
-        </Card>
-      </div>
+        {/* Main area (2/3) */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Stats row with gradients */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Card className="overflow-hidden rounded-xl shadow-md border-0 bg-gradient-to-br from-[#f8e3ff] to-[#ffd1dc]">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg font-medium text-gray-700">Coherence Score</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-4xl font-bold mb-1">
+                  {isNaN(avgCoherence) ? "N/A" : avgCoherence.toFixed(2)}
+                </div>
+                <p className="text-sm text-gray-600">Average score out of 5</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="overflow-hidden rounded-xl shadow-md border-0 bg-gradient-to-br from-[#d4e7fe] to-[#b6ccfe]">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg font-medium text-gray-700">Politeness Score</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-4xl font-bold mb-1">
+                  {isNaN(avgPoliteness) ? "N/A" : avgPoliteness.toFixed(2)}
+                </div>
+                <p className="text-sm text-gray-600">Average score out of 5</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="overflow-hidden rounded-xl shadow-md border-0 bg-gradient-to-br from-[#cffcff] to-[#b0e5e9]">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg font-medium text-gray-700">Relevance Score</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-4xl font-bold mb-1">
+                  {isNaN(avgRelevance) ? "N/A" : avgRelevance.toFixed(2)}
+                </div>
+                <p className="text-sm text-gray-600">Average score out of 5</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="overflow-hidden rounded-xl shadow-md border-0 bg-gradient-to-br from-[#fff8c9] to-[#ffeaa0]">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg font-medium text-gray-700">Resolution Rate</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-4xl font-bold mb-1">
+                  {isNaN(resolutionRate) ? "N/A" : `${resolutionRate.toFixed(1)}%`}
+                </div>
+                <p className="text-sm text-gray-600">{`${resolvedCount} of ${validResults.length} chatlogs resolved`}</p>
+              </CardContent>
+            </Card>
+          </div>
 
-      {/* --- Section 3: Score Distribution Bar Charts --- */}
-      {/* --- UNCOMMENT/ADD THIS SECTION BACK --- */}
-      <h2 className="text-2xl font-semibold tracking-tight text-app-text mt-8 mb-4">Score Distributions</h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {[
-          { title: "Coherence Distribution", data: coherenceDistribution, metricKey: 'coherence' },
-          { title: "Politeness Distribution", data: politenessDistribution, metricKey: 'politeness' },
-          { title: "Relevance Distribution", data: relevanceDistribution, metricKey: 'relevance' },
-        ].map((chart, index) => (
-          <Card key={index} className="bg-card text-card-foreground">
-            <CardHeader><CardTitle>{chart.title}</CardTitle></CardHeader>
-            <CardContent className="h-[250px]">
+          {/* Score Distributions Chart Card */}
+          <Card className="rounded-xl shadow-sm p-1">
+            <CardHeader>
+              <CardTitle>Score Distributions</CardTitle>
+              <CardDescription>
+                Breakdown of scores across evaluation metrics
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {[
+                  { title: "Coherence", data: coherenceDistribution },
+                  { title: "Politeness", data: politenessDistribution },
+                  { title: "Relevance", data: relevanceDistribution },
+                ].map((chart, index) => (
+                  <div key={index} className="h-[200px]">
+                    <h4 className="text-sm font-medium mb-2 text-center">{chart.title}</h4>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={chart.data} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
+                        <XAxis dataKey="name" stroke="hsl(var(--foreground))" fontSize={12} />
+                        <YAxis allowDecimals={false} stroke="hsl(var(--foreground))" fontSize={12} />
+                        <Tooltip 
+                          wrapperStyle={{ color: '#333', fontSize: '12px' }} 
+                          contentStyle={{ background: 'white', borderRadius: '8px', border: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
+                        />
+                        <Bar dataKey="count" fill={BAR_CHART_COLOR} name="Count" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Sidebar area (1/3) */}
+        <div className="space-y-6">
+          {/* Resolution Overview Card */}
+          <Card className="rounded-xl shadow-sm p-1">
+            <CardHeader>
+              <CardTitle>Resolution Overview</CardTitle>
+              <CardDescription>
+                Breakdown of resolved vs. unresolved chatlogs
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="h-[280px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chart.data} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                  <XAxis dataKey="name" stroke="hsl(var(--foreground))" />
-                  <YAxis allowDecimals={false} stroke="hsl(var(--foreground))" />
-                  <Tooltip wrapperStyle={{ color: '#333' }} />
-                  <Legend />
-                  <Bar dataKey="count" fill={BAR_CHART_COLOR} name="Count" radius={[4, 4, 0, 0]} />
-                </BarChart>
+                <PieChart>
+                  <Pie
+                    data={[{ name: 'Resolved', value: resolvedCount }, { name: 'Unresolved', value: unresolvedCount }]}
+                    cx="50%" cy="50%" labelLine={false} outerRadius={90} fill="#8884d8" dataKey="value"
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  >
+                    <Cell key={`cell-resolved`} fill={PIE_RESOLVED_COLOR} />
+                    <Cell key={`cell-unresolved`} fill={PIE_UNRESOLVED_COLOR} />
+                  </Pie>
+                  <Tooltip 
+                    wrapperStyle={{ color: '#333', fontSize: '12px' }} 
+                    contentStyle={{ background: 'white', borderRadius: '8px', border: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
+                  />
+                  <Legend verticalAlign="bottom" height={36} />
+                </PieChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
-        ))}
-      </div>
-      {/* --- END SECTION 3 --- */}
 
-      <div style={{marginTop: '20px', padding: '20px', border: '1px dashed #ccc'}}>
-        <p>Bar Charts section added. More content to come.</p>
-        <p>(If you see this, this section likely didn't crash.)</p>
+          {/* Quick Actions Card */}
+          <Card className="rounded-xl shadow-sm p-1">
+            <CardHeader>
+              <CardTitle>Quick Actions</CardTitle>
+              <CardDescription>Navigate to detailed views</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col space-y-3">
+              <Button 
+                onClick={() => navigate('/satisfaction')} 
+                className="w-full bg-app-blue hover:bg-app-blue-light text-white justify-start"
+                variant="default" 
+              >
+                View Customer Satisfaction
+              </Button>
+              <Button 
+                onClick={() => navigate('/cpr-details')} 
+                className="w-full bg-app-blue hover:bg-app-blue-light text-white justify-start"
+                variant="default" 
+              >
+                View CPR Details
+              </Button>
+              <Button 
+                onClick={() => navigate('/resolution-details')} 
+                className="w-full bg-app-blue hover:bg-app-blue-light text-white justify-start"
+                variant="default" 
+              >
+                View Resolution Details
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
-      {/* DataTable still commented out */}
+      {/* Chatlog Preview Table */}
+      <Card className="rounded-xl shadow-sm mt-6">
+        <CardHeader>
+          <CardTitle>Recent Chatlogs</CardTitle>
+          <CardDescription>Preview of evaluated conversations</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <DataTable 
+            columns={[
+              { 
+                accessorKey: 'chatlog', 
+                header: 'Chatlog',
+                cell: (row: any) => <div className="max-w-xs truncate">{row.chatlog}</div>,
+              },
+              { accessorKey: 'coherence', header: 'C' },
+              { accessorKey: 'politeness', header: 'P' },
+              { accessorKey: 'relevance', header: 'R' },
+              { 
+                accessorKey: 'resolution', 
+                header: 'Resolution',
+                cell: (row: any) => (
+                  <span className={row.resolution === 1 ? "text-green-600 font-medium" : "text-amber-600 font-medium"}>
+                    {row.resolution === 1 ? "Resolved" : "Unresolved"}
+                  </span>
+                ),
+              }
+            ]} 
+            data={evaluationResults.slice(0, 5)} 
+            pageSize={5}
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 };
