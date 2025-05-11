@@ -201,13 +201,22 @@ const HomePage: React.FC = () => {
         return;
       }
 
+      // Set evaluation results and wait for them to be saved
       setEvaluationResults(processedResultsForContext);
+      setCurrentStatus('Saving results...');
+      
+      // Wait a moment to ensure the save operation completes
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       setCurrentStatus('Evaluation complete!');
       toast({
         title: "Evaluation Complete",
         description: `Successfully evaluated ${successfulEvals} chatlogs. ${failedEvals > 0 ? `${failedEvals} failed.` : ''}`
       });
+      
       if (successfulEvals > 0) {
+        // Reload saved chat logs before navigation
+        await loadSavedChatLogs();
         navigate('/dashboard');
       } else {
         setGlobalError("No chatlogs were successfully evaluated. Check console for errors.");

@@ -152,9 +152,25 @@ export const ChatlogProvider: React.FC<{ children: ReactNode }> = ({ children })
   }, [rubricText]);
 
   // Wrap setEvaluationResults to log changes
-  const setEvaluationResultsWithLog = (results: EvaluationResult[]) => {
+  const setEvaluationResultsWithLog = async (results: EvaluationResult[]) => {
     console.log('[Context] setEvaluationResultsWithLog called with', results.length, 'logs:', results);
-    setEvaluationResults(results);
+    try {
+      // Clear existing results and save new ones
+      setEvaluationResults([]); // Clear existing results first
+      
+      // Save to database
+      if (results.length > 0) {
+        await saveChatLogs(results);
+        console.log('[Context] Successfully saved', results.length, 'logs to database');
+      }
+      
+      // Then update state with new results
+      setEvaluationResults(results);
+      console.log('[Context] Updated state with', results.length, 'logs');
+    } catch (error) {
+      console.error('[Context] Error saving evaluation results:', error);
+      setError('Failed to save evaluation results');
+    }
   };
 
   return (

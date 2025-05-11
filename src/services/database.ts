@@ -32,10 +32,15 @@ export const saveChatLogs = async (chatLogs: Omit<ChatLog, 'id' | 'timestamp'>[]
   }));
   
   try {
+    console.log('[Database] Clearing previous chat logs before saving new ones');
+    await db.chatLogs.clear(); // Clear all previous logs
+    
+    console.log('[Database] Attempting to save', logsWithTimestamp.length, 'chat logs');
     await db.chatLogs.bulkAdd(logsWithTimestamp);
+    console.log('[Database] Successfully saved', logsWithTimestamp.length, 'chat logs');
     return true;
   } catch (error) {
-    console.error('Error saving chat logs:', error);
+    console.error('[Database] Error saving chat logs:', error);
     return false;
   }
 };
