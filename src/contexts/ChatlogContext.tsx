@@ -1,7 +1,8 @@
-
-import React, { createContext, useState, useContext, ReactNode } from "react";
+import React, { createContext, useState, useContext, ReactNode, useEffect } from "react";
+import { saveChatLogs, getAllChatLogs, deleteChatLog, ChatLog } from "@/services/database";
 
 interface EvaluationResult {
+  id?: number;
   chatlog: string;
   coherence: number;
   politeness: number;
@@ -30,6 +31,8 @@ interface ChatlogContextType {
   setTestPrompt: (prompt: string) => void;
   testResponse: string;
   setTestResponse: (response: string) => void;
+  loadSavedChatLogs: () => Promise<void>;
+  deleteChatLogById: (id: number) => Promise<void>;
 }
 
 const defaultPromptTemplate = `Your task is to evaluate the following customer service chatlog:
@@ -87,6 +90,50 @@ export const ChatlogProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [testPrompt, setTestPrompt] = useState<string>("");
   const [testResponse, setTestResponse] = useState<string>("");
 
+  // Load saved chat logs from database on mount
+  useEffect(() => {
+    loadSavedChatLogs();
+  }, []);
+
+  // Save evaluation results to database whenever they change
+  useEffect(() => {
+    if (evaluationResults.length > 0) {
+      saveChatLogs(evaluationResults);
+    }
+  }, [evaluationResults]);
+
+  const loadSavedChatLogs = async () => {
+    try {
+      const savedLogs = await getAllChatLogs();
+      console.log('[Context] loadSavedChatLogs fetched', savedLogs.length, 'logs:', savedLogs);
+      if (savedLogs.length > 0) {
+        setEvaluationResults(savedLogs);
+        console.log('[Context] setEvaluationResults called with', savedLogs.length, 'logs');
+      } else {
+        setEvaluationResults([]);
+        console.log('[Context] setEvaluationResults called with 0 logs (empty array)');
+      }
+    } catch (error) {
+      console.error('Error loading saved chat logs:', error);
+      setError('Failed to load saved chat logs');
+    }
+  };
+
+  const deleteChatLogById = async (id: number) => {
+    try {
+      const success = await deleteChatLog(id);
+      if (success) {
+        // Update the local state by removing the deleted chat log
+        setEvaluationResults(prevResults => prevResults.filter(result => result.id !== id));
+      } else {
+        setError('Failed to delete chat log');
+      }
+    } catch (error) {
+      console.error('Error deleting chat log:', error);
+      setError('Failed to delete chat log');
+    }
+  };
+
   // Update localStorage when values change
   React.useEffect(() => {
     if (apiKey) localStorage.setItem("apiKey", apiKey);
@@ -104,6 +151,12 @@ export const ChatlogProvider: React.FC<{ children: ReactNode }> = ({ children })
     if (rubricText) localStorage.setItem("rubricText", rubricText);
   }, [rubricText]);
 
+  // Wrap setEvaluationResults to log changes
+  const setEvaluationResultsWithLog = (results: EvaluationResult[]) => {
+    console.log('[Context] setEvaluationResultsWithLog called with', results.length, 'logs:', results);
+    setEvaluationResults(results);
+  };
+
   return (
     <ChatlogContext.Provider
       value={{
@@ -118,7 +171,7 @@ export const ChatlogProvider: React.FC<{ children: ReactNode }> = ({ children })
         rubricText,
         setRubricText,
         evaluationResults,
-        setEvaluationResults,
+        setEvaluationResults: setEvaluationResultsWithLog,
         isLoading,
         setIsLoading,
         error,
@@ -127,6 +180,8 @@ export const ChatlogProvider: React.FC<{ children: ReactNode }> = ({ children })
         setTestPrompt,
         testResponse,
         setTestResponse,
+        loadSavedChatLogs,
+        deleteChatLogById,
       }}
     >
       {children}

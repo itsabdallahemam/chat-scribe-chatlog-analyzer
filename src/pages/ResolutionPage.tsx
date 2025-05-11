@@ -8,10 +8,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useChatlog } from '@/contexts/ChatlogContext';
 import { Progress } from "@/components/ui/progress";
 import ChatBubbleView from '@/components/ChatBubbleView';
+import { Download, CheckCircle, AlertTriangle, TrendingUp } from 'lucide-react';
+import { exportToCSV, exportToExcel } from '@/utils/exportUtils';
 
 // Import Recharts components for Pie Chart
 import {
-  PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend, Sector // Added Sector for active shape
+  // PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend, Sector // Remove these
 } from 'recharts';
 
 // Define types
@@ -52,17 +54,10 @@ const ExpandableChatlog: React.FC<{ text: string; maxLength?: number }> = ({ tex
 const ResolutionPage: React.FC = () => {
   const navigate = useNavigate();
   const { evaluationResults } = useChatlog();
-  const [activeTab, setActiveTab] = useState<'resolved' | 'unresolved'>('resolved');
+  const [activeTab, setActiveTab] = useState<'unresolved' | 'resolved' | 'trends'>('unresolved');
   const [expandedChatlog, setExpandedChatlog] = useState<{ tab: string; originalIndex: number } | null>(null);
-  const [activeIndex, setActiveIndex] = useState(0); // For active pie segment
-
-  const onPieEnter = useCallback((_: any, index: number) => { // _ for unused data param
-    setActiveIndex(index);
-  }, [setActiveIndex]);
-
 
   if (!evaluationResults || evaluationResults.length === 0) {
-    // ... (no results message) ...
     return (
       <div className="flex flex-col items-center justify-center h-[80vh] bg-app-bg text-app-text">
         <div className="max-w-md text-center">
@@ -87,24 +82,55 @@ const ResolutionPage: React.FC = () => {
       typeof item.politeness === 'number' && !isNaN(item.politeness) &&
       typeof item.relevance === 'number' && !isNaN(item.relevance) &&
       typeof item.resolution === 'number' && !isNaN(item.resolution)
-  ), [evaluationResults]);
+    ), [evaluationResults]);
 
   const resolvedLogs = useMemo(() => validResults.filter(item => item.resolution === 1), [validResults]);
   const unresolvedLogs = useMemo(() => validResults.filter(item => item.resolution === 0), [validResults]);
-
   const totalValidLogs = validResults.length;
   const resolutionRate = totalValidLogs > 0 ? (resolvedLogs.length / totalValidLogs) * 100 : 0;
 
-  const handleToggleChatlogView = (tab: string, originalIndex: number) => {
-    if (expandedChatlog?.tab === tab && expandedChatlog?.originalIndex === originalIndex) {
-      setExpandedChatlog(null);
-    } else {
-      setExpandedChatlog({ tab, originalIndex });
-    }
-  };
+  // Stat cards
+  const statCards = [
+    {
+      title: 'Resolution Rate',
+      value: isNaN(resolutionRate) ? 'N/A' : `${resolutionRate.toFixed(1)}%`,
+      subtitle: `${resolvedLogs.length} of ${totalValidLogs} resolved`,
+      gradient: 'bg-gradient-to-br from-[#fff8c9] via-[#ffeaa0] to-[#ffd166]',
+      icon: <CheckCircle className="w-6 h-6 text-[#2B2D42]" />,
+    },
+    {
+      title: 'Unresolved',
+      value: unresolvedLogs.length,
+      subtitle: 'Currently unresolved',
+      gradient: 'bg-gradient-to-br from-[#ffeaea] via-[#fff5c9] to-[#ffd166]',
+      icon: <AlertTriangle className="w-6 h-6 text-[#FFD166]" />,
+    },
+    {
+      title: 'Resolved',
+      value: resolvedLogs.length,
+      subtitle: 'Resolved chatlogs',
+      gradient: 'bg-gradient-to-br from-[#d1fae5] via-[#6ee7b7] to-[#34d399]',
+      icon: <CheckCircle className="w-6 h-6 text-[#34d399]" />,
+    },
+  ];
 
+  // Needs Attention: longest unresolved or lowest scores
+  const needsAttention = useMemo(() => {
+    return unresolvedLogs
+      .slice()
+      .sort((a, b) => (a.coherence + a.politeness + a.relevance) - (b.coherence + b.politeness + b.relevance))
+      .slice(0, 5);
+  }, [unresolvedLogs]);
+
+  // Table columns (reuse existing logic)
   const getColumns = (tabType: 'resolved' | 'unresolved'): ColumnDefinition<EvaluationResultItem>[] => [
-    // ... (columns definition as before) ...
+    {
+      accessorKey: 'actions',
+      header: 'Chatlog #',
+      cell: (row: EvaluationResultItem) => (
+        <div className="text-center">{row.originalIndex !== undefined ? row.originalIndex + 1 : 'N/A'}</div>
+      ),
+    },
     {
       accessorKey: 'coherence',
       header: 'C',
@@ -128,8 +154,8 @@ const ResolutionPage: React.FC = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => handleToggleChatlogView(tabType, row.originalIndex as number)}
-            className="border-app-blue text-app-blue hover:bg-app-blue-light hover:text-white"
+            onClick={() => setExpandedChatlog(expandedChatlog && expandedChatlog.tab === tabType && expandedChatlog.originalIndex === row.originalIndex ? null : { tab: tabType, originalIndex: row.originalIndex! })}
+            className="border-app-blue text-app-blue hover:bg-app-blue-light hover:text-white dark:bg-app-blue/80 dark:text-white dark:border-app-blue dark:hover:bg-app-blue/60"
           >
             {expandedChatlog?.tab === tabType && expandedChatlog?.originalIndex === row.originalIndex ? 'Hide' : 'View'}
           </Button>
@@ -138,209 +164,218 @@ const ResolutionPage: React.FC = () => {
     }
   ];
 
-  // --- Updated Colors for Pie Chart ---
-  const PIE_CHART_COLORS = {
-    resolved: "#ffcc00", // A vibrant blue (Tailwind blue-500) - was app-blue
-    unresolved: "#f1345d", // A vibrant yellow/amber (Tailwind amber-500) - was app-yellow
-  };
-
-  const pieData = [
-    { name: 'Resolved', value: resolvedLogs.length, color: PIE_CHART_COLORS.resolved },
-    { name: 'Unresolved', value: unresolvedLogs.length, color: PIE_CHART_COLORS.unresolved },
-  ];
-
-  // Custom Active Shape for Pie Chart
-  const renderActiveShape = (props: any) => {
-    const RADIAN = Math.PI / 180;
-    const { cx, cy, midAngle, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent, value } = props;
-    const sin = Math.sin(-RADIAN * midAngle);
-    const cos = Math.cos(-RADIAN * midAngle);
-    const sx = cx + (outerRadius + 5) * cos; // Adjusted for slight pop
-    const sy = cy + (outerRadius + 5) * sin;
-    const mx = cx + (outerRadius + 15) * cos; // Line further out
-    const my = cy + (outerRadius + 15) * sin;
-    const ex = mx + (cos >= 0 ? 1 : -1) * 18; // Line length
-    const ey = my;
-    const textAnchor = cos >= 0 ? 'start' : 'end';
-
-    return (
-      <g>
-        <text x={cx} y={cy} dy={8} textAnchor="middle" fill={fill} fontWeight="bold" fontSize={16}>
-          {payload.name}
-        </text>
-        <Sector
-          cx={cx}
-          cy={cy}
-          innerRadius={innerRadius}
-          outerRadius={outerRadius + 3} // Make active segment slightly larger
-          startAngle={startAngle}
-          endAngle={endAngle}
-          fill={fill}
-          stroke="#fff" // White border for separation
-          strokeWidth={2}
-        />
-        {/* Optional: Line and label for active segment - can be complex to position perfectly */}
-        {/* <path d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`} stroke={fill} fill="none" />
-        <circle cx={ex} cy={ey} r={2} fill={fill} stroke="none" />
-        <text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} textAnchor={textAnchor} fill="#333" fontSize={12}>{`${value} (${(percent * 100).toFixed(0)}%)`}</text> */}
-      </g>
-    );
-  };
-
-
-  const renderTabContent = (tabType: 'resolved' | 'unresolved') => {
-    // ... (renderTabContent logic as before, using getColumns) ...
-    const dataForTable = tabType === 'resolved' ? resolvedLogs : unresolvedLogs;
-    const currentColumns = getColumns(tabType);
-
-    return (
-      <Card className="rounded-xl shadow-sm bg-card text-card-foreground mt-6">
-        <CardHeader>
-          <CardTitle className="text-lg">
-            {tabType === 'resolved' ? 'Resolved' : 'Unresolved'} Chatlogs ({dataForTable.length})
-          </CardTitle>
-          <CardDescription className="text-muted-foreground">
-            Chatlogs marked as {tabType}. Click 'View' to see the full conversation.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-md border">
-            <table className="w-full caption-bottom text-sm">
-              <thead className="[&_tr]:border-b">
-                <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                  {currentColumns.map((columnDef) => (
-                    <th
-                      key={String(columnDef.accessorKey)}
-                      className="h-12 px-4 text-left align-middle font-medium text-muted-foreground"
-                    >
-                      {typeof columnDef.header === 'function' ? columnDef.header() : columnDef.header}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="[&_tr:last-child]:border-0">
-                {dataForTable.length > 0 ? (
-                  dataForTable.map((rowItem, rowIndex) => (
-                    <React.Fragment key={rowItem.originalIndex ?? rowIndex}>
-                      <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                        {currentColumns.map((columnDef) => (
-                          <td
-                            key={String(columnDef.accessorKey)}
-                            className="p-4 align-middle"
-                          >
-                            {columnDef.cell ? columnDef.cell(rowItem) : (rowItem[columnDef.accessorKey as keyof EvaluationResultItem] as React.ReactNode)}
-                          </td>
-                        ))}
-                      </tr>
-                      {expandedChatlog?.tab === tabType && expandedChatlog?.originalIndex === rowItem.originalIndex && (
-                        <tr className="bg-muted/50">
-                          <td colSpan={currentColumns.length} className="p-2 border-t">
-                            <ChatBubbleView chatlogText={rowItem.chatlog} />
-                          </td>
-                        </tr>
-                      )}
-                    </React.Fragment>
-                  ))
-                ) : (
-                  <tr>
-                    <td
-                      colSpan={currentColumns.length}
-                      className="p-4 h-24 text-center text-muted-foreground"
-                    >
-                      No {tabType} chatlogs found.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-          {/* Add pagination controls here if dataForTable can be long */}
-        </CardContent>
-      </Card>
-    );
-  };
+  // Trends data (if timestamps available, otherwise by index)
+  const trendsData = useMemo(() => {
+    // If you have timestamps, group by day/week/month
+    // For now, just show resolved/unresolved counts by index
+    return validResults.map((item, idx) => ({
+      name: `#${idx + 1}`,
+      Resolved: item.resolution === 1 ? 1 : 0,
+      Unresolved: item.resolution === 0 ? 1 : 0,
+    }));
+  }, [validResults]);
 
   return (
-    <div className="space-y-6 p-4 md:p-6 bg-app-bg min-h-screen text-app-text">
-      <PageTitle
-        title="Resolution Details"
-        description="Analysis of resolved and unresolved customer service interactions."
-      />
-
-      {/* Summary Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="rounded-xl shadow-sm bg-card text-card-foreground p-1">
-          <CardHeader>
-            <CardTitle className="text-lg">Resolution Rate Overview</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="text-center">
-              <p className="text-xs text-muted-foreground">Overall Resolution Rate</p>
-              <div className="text-4xl font-bold text-app-text">
-                {isNaN(resolutionRate) ? "N/A" : `${resolutionRate.toFixed(1)}%`}
-              </div>
-              <p className="text-xs text-muted-foreground">{`${resolvedLogs.length} of ${totalValidLogs} resolved`}</p>
-            </div>
-            <Progress value={isNaN(resolutionRate) ? 0 : resolutionRate} className="h-3 [&>div]:bg-app-blue" />
-            <div className="flex justify-between text-xs text-muted-foreground mt-1">
-              <span>0% (Unresolved)</span>
-              <span>100% (Resolved)</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Modernized Pie Chart Card */}
-        <Card className="rounded-xl shadow-sm bg-card text-card-foreground p-1">
-          <CardHeader>
-            <CardTitle className="text-lg">Resolution Breakdown</CardTitle>
-          </CardHeader>
-          <CardContent className="h-[230px] md:h-[260px] flex items-center justify-center">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  activeIndex={activeIndex}
-                  activeShape={renderActiveShape}
-                  data={pieData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={50} // Creates the donut hole
-                  outerRadius={80} // Outer size of the pie
-                  fill="#8884d8" // Default fill, overridden by Cell
-                  dataKey="value"
-                  onMouseEnter={onPieEnter}
-                  paddingAngle={2} // Small gap between segments
-                >
-                  {pieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} stroke={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  wrapperStyle={{ fontSize: '12px' }}
-                  contentStyle={{ background: 'hsl(var(--popover))', borderRadius: 'var(--radius)', border: '1px solid hsl(var(--border))', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
-                  formatter={(value: number, name: string) => [`${value} (${(value / totalValidLogs * 100).toFixed(0)}%)`, name]}
-                />
-                 {/* Optional: Legend if labels on active shape are not enough */}
-                {/* <Legend verticalAlign="bottom" height={36} wrapperStyle={{fontSize: '10px'}} iconSize={10}/> */}
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+    <div className="min-h-screen bg-gradient-to-br from-[#f8fafc] via-[#e8ecf3] to-[#f5f7fa] dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-8 px-2 md:px-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-app-blue dark:text-white">Resolution Details</h1>
+        <p className="mt-1 text-app-text dark:text-gray-300">Deep dive into resolved and unresolved chatlogs, trends, and actionable insights.</p>
       </div>
-
-      {/* Tabs for Resolved/Unresolved Tables */}
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'resolved' | 'unresolved')} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 bg-card border rounded-lg shadow-sm">
-          <TabsTrigger value="resolved" className="data-[state=active]:bg-app-blue data-[state=active]:text-white data-[state=active]:shadow-md">Resolved Chatlogs ({resolvedLogs.length})</TabsTrigger>
-          <TabsTrigger value="unresolved" className="data-[state=active]:bg-app-blue data-[state=active]:text-white data-[state=active]:shadow-md">Unresolved Chatlogs ({unresolvedLogs.length})</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="resolved" className="mt-6">
-          {renderTabContent('resolved')}
-        </TabsContent>
-        <TabsContent value="unresolved" className="mt-6">
-          {renderTabContent('unresolved')}
-        </TabsContent>
-      </Tabs>
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 max-w-7xl mx-auto">
+        {/* Main Content (2 columns) */}
+        <div className="xl:col-span-2 flex flex-col gap-8">
+          {/* Stat Cards Row */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {statCards.map((card, idx) => (
+              <div key={card.title} className={`relative rounded-2xl shadow-lg p-6 min-w-[180px] min-h-[180px] flex flex-col justify-between ${card.gradient} dark:from-gray-900 dark:via-gray-800 dark:to-gray-900`}>
+                <div className="flex justify-between items-start">
+                  <div className="text-lg font-semibold text-black/90 dark:text-white drop-shadow-sm">{card.title}</div>
+                  <div className="bg-white/60 dark:bg-gray-900/70 rounded-full p-2 shadow absolute top-4 right-4">
+                    {card.icon}
+                  </div>
+                </div>
+                <div className="mt-8">
+                  <div className="text-4xl font-bold text-black/90 dark:text-white drop-shadow-sm">{card.value}</div>
+                  <div className="text-sm text-black/60 dark:text-gray-300 font-medium">{card.subtitle}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* Tabs for Resolved/Unresolved/Trends */}
+          <Card className="rounded-3xl border-0 bg-white/60 dark:bg-gray-900/70 backdrop-blur-xl shadow-xl p-8">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-2xl font-bold text-app-text dark:text-white">Resolution Insights</CardTitle>
+              <CardDescription className="text-base text-app-text-secondary dark:text-gray-300">
+                Explore unresolved, resolved, and trends in chatlog resolution
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-4">
+              <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'unresolved' | 'resolved' | 'trends')} className="w-full">
+                <TabsList className="grid w-full grid-cols-3 bg-card border rounded-lg shadow-sm mb-6">
+                  <TabsTrigger value="unresolved" className="data-[state=active]:bg-app-blue data-[state=active]:text-white data-[state=active]:shadow-md">Unresolved</TabsTrigger>
+                  <TabsTrigger value="resolved" className="data-[state=active]:bg-app-blue data-[state=active]:text-white data-[state=active]:shadow-md">Resolved</TabsTrigger>
+                  <TabsTrigger value="trends" className="data-[state=active]:bg-app-blue data-[state=active]:text-white data-[state=active]:shadow-md">Trends</TabsTrigger>
+                </TabsList>
+                <TabsContent value="unresolved">
+                  <div className="rounded-2xl border border-border/40 dark:border-gray-700 bg-white/70 dark:bg-gray-900/60 shadow-md overflow-hidden">
+                    <div className="[&_th]:bg-white/60 dark:[&_th]:bg-gray-900/80 [&_th]:text-muted-foreground dark:[&_th]:text-gray-100 [&_th]:font-medium [&_th]:text-base [&_th]:border-border/40 dark:[&_th]:border-gray-700 [&_td]:border-border/40 dark:[&_td]:border-gray-700 [&_tr:hover]:bg-white/80 dark:[&_tr:hover]:bg-gray-800/60">
+                      <table className="w-full caption-bottom text-sm">
+                        <thead>
+                          <tr>
+                            {getColumns('unresolved').map((columnDef) => (
+                              <th key={String(columnDef.accessorKey)} className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                                {typeof columnDef.header === 'function' ? columnDef.header() : columnDef.header}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {unresolvedLogs.length > 0 ? (
+                            unresolvedLogs.map((rowItem, rowIndex) => (
+                              <React.Fragment key={rowItem.originalIndex ?? rowIndex}>
+                                <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                                  {getColumns('unresolved').map((columnDef) => (
+                                    <td key={String(columnDef.accessorKey)} className="p-4 align-middle">
+                                      {columnDef.cell ? columnDef.cell(rowItem) : (rowItem[columnDef.accessorKey as keyof EvaluationResultItem] as React.ReactNode)}
+                                    </td>
+                                  ))}
+                                </tr>
+                                {expandedChatlog?.tab === 'unresolved' && expandedChatlog?.originalIndex === rowItem.originalIndex && (
+                                  <tr key={rowItem.originalIndex + '-expanded'} className="bg-muted/50">
+                                    <td colSpan={getColumns('unresolved').length} className="p-2 border-t">
+                                      <ChatBubbleView chatlogText={rowItem.chatlog} />
+                                    </td>
+                                  </tr>
+                                )}
+                              </React.Fragment>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={getColumns('unresolved').length} className="p-4 h-24 text-center text-muted-foreground">
+                                No unresolved chatlogs found.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </TabsContent>
+                <TabsContent value="resolved">
+                  <div className="rounded-2xl border border-border/40 dark:border-gray-700 bg-white/70 dark:bg-gray-900/60 shadow-md overflow-hidden">
+                    <div className="[&_th]:bg-white/60 dark:[&_th]:bg-gray-900/80 [&_th]:text-muted-foreground dark:[&_th]:text-gray-100 [&_th]:font-medium [&_th]:text-base [&_th]:border-border/40 dark:[&_th]:border-gray-700 [&_td]:border-border/40 dark:[&_td]:border-gray-700 [&_tr:hover]:bg-white/80 dark:[&_tr:hover]:bg-gray-800/60">
+                      <table className="w-full caption-bottom text-sm">
+                        <thead>
+                          <tr>
+                            {getColumns('resolved').map((columnDef) => (
+                              <th key={String(columnDef.accessorKey)} className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                                {typeof columnDef.header === 'function' ? columnDef.header() : columnDef.header}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {resolvedLogs.length > 0 ? (
+                            resolvedLogs.map((rowItem, rowIndex) => (
+                              <React.Fragment key={rowItem.originalIndex ?? rowIndex}>
+                                <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                                  {getColumns('resolved').map((columnDef) => (
+                                    <td key={String(columnDef.accessorKey)} className="p-4 align-middle">
+                                      {columnDef.cell ? columnDef.cell(rowItem) : (rowItem[columnDef.accessorKey as keyof EvaluationResultItem] as React.ReactNode)}
+                                    </td>
+                                  ))}
+                                </tr>
+                                {expandedChatlog?.tab === 'resolved' && expandedChatlog?.originalIndex === rowItem.originalIndex && (
+                                  <tr key={rowItem.originalIndex + '-expanded'} className="bg-muted/50">
+                                    <td colSpan={getColumns('resolved').length} className="p-2 border-t">
+                                      <ChatBubbleView chatlogText={rowItem.chatlog} />
+                                    </td>
+                                  </tr>
+                                )}
+                              </React.Fragment>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={getColumns('resolved').length} className="p-4 h-24 text-center text-muted-foreground">
+                                No resolved chatlogs found.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </TabsContent>
+                <TabsContent value="trends">
+                  <div className="rounded-2xl border border-border/40 bg-white/70 dark:bg-gray-900/80 shadow-md overflow-hidden p-8">
+                    <div className="text-lg font-semibold mb-4 dark:text-white">Resolution Trends</div>
+                    {/* Simple bar chart for now (can be replaced with recharts if available) */}
+                    <div className="w-full h-64 flex items-center justify-center">
+                      <span className="text-muted-foreground dark:text-gray-300">(Trends chart placeholder)</span>
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+        </div>
+        {/* Sidebar (1 column) */}
+        <div className="flex flex-col gap-8">
+          {/* Needs Attention Card */}
+          <Card className="rounded-3xl border-0 bg-white/60 dark:bg-gray-900/70 backdrop-blur-xl shadow-xl p-8 flex flex-col justify-between">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-2xl font-bold text-app-text dark:text-white">Needs Attention</CardTitle>
+              <CardDescription className="text-base text-app-text-secondary dark:text-gray-300">Lowest scoring unresolved chatlogs</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-4">
+              <div className="flex flex-col gap-2 bg-white/70 dark:bg-gray-900/60 rounded-2xl p-4 shadow-sm">
+                {needsAttention.length === 0 ? (
+                  <span className="text-base text-muted-foreground">No unresolved chatlogs need attention.</span>
+                ) : (
+                  needsAttention.map((item, idx) => (
+                    <div key={item.originalIndex} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                      <span className="text-base font-medium text-app-text-secondary">Chatlog #{item.originalIndex! + 1}</span>
+                      <span className="text-base font-semibold text-red-600">Score: {(item.coherence + item.politeness + item.relevance).toFixed(1)}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+          {/* Quick Actions */}
+          <Card className="rounded-3xl border-0 bg-white/60 dark:bg-gray-900/70 backdrop-blur-xl shadow-xl p-8 flex flex-col justify-between">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-2xl font-bold text-app-text dark:text-white">Quick Actions</CardTitle>
+              <CardDescription className="text-base text-app-text-secondary dark:text-gray-300">Navigate to other views</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-4">
+              <div className="flex flex-col space-y-3 bg-white/70 dark:bg-gray-900/60 rounded-2xl p-4 shadow-sm">
+                <Button 
+                  onClick={() => navigate('/dashboard')} 
+                  variant="outline"
+                  className="w-full border-app-blue text-app-blue hover:bg-app-blue/10 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600 dark:hover:bg-app-blue/20 justify-start text-base font-medium"
+                >
+                  View Dashboard
+                </Button>
+                <Button 
+                  onClick={() => navigate('/cpr-details')} 
+                  variant="outline"
+                  className="w-full border-app-blue text-app-blue hover:bg-app-blue/10 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600 dark:hover:bg-app-blue/20 justify-start text-base font-medium"
+                >
+                  View CPR Details
+                </Button>
+                <Button 
+                  onClick={() => navigate('/satisfaction')} 
+                  variant="outline"
+                  className="w-full border-app-blue text-app-blue hover:bg-app-blue/10 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600 dark:hover:bg-app-blue/20 justify-start text-base font-medium"
+                >
+                  View Customer Satisfaction
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };

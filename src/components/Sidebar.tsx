@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { BarChart2, FileText, Home, Info, MessageSquare, Settings, Users } from 'lucide-react';
@@ -8,10 +7,12 @@ const NavItem = ({
   to,
   icon: Icon,
   children,
+  collapsed,
 }: {
   to: string;
   icon: React.ElementType;
   children: React.ReactNode;
+  collapsed?: boolean;
 }) => (
   <NavLink
     to={to}
@@ -25,8 +26,8 @@ const NavItem = ({
       )
     }
   >
-    <Icon className="h-4 w-4" />
-    <span>{children}</span>
+    <Icon className="h-6 w-6" />
+    {!collapsed && <span>{children}</span>}
   </NavLink>
 );
 
@@ -59,26 +60,23 @@ export const Sidebar = () => {
       </div>
 
       <nav className="flex-1 space-y-2">
-        <NavItem to="/" icon={Home}>
-          {collapsed ? "" : "Home"}
+        <NavItem to="/" icon={Home} collapsed={collapsed}>
+          Home
         </NavItem>
-        <NavItem to="/settings" icon={Settings}>
-          {collapsed ? "" : "Settings"}
+        <NavItem to="/settings" icon={Settings} collapsed={collapsed}>
+          Settings
         </NavItem>
-        <NavItem to="/prompt-rubric" icon={FileText}>
-          {collapsed ? "" : "Prompts & Rubrics"}
+        <NavItem to="/dashboard" icon={BarChart2} collapsed={collapsed}>
+          Dashboard
         </NavItem>
-        <NavItem to="/dashboard" icon={BarChart2}>
-          {collapsed ? "" : "Dashboard"}
+        <NavItem to="/satisfaction" icon={Users} collapsed={collapsed}>
+          Satisfaction
         </NavItem>
-        <NavItem to="/satisfaction" icon={Users}>
-          {collapsed ? "" : "Satisfaction"}
+        <NavItem to="/cpr-details" icon={Info} collapsed={collapsed}>
+          CPR Details
         </NavItem>
-        <NavItem to="/cpr-details" icon={Info}>
-          {collapsed ? "" : "CPR Details"}
-        </NavItem>
-        <NavItem to="/resolution-details" icon={MessageSquare}>
-          {collapsed ? "" : "Resolution"}
+        <NavItem to="/resolution-details" icon={MessageSquare} collapsed={collapsed}>
+          Resolution
         </NavItem>
       </nav>
       

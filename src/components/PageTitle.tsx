@@ -1,8 +1,7 @@
-
 import React from 'react';
 
 interface PageTitleProps {
-  title: string;
+  title: React.ReactNode;
   description?: string;
 }
 
