@@ -11,14 +11,20 @@ import ChatBubbleView from '@/components/ChatBubbleView';
 import { Download, CheckCircle, AlertTriangle, TrendingUp } from 'lucide-react';
 import { exportToCSV, exportToExcel } from '@/utils/exportUtils';
 
-// Import Recharts components for Pie Chart
+// Import Recharts components
 import {
-  // PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend, Sector // Remove these
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
+
+// Define colors
+const RESOLVED_COLOR = "#0A2463";
+const UNRESOLVED_COLOR = "#FFD166";
+const BAR_CHART_COLOR = "#247BA0";
 
 // Define types
 interface EvaluationResultItem {
   chatlog: string;
+  scenario: string;
   coherence: number;
   politeness: number;
   relevance: number;
@@ -32,24 +38,11 @@ interface ColumnDefinition<TData extends object> {
   cell: (row: TData) => React.ReactNode;
 }
 
-// ExpandableChatlog component (assuming it's in ChatBubbleView.tsx or defined here)
-const ExpandableChatlog: React.FC<{ text: string; maxLength?: number }> = ({ text, maxLength = 100 }) => {
-  const [isExpanded, setIsExpanded] = React.useState(false);
-  if (typeof text !== 'string') return <span className="text-muted-foreground">N/A</span>;
-  const needsExpansion = text.length > maxLength;
-  const displayText = isExpanded || !needsExpansion ? text : `${text.substring(0, maxLength)}...`;
-  return (
-    <div className="text-app-text text-sm">
-      <p style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{displayText}</p>
-      {needsExpansion && (
-        <Button variant="link" size="sm" className="p-0 h-auto text-app-blue hover:text-app-blue-light" onClick={() => setIsExpanded(!isExpanded)}>
-          {isExpanded ? 'Show Less' : 'Show More'}
-        </Button>
-      )}
-    </div>
-  );
-};
-
+interface TrendsDataItem {
+  name: string;
+  Resolved: number;
+  Unresolved: number;
+}
 
 const ResolutionPage: React.FC = () => {
   const navigate = useNavigate();
@@ -165,7 +158,7 @@ const ResolutionPage: React.FC = () => {
   ];
 
   // Trends data (if timestamps available, otherwise by index)
-  const trendsData = useMemo(() => {
+  const trendsData: TrendsDataItem[] = useMemo(() => {
     // If you have timestamps, group by day/week/month
     // For now, just show resolved/unresolved counts by index
     return validResults.map((item, idx) => ({
@@ -173,6 +166,17 @@ const ResolutionPage: React.FC = () => {
       Resolved: item.resolution === 1 ? 1 : 0,
       Unresolved: item.resolution === 0 ? 1 : 0,
     }));
+  }, [validResults]);
+
+  // Calculate scenario-based resolution rates
+  const scenarioResolutionData = useMemo(() => {
+    const scenarios = [...new Set(validResults.map(item => item.scenario))];
+    return scenarios.map(scenario => {
+      const scenarioLogs = validResults.filter(item => item.scenario === scenario);
+      const resolvedInScenario = scenarioLogs.filter(item => item.resolution === 1).length;
+      const rate = scenarioLogs.length > 0 ? (resolvedInScenario / scenarioLogs.length) * 100 : 0;
+      return { name: scenario, value: rate };
+    });
   }, [validResults]);
 
   return (
@@ -309,9 +313,43 @@ const ResolutionPage: React.FC = () => {
                 <TabsContent value="trends">
                   <div className="rounded-2xl border border-border/40 bg-white/70 dark:bg-gray-900/80 shadow-md overflow-hidden p-8">
                     <div className="text-lg font-semibold mb-4 dark:text-white">Resolution Trends</div>
-                    {/* Simple bar chart for now (can be replaced with recharts if available) */}
-                    <div className="w-full h-64 flex items-center justify-center">
-                      <span className="text-muted-foreground dark:text-gray-300">(Trends chart placeholder)</span>
+                    <div className="h-[400px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={trendsData}
+                          margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis
+                            dataKey="name"
+                            angle={-45}
+                            textAnchor="end"
+                            height={100}
+                            interval={0}
+                            tick={{ fontSize: 12 }}
+                          />
+                          <YAxis />
+                          <Tooltip
+                            content={({ active, payload, label }) => {
+                              if (active && payload && payload.length) {
+                                const resolvedValue = payload[0].value as number;
+                                const unresolvedValue = payload[1].value as number;
+                                return (
+                                  <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+                                    <p className="font-semibold">{label}</p>
+                                    <p className="text-sm">Resolved: {resolvedValue}</p>
+                                    <p className="text-sm">Unresolved: {unresolvedValue}</p>
+                                  </div>
+                                );
+                              }
+                              return null;
+                            }}
+                          />
+                          <Legend />
+                          <Bar dataKey="Resolved" name="Resolved" fill={RESOLVED_COLOR} />
+                          <Bar dataKey="Unresolved" name="Unresolved" fill={UNRESOLVED_COLOR} />
+                        </BarChart>
+                      </ResponsiveContainer>
                     </div>
                   </div>
                 </TabsContent>
@@ -376,6 +414,53 @@ const ResolutionPage: React.FC = () => {
           </Card>
         </div>
       </div>
+
+      {/* Add Scenario Resolution Chart */}
+      <Card className="mb-8 mt-12">
+        <CardHeader>
+          <CardTitle>Resolution Rate by Scenario</CardTitle>
+          <CardDescription>Percentage of resolved issues for each scenario</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[400px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={scenarioResolutionData}
+                margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="name"
+                  angle={-45}
+                  textAnchor="end"
+                  height={100}
+                  interval={0}
+                  tick={{ fontSize: 12 }}
+                />
+                <YAxis />
+                <Tooltip
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      return (
+                        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+                          <p className="font-semibold">{label}</p>
+                          <p className="text-sm">Resolution Rate: {Number(data.resolutionRate).toFixed(1)}%</p>
+                          <p className="text-sm">Avg Coherence: {Number(data.avgCoherence).toFixed(1)}</p>
+                          <p className="text-sm">Avg Politeness: {Number(data.avgPoliteness).toFixed(1)}</p>
+                          <p className="text-sm">Avg Relevance: {Number(data.avgRelevance).toFixed(1)}</p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Bar dataKey="value" name="Resolution Rate (%)" fill={RESOLVED_COLOR} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

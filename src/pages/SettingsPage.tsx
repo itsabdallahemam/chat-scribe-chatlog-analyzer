@@ -180,6 +180,7 @@ const SettingsPage: React.FC = () => {
   const handleDeleteAllChatlogs = async () => {
     try {
       await deleteAllChatLogs();
+      setEvaluationResults([]); // Clear in-memory state
       await loadSavedChatLogs();
       toast({ title: 'All chatlogs deleted', description: 'All chatlogs have been removed from the database.' });
     } catch (error) {

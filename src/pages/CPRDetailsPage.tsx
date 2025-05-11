@@ -21,6 +21,7 @@ import {
 // Define types
 interface EvaluationResultItem {
   chatlog: string;
+  scenario: string;
   coherence: number;
   politeness: number;
   relevance: number;
@@ -271,7 +272,22 @@ const CPRDetailsPage: React.FC = () => {
     };
   }, [validResults, activeTab]);
 
-    return (
+  // Calculate scenario-based metrics for each CPR dimension
+  const scenarioMetrics = useMemo(() => {
+    const scenarios = [...new Set(validResults.map(item => item.scenario))];
+    return scenarios.map(scenario => {
+      const scenarioLogs = validResults.filter(item => item.scenario === scenario);
+      return {
+        name: scenario,
+        coherence: scenarioLogs.reduce((sum, item) => sum + item.coherence, 0) / scenarioLogs.length,
+        politeness: scenarioLogs.reduce((sum, item) => sum + item.politeness, 0) / scenarioLogs.length,
+        relevance: scenarioLogs.reduce((sum, item) => sum + item.relevance, 0) / scenarioLogs.length,
+        count: scenarioLogs.length
+      };
+    });
+  }, [validResults]);
+
+  return (
     <div className="min-h-screen bg-gradient-to-br from-[#f8fafc] via-[#e8ecf3] to-[#f5f7fa] dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-8 px-2 md:px-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-app-blue dark:text-white">CPR Details Overview</h1>
@@ -493,6 +509,196 @@ const CPRDetailsPage: React.FC = () => {
           </Card>
         </div>
       </div>
+
+      {/* Add Scenario Performance Chart */}
+      <Card className="mb-8 mt-12">
+        <CardHeader>
+          <CardTitle>Performance by Scenario</CardTitle>
+          <CardDescription>Average scores across different scenarios</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[400px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={scenarioMetrics}
+                margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="name"
+                  angle={-45}
+                  textAnchor="end"
+                  height={100}
+                  interval={0}
+                  tick={{ fontSize: 12 }}
+                />
+                <YAxis domain={[0, 5]} />
+                <Tooltip
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      return (
+                        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+                          <p className="font-semibold">{label}</p>
+                          <p className="text-sm">Coherence: {data.coherence.toFixed(1)}</p>
+                          <p className="text-sm">Politeness: {data.politeness.toFixed(1)}</p>
+                          <p className="text-sm">Relevance: {data.relevance.toFixed(1)}</p>
+                          <p className="text-sm">Total Chatlogs: {data.count}</p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Legend />
+                <Bar dataKey="coherence" name="Coherence" fill="#0A2463" />
+                <Bar dataKey="politeness" name="Politeness" fill="#FFD166" />
+                <Bar dataKey="relevance" name="Relevance" fill="#247BA0" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Tabs defaultValue="coherence" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="coherence">Coherence</TabsTrigger>
+          <TabsTrigger value="politeness">Politeness</TabsTrigger>
+          <TabsTrigger value="relevance">Relevance</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="coherence">
+          <Card>
+            <CardHeader>
+              <CardTitle>Low Scoring Chatlogs by Scenario</CardTitle>
+              <CardDescription>Detailed view of chatlog coherence scores. Use the selector to filter by score.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-4 flex items-center gap-2">
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Score</label>
+                <select value={scoreFilter} onChange={e => setScoreFilter(e.target.value)} className="border rounded px-2 py-1 text-sm dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700 dark:placeholder-gray-400">
+                  <option value="">All</option>
+                  {[1,2,3,4,5].map(n => <option key={n} value={n}>{n}</option>)}
+                </select>
+              </div>
+              <div className="space-y-4">
+                {validResults
+                  .filter(item => item.coherence <= 2 && (!scoreFilter || Math.round(item.coherence) === Number(scoreFilter)))
+                  .map((item, index) => (
+                    <div key={index} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <span className="text-sm font-medium text-muted-foreground">Scenario: {item.scenario}</span>
+                          <span className="ml-4 text-sm font-medium text-muted-foreground">Score: {item.coherence}</span>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setExpandedChatlog(expandedChatlog && expandedChatlog.tab === 'coherence' && expandedChatlog.originalIndex === item.originalIndex ? null : { tab: 'coherence', originalIndex: item.originalIndex! })}
+                        >
+                          {expandedChatlog?.tab === 'coherence' && expandedChatlog?.originalIndex === item.originalIndex ? 'Hide' : 'View'}
+                        </Button>
+                      </div>
+                      {expandedChatlog?.tab === 'coherence' && expandedChatlog?.originalIndex === item.originalIndex && (
+                        <div className="mt-4">
+                          <ChatBubbleView chatlogText={item.chatlog} />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="politeness">
+          <Card>
+            <CardHeader>
+              <CardTitle>Low Scoring Chatlogs by Scenario</CardTitle>
+              <CardDescription>Detailed view of chatlog politeness scores. Use the selector to filter by score.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-4 flex items-center gap-2">
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Score</label>
+                <select value={scoreFilter} onChange={e => setScoreFilter(e.target.value)} className="border rounded px-2 py-1 text-sm dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700 dark:placeholder-gray-400">
+                  <option value="">All</option>
+                  {[1,2,3,4,5].map(n => <option key={n} value={n}>{n}</option>)}
+                </select>
+              </div>
+              <div className="space-y-4">
+                {validResults
+                  .filter(item => item.politeness <= 2 && (!scoreFilter || Math.round(item.politeness) === Number(scoreFilter)))
+                  .map((item, index) => (
+                    <div key={index} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <span className="text-sm font-medium text-muted-foreground">Scenario: {item.scenario}</span>
+                          <span className="ml-4 text-sm font-medium text-muted-foreground">Score: {item.politeness}</span>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setExpandedChatlog(expandedChatlog && expandedChatlog.tab === 'politeness' && expandedChatlog.originalIndex === item.originalIndex ? null : { tab: 'politeness', originalIndex: item.originalIndex! })}
+                        >
+                          {expandedChatlog?.tab === 'politeness' && expandedChatlog?.originalIndex === item.originalIndex ? 'Hide' : 'View'}
+                        </Button>
+                      </div>
+                      {expandedChatlog?.tab === 'politeness' && expandedChatlog?.originalIndex === item.originalIndex && (
+                        <div className="mt-4">
+                          <ChatBubbleView chatlogText={item.chatlog} />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="relevance">
+          <Card>
+            <CardHeader>
+              <CardTitle>Low Scoring Chatlogs by Scenario</CardTitle>
+              <CardDescription>Detailed view of chatlog relevance scores. Use the selector to filter by score.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-4 flex items-center gap-2">
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Score</label>
+                <select value={scoreFilter} onChange={e => setScoreFilter(e.target.value)} className="border rounded px-2 py-1 text-sm dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700 dark:placeholder-gray-400">
+                  <option value="">All</option>
+                  {[1,2,3,4,5].map(n => <option key={n} value={n}>{n}</option>)}
+                </select>
+              </div>
+              <div className="space-y-4">
+                {validResults
+                  .filter(item => item.relevance <= 2 && (!scoreFilter || Math.round(item.relevance) === Number(scoreFilter)))
+                  .map((item, index) => (
+                    <div key={index} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <span className="text-sm font-medium text-muted-foreground">Scenario: {item.scenario}</span>
+                          <span className="ml-4 text-sm font-medium text-muted-foreground">Score: {item.relevance}</span>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setExpandedChatlog(expandedChatlog && expandedChatlog.tab === 'relevance' && expandedChatlog.originalIndex === item.originalIndex ? null : { tab: 'relevance', originalIndex: item.originalIndex! })}
+                        >
+                          {expandedChatlog?.tab === 'relevance' && expandedChatlog?.originalIndex === item.originalIndex ? 'Hide' : 'View'}
+                        </Button>
+                      </div>
+                      {expandedChatlog?.tab === 'relevance' && expandedChatlog?.originalIndex === item.originalIndex && (
+                        <div className="mt-4">
+                          <ChatBubbleView chatlogText={item.chatlog} />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

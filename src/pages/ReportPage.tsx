@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { useChatlog } from '@/contexts/ChatlogContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -36,6 +36,25 @@ const ReportPage: React.FC = () => {
   const coherenceDist = calculateDistribution(evaluationResults.map(r => r.coherence));
   const politenessDist = calculateDistribution(evaluationResults.map(r => r.politeness));
   const relevanceDist = calculateDistribution(evaluationResults.map(r => r.relevance));
+
+  // Calculate scenario-based metrics
+  const scenarioMetrics = useMemo(() => {
+    const scenarios = [...new Set(evaluationResults.map(item => item.scenario))];
+    return scenarios.map(scenario => {
+      const scenarioLogs = evaluationResults.filter(item => item.scenario === scenario);
+      const resolvedInScenario = scenarioLogs.filter(item => item.resolution === 1).length;
+      const resolutionRate = scenarioLogs.length > 0 ? (resolvedInScenario / scenarioLogs.length) * 100 : 0;
+      
+      return {
+        name: scenario,
+        count: scenarioLogs.length,
+        resolutionRate: resolutionRate.toFixed(1),
+        avgCoherence: calculateAverage(scenarioLogs.map(r => r.coherence)),
+        avgPoliteness: calculateAverage(scenarioLogs.map(r => r.politeness)),
+        avgRelevance: calculateAverage(scenarioLogs.map(r => r.relevance))
+      };
+    });
+  }, [evaluationResults]);
 
   // Find chatlogs for review
   const flaggedChatlogs = evaluationResults.filter(
@@ -373,6 +392,35 @@ const ReportPage: React.FC = () => {
                 <div className="text-2xl font-bold text-red-600 dark:text-red-400">{evaluationResults.length - resolvedCount}</div>
                 <div className="text-sm text-muted-foreground">{(100 - Number(resolutionRate)).toFixed(1)}%</div>
               </div>
+            </div>
+          </Card>
+
+          {/* Add Scenario Performance Summary */}
+          <Card className="bg-white/60 dark:bg-gray-900/80 shadow rounded-xl p-4">
+            <CardTitle className="text-base font-semibold text-app-text dark:text-white text-center mb-3">Performance by Scenario</CardTitle>
+            <div className="space-y-4">
+              {scenarioMetrics.map((scenario, index) => (
+                <div key={index} className="p-3 bg-white/50 dark:bg-gray-900/60 rounded-lg border border-border/40 dark:border-gray-700">
+                  <h3 className="font-semibold mb-2 dark:text-white">{scenario.name}</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                    <div className="bg-blue-50 text-blue-700 px-2 py-1 rounded-md text-center dark:bg-blue-900/60 dark:text-blue-200">
+                      Resolution Rate: {scenario.resolutionRate}%
+                    </div>
+                    <div className="bg-green-50 text-green-700 px-2 py-1 rounded-md text-center dark:bg-green-900/60 dark:text-green-200">
+                      Avg Coherence: {scenario.avgCoherence}
+                    </div>
+                    <div className="bg-yellow-50 text-yellow-700 px-2 py-1 rounded-md text-center dark:bg-yellow-900/60 dark:text-yellow-200">
+                      Avg Politeness: {scenario.avgPoliteness}
+                    </div>
+                    <div className="bg-purple-50 text-purple-700 px-2 py-1 rounded-md text-center dark:bg-purple-900/60 dark:text-purple-200">
+                      Avg Relevance: {scenario.avgRelevance}
+                    </div>
+                  </div>
+                  <div className="mt-2 text-xs text-muted-foreground text-center">
+                    Total Chatlogs: {scenario.count}
+                  </div>
+                </div>
+              ))}
             </div>
           </Card>
 

@@ -1,6 +1,11 @@
 // src/utils/csvParser.ts
 
-export const parseCSV = (csvContent: string): string[] => {
+interface ChatlogWithScenario {
+  chatlog: string;
+  scenario: string;
+}
+
+export const parseCSV = (csvContent: string): ChatlogWithScenario[] => {
   // --- Robust Line Splitting ---
   const lines: string[] = [];
   let currentLine = '';
@@ -42,10 +47,13 @@ export const parseCSV = (csvContent: string): string[] => {
     return [];
   }
 
-  // Find the header row and locate the "Chatlog" column index
-  const headers = parseCSVRow(lines[0]); // Use robust row parser for headers
+  // Find the header row and locate the "Chatlog" and "Scenario" column indices
+  const headers = parseCSVRow(lines[0]);
   const chatlogIndex = headers.findIndex(
     (header) => header.trim().toLowerCase() === 'chatlog'
+  );
+  const scenarioIndex = headers.findIndex(
+    (header) => header.trim().toLowerCase() === 'scenario'
   );
 
   if (chatlogIndex === -1) {
@@ -53,7 +61,11 @@ export const parseCSV = (csvContent: string): string[] => {
     throw new Error('CSV file must contain a "Chatlog" column (case-insensitive). Check for extra spaces or typos in the header.');
   }
 
-  const chatlogs: string[] = [];
+  if (scenarioIndex === -1) {
+    console.warn("CSV Parser Warning: No 'Scenario' column found. Using 'Unknown' as default scenario.");
+  }
+
+  const chatlogsWithScenarios: ChatlogWithScenario[] = [];
 
   // Skip the header row (i=0) and process data rows
   for (let i = 1; i < lines.length; i++) {
@@ -69,13 +81,32 @@ export const parseCSV = (csvContent: string): string[] => {
       if (chatlogContent.startsWith('"') && chatlogContent.endsWith('"')) {
         chatlogContent = chatlogContent.substring(1, chatlogContent.length - 1).replace(/""/g, '"');
       }
-      chatlogs.push(chatlogContent);
+
+      // Get scenario content, defaulting to "Unknown" if not found
+      let scenarioContent = "Unknown";
+      if (scenarioIndex !== -1 && row.length > scenarioIndex && row[scenarioIndex] !== undefined && row[scenarioIndex] !== null) {
+        scenarioContent = row[scenarioIndex].trim();
+        // Remove potential surrounding quotes from the scenario content
+        if (scenarioContent.startsWith('"') && scenarioContent.endsWith('"')) {
+          scenarioContent = scenarioContent.substring(1, scenarioContent.length - 1).replace(/""/g, '"');
+        }
+        // Only take the part before the colon if it exists
+        const colonIndex = scenarioContent.indexOf(':');
+        if (colonIndex !== -1) {
+          scenarioContent = scenarioContent.substring(0, colonIndex).trim();
+        }
+      }
+
+      chatlogsWithScenarios.push({
+        chatlog: chatlogContent,
+        scenario: scenarioContent
+      });
     } else {
       // console.warn(`CSV Parser: Skipping row ${i + 1}. Chatlog column missing or row too short. Row data:`, row);
     }
   }
-  console.log(`CSV Parser: Successfully parsed ${chatlogs.length} chatlogs.`);
-  return chatlogs;
+  console.log(`CSV Parser: Successfully parsed ${chatlogsWithScenarios.length} chatlogs with scenarios.`);
+  return chatlogsWithScenarios;
 };
 
 // Improved helper function to handle CSV row parsing with quotes (from previous version)

@@ -4,6 +4,7 @@ import { saveChatLogs, getAllChatLogs, deleteChatLog, ChatLog } from "@/services
 interface EvaluationResult {
   id?: number;
   chatlog: string;
+  scenario: string;
   coherence: number;
   politeness: number;
   relevance: number;
@@ -155,16 +156,13 @@ export const ChatlogProvider: React.FC<{ children: ReactNode }> = ({ children })
   const setEvaluationResultsWithLog = async (results: EvaluationResult[]) => {
     console.log('[Context] setEvaluationResultsWithLog called with', results.length, 'logs:', results);
     try {
-      // Clear existing results and save new ones
-      setEvaluationResults([]); // Clear existing results first
-      
-      // Save to database
+      // Save to database first
       if (results.length > 0) {
         await saveChatLogs(results);
         console.log('[Context] Successfully saved', results.length, 'logs to database');
       }
       
-      // Then update state with new results
+      // Then update state with new results (only once)
       setEvaluationResults(results);
       console.log('[Context] Updated state with', results.length, 'logs');
     } catch (error) {

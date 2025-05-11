@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Gauge, Smile, MessageCircle, CheckCircle } from 'lucide-react';
@@ -25,6 +25,7 @@ interface ScoreDistributionData {
 interface EvaluationResultItem {
   id?: number;
   chatlog: string;
+  scenario: string;
   coherence: number;
   politeness: number;
   relevance: number;
@@ -243,6 +244,29 @@ const DashboardPage: React.FC = () => {
     },
   ];
 
+  // Calculate scenario-based metrics
+  const scenarioMetrics = useMemo(() => {
+    const scenarios = [...new Set(validResults.map(item => item.scenario))];
+    return scenarios.map(scenario => {
+      const scenarioLogs = validResults.filter(item => item.scenario === scenario);
+      const resolvedInScenario = scenarioLogs.filter(item => item.resolution === 1).length;
+      const resolutionRate = scenarioLogs.length > 0 ? (resolvedInScenario / scenarioLogs.length) * 100 : 0;
+      
+      const avgCoherence = scenarioLogs.reduce((sum, item) => sum + item.coherence, 0) / scenarioLogs.length;
+      const avgPoliteness = scenarioLogs.reduce((sum, item) => sum + item.politeness, 0) / scenarioLogs.length;
+      const avgRelevance = scenarioLogs.reduce((sum, item) => sum + item.relevance, 0) / scenarioLogs.length;
+
+      return {
+        name: scenario,
+        resolutionRate,
+        avgCoherence,
+        avgPoliteness,
+        avgRelevance,
+        count: scenarioLogs.length
+      };
+    });
+  }, [validResults]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f8fafc] via-[#e8ecf3] to-[#f5f7fa] dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-8 px-2 md:px-8">
       <div className="mb-4">
@@ -343,6 +367,66 @@ const DashboardPage: React.FC = () => {
                     </ResponsiveContainer>
                   </div>
                 ))}
+              </div>
+            </CardContent>
+          </Card>
+          {/* Performance by Scenario (moved and styled) */}
+          <Card className="rounded-3xl bg-white/60 dark:bg-gray-800/90 dark:shadow-2xl shadow-xl p-8">
+            <CardHeader>
+              <CardTitle>Performance by Scenario</CardTitle>
+              <CardDescription>Resolution rates and average scores across different scenarios</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[400px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={scenarioMetrics}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="name"
+                      angle={-45}
+                      textAnchor="end"
+                      height={100}
+                      interval={0}
+                      tick={{ fontSize: 12 }}
+                    />
+                    <YAxis yAxisId="left" orientation="left" stroke={RESOLVED_COLOR} />
+                    <YAxis yAxisId="right" orientation="right" stroke={BAR_CHART_COLOR} />
+                    <Tooltip
+                      content={({ active, payload, label }) => {
+                        if (active && payload && payload.length) {
+                          const data = payload[0].payload;
+                          return (
+                            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+                              <p className="font-semibold">{label}</p>
+                              <p className="text-sm">Resolution Rate: {data.resolutionRate.toFixed(1)}%</p>
+                              <p className="text-sm">Avg Coherence: {data.avgCoherence.toFixed(1)}</p>
+                              <p className="text-sm">Avg Politeness: {data.avgPoliteness.toFixed(1)}</p>
+                              <p className="text-sm">Avg Relevance: {data.avgRelevance.toFixed(1)}</p>
+                              <p className="text-sm">Total Chatlogs: {data.count}</p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Legend />
+                    <Bar
+                      yAxisId="left"
+                      dataKey="resolutionRate"
+                      name="Resolution Rate (%)"
+                      fill={RESOLVED_COLOR}
+                    />
+                    <Bar
+                      yAxisId="right"
+                      dataKey="avgCoherence"
+                      name="Avg Coherence"
+                      fill={BAR_CHART_COLOR}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>

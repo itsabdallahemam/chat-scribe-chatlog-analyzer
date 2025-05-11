@@ -16,6 +16,7 @@ import { UploadCloud, FileText, X, AlertCircle } from 'lucide-react';
 // Type expected by the ChatlogContext for evaluationResults
 interface EvaluationResultForContext {
   chatlog: string;
+  scenario: string;
   coherence: number;
   politeness: number;
   relevance: number;
@@ -120,7 +121,7 @@ const HomePage: React.FC = () => {
     cancelEvaluationRef.current = false;
     setIsPaused(false);
 
-    let chatlogsToProcess: string[] = [];
+    let chatlogsToProcess: { chatlog: string; scenario: string }[] = [];
     const processedResultsForContext: EvaluationResultForContext[] = [];
     let successfulEvals = 0;
     let failedEvals = 0;
@@ -135,7 +136,7 @@ const HomePage: React.FC = () => {
           throw new Error(`CSV parsing error: ${error instanceof Error ? error.message : String(error)}`);
         }
       } else if (pastedChatlog.trim()) {
-        chatlogsToProcess = [pastedChatlog.trim()];
+        chatlogsToProcess = [{ chatlog: pastedChatlog.trim(), scenario: "Manual Entry" }];
         setCurrentStatus('Processing pasted chatlog.');
       } else {
         throw new Error("Please upload a CSV file or paste a chatlog.");
@@ -166,7 +167,7 @@ const HomePage: React.FC = () => {
           }
         }
         
-        const currentChatlog = chatlogsToProcess[i];
+        const currentInputItem = chatlogsToProcess[i];
         setCurrentStatus(`Evaluating chatlog ${i + 1} of ${chatlogsToProcess.length} using ${selectedModel.split('/').pop()}...`);
         
         const apiResult = await evaluateSingleChatlog(
@@ -174,12 +175,13 @@ const HomePage: React.FC = () => {
           selectedModel,
           promptTemplate,
           rubricText,
-          currentChatlog
+          currentInputItem.chatlog
         );
 
         if (apiResult.scores && apiResult.error === null) {
           processedResultsForContext.push({
             chatlog: apiResult.original_chatlog,
+            scenario: currentInputItem.scenario,
             coherence: apiResult.scores.Coherence,
             politeness: apiResult.scores.Politeness,
             relevance: apiResult.scores.Relevance,
@@ -189,7 +191,7 @@ const HomePage: React.FC = () => {
           successfulEvals++;
         } else {
           failedEvals++;
-          console.warn(`Evaluation failed for chatlog index ${i}: ${apiResult.error || 'Unknown error'}. Chatlog: ${currentChatlog.substring(0,100)}... Raw Response: ${apiResult.raw_response?.substring(0,100)}`);
+          console.warn(`Evaluation failed for chatlog index ${i}: ${apiResult.error || 'Unknown error'}. Chatlog: ${currentInputItem.chatlog.substring(0,100)}... Raw Response: ${apiResult.raw_response?.substring(0,100)}`);
         }
         setProgress(Math.round(((i + 1) / chatlogsToProcess.length) * 100));
       }

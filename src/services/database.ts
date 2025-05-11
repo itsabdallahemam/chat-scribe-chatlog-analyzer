@@ -3,6 +3,7 @@ import Dexie, { Table } from 'dexie';
 export interface ChatLog {
   id?: number;
   chatlog: string;
+  scenario: string;
   coherence: number;
   politeness: number;
   relevance: number;
@@ -15,8 +16,8 @@ class ChatLogDatabase extends Dexie {
 
   constructor() {
     super('ChatLogDatabase');
-    this.version(1).stores({
-      chatLogs: '++id, timestamp' // id is auto-incremented, timestamp is indexed
+    this.version(2).stores({
+      chatLogs: '++id, timestamp, scenario' // Added scenario to indexed fields
     });
   }
 }
@@ -32,16 +33,22 @@ export const saveChatLogs = async (chatLogs: Omit<ChatLog, 'id' | 'timestamp'>[]
   }));
   
   try {
-    console.log('[Database] Clearing previous chat logs before saving new ones');
-    await db.chatLogs.clear(); // Clear all previous logs
+    console.log('[Database] Starting transaction to save', logsWithTimestamp.length, 'chat logs');
     
-    console.log('[Database] Attempting to save', logsWithTimestamp.length, 'chat logs');
-    await db.chatLogs.bulkAdd(logsWithTimestamp);
+    // Use a transaction to ensure atomicity
+    await db.transaction('rw', db.chatLogs, async () => {
+      // Clear existing logs within the transaction
+      await db.chatLogs.clear();
+      
+      // Add new logs within the same transaction
+      await db.chatLogs.bulkAdd(logsWithTimestamp);
+    });
+    
     console.log('[Database] Successfully saved', logsWithTimestamp.length, 'chat logs');
     return true;
   } catch (error) {
     console.error('[Database] Error saving chat logs:', error);
-    return false;
+    throw error; // Propagate error to be handled by the caller
   }
 };
 

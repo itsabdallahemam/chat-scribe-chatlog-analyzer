@@ -20,6 +20,7 @@ import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-r
 
 interface EvaluationResultItem {
   chatlog: string;
+  scenario: string;
   coherence: number;
   politeness: number;
   relevance: number;
@@ -243,16 +244,21 @@ const SatisfactionPage: React.FC = () => {
     };
   }, [validResults]);
 
-  // 3. Trends data for politeness
-  const politenessTrends = useMemo(() => {
-    const groupSize = 10;
-    const data: { name: string; avg: number }[] = [];
-    for (let i = 0; i < validResults.length; i += groupSize) {
-      const group = validResults.slice(i, i + groupSize);
-      const avg = group.length > 0 ? group.reduce((sum, item) => sum + item.politeness, 0) / group.length : 0;
-      data.push({ name: `#${i + 1}-${i + group.length}`, avg });
-    }
-    return data;
+  // 3. Scenario-based metrics for politeness and resolution
+  const scenarioMetrics = useMemo(() => {
+    const scenarios = [...new Set(validResults.map(item => item.scenario))];
+    return scenarios.map(scenario => {
+      const scenarioLogs = validResults.filter(item => item.scenario === scenario);
+      const avgPoliteness = scenarioLogs.reduce((sum, item) => sum + item.politeness, 0) / scenarioLogs.length;
+      const resolvedInScenario = scenarioLogs.filter(item => item.resolution === 1).length;
+      const resolutionRate = scenarioLogs.length > 0 ? (resolvedInScenario / scenarioLogs.length) * 100 : 0;
+      return {
+        name: scenario,
+        avgPoliteness,
+        resolutionRate,
+        count: scenarioLogs.length
+      };
+    });
   }, [validResults]);
 
   // 4. Needs Attention: lowest politeness chatlogs
@@ -316,19 +322,58 @@ const SatisfactionPage: React.FC = () => {
               </ResponsiveContainer>
             </CardContent>
           </Card>
-          {/* Trends card for politeness */}
-          <Card className="rounded-2xl border-0 bg-white/60 dark:bg-gray-900/80 shadow p-6">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-bold text-app-text dark:text-white">Politeness Trends</CardTitle>
+          {/* User Satisfaction by Scenario (replaces Politeness Trends) */}
+          <Card className="rounded-3xl border-0 bg-white/60 dark:bg-gray-900/70 backdrop-blur-xl shadow-xl p-8">
+            <CardHeader>
+              <CardTitle className="text-lg font-bold text-app-text dark:text-white">User Satisfaction by Scenario</CardTitle>
+              <CardDescription className="text-base text-muted-foreground">Average politeness and resolution rates across different scenarios</CardDescription>
             </CardHeader>
-            <CardContent className="h-[250px] md:h-[300px]">
+            <CardContent className="h-[300px] md:h-[350px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={politenessTrends} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
-                  <XAxis dataKey="name" name="Group" stroke="hsl(var(--foreground))" fontSize={12} />
-                  <YAxis allowDecimals={false} stroke="hsl(var(--foreground))" fontSize={12} label={{ value: 'Avg. Politeness', angle: -90, position: 'insideLeft', offset: 0, style: {textAnchor: 'middle', fontSize: '12px', fill: 'hsl(var(--foreground))'} }}/>
-                  <Tooltip wrapperStyle={{ color: '#333', fontSize: '12px' }} contentStyle={{ background: 'hsl(var(--popover))', borderRadius: 'var(--radius)', border: '1px solid hsl(var(--border))' }}/>
-                  <Bar dataKey="avg" fill="#FFD166" name="Avg. Politeness" radius={[8, 8, 0, 0]} />
+                <BarChart
+                  data={scenarioMetrics}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis
+                    dataKey="name"
+                    angle={-45}
+                    textAnchor="end"
+                    height={100}
+                    interval={0}
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis yAxisId="left" orientation="left" stroke={BAR_CHART_COLOR_POLITENESS} domain={[0, 5]} />
+                  <YAxis yAxisId="right" orientation="right" stroke={RESOLVED_COLOR} domain={[0, 100]} />
+                  <Tooltip
+                    content={({ active, payload, label }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload;
+                        return (
+                          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+                            <p className="font-semibold">{label}</p>
+                            <p className="text-sm">Avg Politeness: {data.avgPoliteness.toFixed(2)}</p>
+                            <p className="text-sm">Resolution Rate: {data.resolutionRate.toFixed(1)}%</p>
+                            <p className="text-sm">Total Chatlogs: {data.count}</p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Legend />
+                  <Bar
+                    yAxisId="left"
+                    dataKey="avgPoliteness"
+                    name="Avg Politeness"
+                    fill={BAR_CHART_COLOR_POLITENESS}
+                  />
+                  <Bar
+                    yAxisId="right"
+                    dataKey="resolutionRate"
+                    name="Resolution Rate (%)"
+                    fill={RESOLVED_COLOR}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
