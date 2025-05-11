@@ -362,7 +362,7 @@ const SatisfactionPage: React.FC = () => {
         {/* Right: Summary/Diagnostic Cards */}
         <div className="flex flex-col gap-8">
           {/* Politeness Breakdown */}
-          <Card className="rounded-3xl border-0 bg-white/60 dark:bg-gray-900/70 backdrop-blur-xl shadow-xl p-8">
+          <Card className="rounded-3xl border-0 bg-white dark:bg-gray-900 shadow-xl p-8">
             <CardHeader>
               <CardTitle className="text-2xl font-bold">Politeness Breakdown</CardTitle>
               <CardDescription className="text-base text-muted-foreground">Chatlogs by politeness category.</CardDescription>
@@ -373,21 +373,45 @@ const SatisfactionPage: React.FC = () => {
                   <span>Excellent (4-5)</span>
                   <span className="font-semibold text-green-600">{excellentPolitenessCount}</span>
                 </div>
-                <Progress value={totalValidLogs > 0 ? (excellentPolitenessCount / totalValidLogs) * 100 : 0} className="h-2 [&>div]:bg-green-500" />
+                <div className="w-full h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${totalValidLogs > 0 ? (excellentPolitenessCount / totalValidLogs) * 100 : 0}%`,
+                      background: 'linear-gradient(90deg, #22c55e 0%, #4ade80 100%)',
+                    }}
+                  />
+                </div>
               </div>
               <div>
                 <div className="flex justify-between mb-1">
                   <span>Average (3)</span>
                   <span className="font-semibold text-yellow-500">{averagePolitenessCount}</span>
                 </div>
-                <Progress value={totalValidLogs > 0 ? (averagePolitenessCount / totalValidLogs) * 100 : 0} className="h-2 [&>div]:bg-yellow-500" />
+                <div className="w-full h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${totalValidLogs > 0 ? (averagePolitenessCount / totalValidLogs) * 100 : 0}%`,
+                      background: 'linear-gradient(90deg, #facc15 0%, #fbbf24 100%)',
+                    }}
+                  />
+                </div>
               </div>
               <div>
                 <div className="flex justify-between mb-1">
                   <span>Poor (1-2)</span>
                   <span className="font-semibold text-red-500">{poorPolitenessCount}</span>
                 </div>
-                <Progress value={totalValidLogs > 0 ? (poorPolitenessCount / totalValidLogs) * 100 : 0} className="h-2 [&>div]:bg-red-500" />
+                <div className="w-full h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${totalValidLogs > 0 ? (poorPolitenessCount / totalValidLogs) * 100 : 0}%`,
+                      background: 'linear-gradient(90deg, #ef4444 0%, #f87171 100%)',
+                    }}
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>

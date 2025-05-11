@@ -417,7 +417,7 @@ const DashboardPage: React.FC = () => {
         {/* Sidebar (1 column) */}
         <div className="flex flex-col gap-8">
           {/* Resolution Overview */}
-          <Card className="rounded-3xl bg-white/60 dark:bg-gray-800/90 dark:shadow-2xl shadow-xl p-8 flex flex-col justify-between">
+          <Card className="rounded-3xl bg-white dark:bg-gray-900 shadow-xl p-8 flex flex-col justify-between border-0">
             <CardHeader className="pb-2">
               <CardTitle className="text-2xl font-bold text-app-text dark:text-gray-100">Resolution Overview</CardTitle>
               <CardDescription className="text-base text-app-text-secondary dark:text-gray-300">
@@ -425,30 +425,46 @@ const DashboardPage: React.FC = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-4">
-              <div className="flex flex-col gap-4 bg-white/70 dark:bg-gray-700/80 rounded-2xl p-4 shadow-sm">
-                <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-6 bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-800">
+                <div className="flex items-center justify-between mb-2">
                   <span className="text-base font-medium text-app-text-secondary">Resolved</span>
-                  <span className="text-base font-semibold" style={{ color: RESOLVED_COLOR }}>{resolvedCount} ({resolutionRate.toFixed(1)}%)</span>
+                  <span className="flex items-center gap-2">
+                    <span className="text-2xl font-extrabold text-app-blue dark:text-green-400">{resolvedCount}</span>
+                    <span className="px-2 py-0.5 rounded text-xs font-medium bg-gradient-to-r from-blue-200 via-cyan-100 to-green-200 text-app-blue dark:from-green-900 dark:to-blue-900 dark:text-green-200 border border-transparent">
+                      {resolutionRate.toFixed(1)}%
+                    </span>
+                  </span>
                 </div>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mb-2">
                   <span className="text-base font-medium text-app-text-secondary">Unresolved</span>
-                  <span className="text-base font-semibold" style={{ color: UNRESOLVED_COLOR }}>{unresolvedCount} ({(100 - resolutionRate).toFixed(1)}%)</span>
+                  <span className="flex items-center gap-2">
+                    <span className="text-2xl font-extrabold text-yellow-500 dark:text-yellow-300">{unresolvedCount}</span>
+                    <span className="px-2 py-0.5 rounded text-xs font-medium bg-gradient-to-r from-yellow-200 via-orange-100 to-orange-300 text-yellow-700 dark:from-yellow-900 dark:to-orange-900 dark:text-yellow-200 border border-transparent">
+                      {(100 - resolutionRate).toFixed(1)}%
+                    </span>
+                  </span>
                 </div>
-                <div className="w-full h-6 bg-gray-100 rounded-full overflow-hidden flex shadow-inner">
+                <div className="w-full h-7 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center shadow-inner relative overflow-hidden mt-2 border border-gray-200 dark:border-gray-700">
                   <div
-                    className="h-full"
+                    className="h-full transition-all duration-500"
                     style={{
                       width: `${resolutionRate}%`,
-                      backgroundColor: RESOLVED_COLOR,
-                      transition: 'width 0.5s',
+                      borderTopLeftRadius: '9999px',
+                      borderBottomLeftRadius: '9999px',
+                      borderTopRightRadius: resolutionRate === 100 ? '9999px' : 0,
+                      borderBottomRightRadius: resolutionRate === 100 ? '9999px' : 0,
+                      background: 'linear-gradient(90deg, #0A2463 0%, #247BA0 50%, #34d399 100%)',
                     }}
                   />
                   <div
-                    className="h-full"
+                    className="h-full transition-all duration-500"
                     style={{
                       width: `${100 - resolutionRate}%`,
-                      backgroundColor: UNRESOLVED_COLOR,
-                      transition: 'width 0.5s',
+                      borderTopRightRadius: '9999px',
+                      borderBottomRightRadius: '9999px',
+                      borderTopLeftRadius: resolutionRate === 0 ? '9999px' : 0,
+                      borderBottomLeftRadius: resolutionRate === 0 ? '9999px' : 0,
+                      background: 'linear-gradient(90deg, #FFD166 0%, #ffeaa0 100%)',
                     }}
                   />
                 </div>
