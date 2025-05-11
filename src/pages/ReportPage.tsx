@@ -305,30 +305,30 @@ const ReportPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f8fafc] via-[#e8ecf3] to-[#f5f7fa] dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-8 px-2 md:px-8">
       <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold text-app-blue dark:text-white">Evaluation Report</h1>
-        <p className="mt-1 text-app-text dark:text-gray-300">Generated on {format(new Date(), 'MMMM d, yyyy h:mm a')} using {selectedModel}</p>
+        <h1 className="text-2xl md:text-3xl font-bold text-app-blue dark:text-white">Evaluation Report</h1>
+        <p className="mt-2 text-sm text-app-text dark:text-gray-300">Generated on {format(new Date(), 'MMMM d, yyyy h:mm a')} using {selectedModel}</p>
       </div>
 
-      <div className="max-w-7xl mx-auto space-y-8">
-        <div ref={reportRef} className="space-y-8">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <div ref={reportRef} className="space-y-6">
           {/* Overall Performance Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <Card className="bg-white/60 dark:bg-gray-900/80 shadow rounded-2xl p-6 flex flex-col items-center">
-              <CardTitle className="text-lg font-semibold text-app-text dark:text-white text-center">Average Coherence</CardTitle>
-              <div className="text-3xl font-bold text-app-text dark:text-white mt-2">{averageCoherence} <span className="text-base font-normal">/ 5</span></div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card className="bg-white/60 dark:bg-gray-900/80 shadow rounded-xl p-4 flex flex-col items-center">
+              <CardTitle className="text-base font-semibold text-app-text dark:text-white text-center">Average Coherence</CardTitle>
+              <div className="text-2xl font-bold text-app-text dark:text-white mt-1">{averageCoherence} <span className="text-sm font-normal">/ 5</span></div>
             </Card>
-            <Card className="bg-white/60 dark:bg-gray-900/80 shadow rounded-2xl p-6 flex flex-col items-center">
-              <CardTitle className="text-lg font-semibold text-app-text dark:text-white text-center">Average Politeness</CardTitle>
-              <div className="text-3xl font-bold text-app-text dark:text-white mt-2">{averagePoliteness} <span className="text-base font-normal">/ 5</span></div>
+            <Card className="bg-white/60 dark:bg-gray-900/80 shadow rounded-xl p-4 flex flex-col items-center">
+              <CardTitle className="text-base font-semibold text-app-text dark:text-white text-center">Average Politeness</CardTitle>
+              <div className="text-2xl font-bold text-app-text dark:text-white mt-1">{averagePoliteness} <span className="text-sm font-normal">/ 5</span></div>
             </Card>
-            <Card className="bg-white/60 dark:bg-gray-900/80 shadow rounded-2xl p-6 flex flex-col items-center">
-              <CardTitle className="text-lg font-semibold text-app-text dark:text-white text-center">Average Relevance</CardTitle>
-              <div className="text-3xl font-bold text-app-text dark:text-white mt-2">{averageRelevance} <span className="text-base font-normal">/ 5</span></div>
+            <Card className="bg-white/60 dark:bg-gray-900/80 shadow rounded-xl p-4 flex flex-col items-center">
+              <CardTitle className="text-base font-semibold text-app-text dark:text-white text-center">Average Relevance</CardTitle>
+              <div className="text-2xl font-bold text-app-text dark:text-white mt-1">{averageRelevance} <span className="text-sm font-normal">/ 5</span></div>
             </Card>
-            <Card className="bg-white/60 dark:bg-gray-900/80 shadow rounded-2xl p-6 flex flex-col items-center">
-              <CardTitle className="text-lg font-semibold text-app-text dark:text-white text-center">Resolution Rate</CardTitle>
-              <div className="text-3xl font-bold text-app-text dark:text-white mt-2">{resolutionRate}%</div>
-              <div className="text-base text-muted-foreground">${resolvedCount} of ${evaluationResults.length} resolved</div>
+            <Card className="bg-white/60 dark:bg-gray-900/80 shadow rounded-xl p-4 flex flex-col items-center">
+              <CardTitle className="text-base font-semibold text-app-text dark:text-white text-center">Resolution Rate</CardTitle>
+              <div className="text-2xl font-bold text-app-text dark:text-white mt-1">{resolutionRate}%</div>
+              <div className="text-sm text-muted-foreground">{resolvedCount} of {evaluationResults.length} resolved</div>
             </Card>
           </div>
 
@@ -339,44 +339,52 @@ const ReportPage: React.FC = () => {
               { title: 'Politeness', dist: politenessDist },
               { title: 'Relevance', dist: relevanceDist }
             ].map(({ title, dist }) => (
-              <Card key={title} className="bg-white/60 dark:bg-gray-900/80 shadow rounded-2xl p-6 flex flex-col items-center">
-                <CardTitle className="text-lg font-semibold text-app-text dark:text-white text-center">{title} Score Breakdown</CardTitle>
-                <div className="text-3xl font-bold text-app-text dark:text-white mt-2">
-                  Low (1-2): {dist.low} logs ({((dist.low / evaluationResults.length) * 100).toFixed(1)}%)
-                </div>
-                <div className="text-3xl font-bold text-app-text dark:text-white mt-2">
-                  Medium (3): {dist.medium} logs ({((dist.medium / evaluationResults.length) * 100).toFixed(1)}%)
-                </div>
-                <div className="text-3xl font-bold text-app-text dark:text-white mt-2">
-                  High (4-5): {dist.high} logs ({((dist.high / evaluationResults.length) * 100).toFixed(1)}%)
+              <Card key={title} className="bg-white/60 dark:bg-gray-900/80 shadow rounded-xl p-4">
+                <CardTitle className="text-base font-semibold text-app-text dark:text-white text-center mb-3">{title} Score Breakdown</CardTitle>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-muted-foreground">Low (1-2):</span>
+                    <span className="font-medium">{dist.low} ({((dist.low / evaluationResults.length) * 100).toFixed(1)}%)</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-muted-foreground">Medium (3):</span>
+                    <span className="font-medium">{dist.medium} ({((dist.medium / evaluationResults.length) * 100).toFixed(1)}%)</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-muted-foreground">High (4-5):</span>
+                    <span className="font-medium">{dist.high} ({((dist.high / evaluationResults.length) * 100).toFixed(1)}%)</span>
+                  </div>
                 </div>
               </Card>
             ))}
           </div>
 
           {/* Resolution Breakdown */}
-          <Card className="bg-white/60 dark:bg-gray-900/80 shadow rounded-2xl p-6 flex flex-col items-center">
-            <CardTitle className="text-lg font-semibold text-app-text dark:text-white text-center">Resolution Breakdown</CardTitle>
-            <div className="text-3xl font-bold text-app-text dark:text-white mt-2">
-              Resolved Chatlogs: {resolvedCount}
-            </div>
-            <div className="text-3xl font-bold text-app-text dark:text-white mt-2">
-              Unresolved Chatlogs: {evaluationResults.length - resolvedCount}
-            </div>
-            <div className="text-base text-muted-foreground">
-              {resolutionRate}%
+          <Card className="bg-white/60 dark:bg-gray-900/80 shadow rounded-xl p-4">
+            <CardTitle className="text-base font-semibold text-app-text dark:text-white text-center mb-3">Resolution Breakdown</CardTitle>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center">
+                <div className="text-xl font-bold text-app-text dark:text-white">Resolved</div>
+                <div className="text-2xl font-bold text-green-600 dark:text-green-400">{resolvedCount}</div>
+                <div className="text-sm text-muted-foreground">{resolutionRate}%</div>
+              </div>
+              <div className="text-center">
+                <div className="text-xl font-bold text-app-text dark:text-white">Unresolved</div>
+                <div className="text-2xl font-bold text-red-600 dark:text-red-400">{evaluationResults.length - resolvedCount}</div>
+                <div className="text-sm text-muted-foreground">{(100 - Number(resolutionRate)).toFixed(1)}%</div>
+              </div>
             </div>
           </Card>
 
           {/* Chatlogs for Review */}
           {flaggedChatlogs.length > 0 && (
-            <Card className="bg-white/60 dark:bg-gray-900/80 shadow rounded-2xl p-6 flex flex-col items-center">
-              <CardTitle className="text-lg font-semibold text-app-text dark:text-white text-center">Sample Chatlogs Flagged for Review</CardTitle>
-              <div className="space-y-4">
+            <Card className="bg-white/60 dark:bg-gray-900/80 shadow rounded-xl p-4">
+              <CardTitle className="text-base font-semibold text-app-text dark:text-white text-center mb-3">Sample Chatlogs Flagged for Review</CardTitle>
+              <div className="space-y-3">
                 {flaggedChatlogs.map((chatlog, index) => (
-                  <div key={index} className="p-4 bg-white/50 dark:bg-gray-900/60 rounded-lg border border-border/40 dark:border-gray-700">
-                    <p className="text-sm mb-3 dark:text-gray-200">{chatlog.chatlog?.slice(0, 100) || 'No chatlog text available'}...</p>
-                    <div className="grid grid-cols-4 gap-2 text-sm">
+                  <div key={index} className="p-3 bg-white/50 dark:bg-gray-900/60 rounded-lg border border-border/40 dark:border-gray-700">
+                    <p className="text-sm mb-2 dark:text-gray-200 line-clamp-2">{chatlog.chatlog?.slice(0, 100) || 'No chatlog text available'}...</p>
+                    <div className="grid grid-cols-4 gap-2 text-xs">
                       <div className="bg-red-50 text-red-700 px-2 py-1 rounded-md text-center dark:bg-red-900/60 dark:text-red-200">Coherence: {chatlog.coherence}</div>
                       <div className="bg-red-50 text-red-700 px-2 py-1 rounded-md text-center dark:bg-red-900/60 dark:text-red-200">Politeness: {chatlog.politeness}</div>
                       <div className="bg-yellow-50 text-yellow-700 px-2 py-1 rounded-md text-center dark:bg-yellow-900/60 dark:text-yellow-200">Relevance: {chatlog.relevance}</div>
@@ -390,18 +398,18 @@ const ReportPage: React.FC = () => {
 
           {/* Evaluation Context */}
           <div className="space-y-4">
-            <Card className="bg-white/60 dark:bg-gray-900/80 shadow rounded-2xl p-6 flex flex-col items-center">
-              <CardTitle className="text-lg font-semibold text-app-text dark:text-white text-center">Prompt Template Used</CardTitle>
-              <div className="text-base font-normal text-app-text dark:text-gray-200">
-                <pre className="bg-white/50 dark:bg-gray-900/80 p-4 rounded-lg overflow-x-auto text-sm border border-border/40 dark:text-gray-200">
+            <Card className="bg-white/60 dark:bg-gray-900/80 shadow rounded-xl p-4">
+              <CardTitle className="text-base font-semibold text-app-text dark:text-white text-center mb-3">Prompt Template Used</CardTitle>
+              <div className="text-sm font-normal text-app-text dark:text-gray-200">
+                <pre className="bg-white/50 dark:bg-gray-900/80 p-3 rounded-lg overflow-x-auto text-xs border border-border/40 dark:text-gray-200 whitespace-pre-wrap">
                   {promptTemplate}
                 </pre>
               </div>
             </Card>
-            <Card className="bg-white/60 dark:bg-gray-900/80 shadow rounded-2xl p-6 flex flex-col items-center">
-              <CardTitle className="text-lg font-semibold text-app-text dark:text-white text-center">Rubric Used</CardTitle>
-              <div className="text-base font-normal text-app-text dark:text-gray-200">
-                <pre className="bg-white/50 dark:bg-gray-900/80 p-4 rounded-lg overflow-x-auto text-sm border border-border/40 dark:text-gray-200">
+            <Card className="bg-white/60 dark:bg-gray-900/80 shadow rounded-xl p-4">
+              <CardTitle className="text-base font-semibold text-app-text dark:text-white text-center mb-3">Rubric Used</CardTitle>
+              <div className="text-sm font-normal text-app-text dark:text-gray-200">
+                <pre className="bg-white/50 dark:bg-gray-900/80 p-3 rounded-lg overflow-x-auto text-xs border border-border/40 dark:text-gray-200 whitespace-pre-wrap">
                   {rubricText}
                 </pre>
               </div>
