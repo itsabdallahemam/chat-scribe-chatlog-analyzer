@@ -1,73 +1,169 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Home, BarChart2, Smile, CheckCircle, Settings, FileText, Info, Moon, Sun } from 'lucide-react';
+import { Home, BarChart2, Smile, CheckCircle, Settings, FileText, Info, Moon, Sun, UploadCloud, Menu, X } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Header: React.FC = () => {
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const isActive = (path: string) => {
     return location.pathname === path;
   };
 
-  const navItems = [
+  const primaryNavItems = [
     { path: '/', label: 'Home', icon: <Home className="w-4 h-4" /> },
+    { path: '/evaluate', label: 'Evaluate', icon: <UploadCloud className="w-4 h-4" /> },
     { path: '/dashboard', label: 'Dashboard', icon: <BarChart2 className="w-4 h-4" /> },
+  ];
+
+  const secondaryNavItems = [
     { path: '/satisfaction', label: 'Satisfaction', icon: <Smile className="w-4 h-4" /> },
     { path: '/cpr-details', label: 'CPR Details', icon: <Info className="w-4 h-4" /> },
     { path: '/resolution', label: 'Resolution', icon: <CheckCircle className="w-4 h-4" /> },
     { path: '/report', label: 'Report', icon: <FileText className="w-4 h-4" /> },
   ];
 
+  const NavLink = ({ item }: { item: typeof primaryNavItems[0] }) => (
+    <Link
+      to={item.path}
+      className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors font-medium text-sm ${
+        isActive(item.path)
+          ? 'bg-app-blue dark:bg-app-blue-light text-white shadow-md'
+          : 'text-app-text dark:text-gray-200 hover:bg-app-blue/10 hover:text-app-blue dark:hover:bg-app-blue-light/10 dark:hover:text-app-blue-light'
+      }`}
+    >
+      {item.icon}
+      <span>{item.label}</span>
+    </Link>
+  );
+
   return (
-    <header className="sticky top-0 z-50 w-full flex justify-center items-center py-4 bg-transparent">
-      <div className="w-full max-w-7xl flex items-center justify-between rounded-full bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl shadow-xl px-8 py-3 border border-border/40">
-        {/* Logo Left */}
-        <div className="flex items-center space-x-3">
+    <header className="sticky top-0 z-50 w-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-border/40">
+      <div className="container mx-auto px-4">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
             <span className="font-bold text-2xl text-app-blue dark:text-app-blue-light tracking-tight">ChatScribe</span>
           </Link>
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-4">
+            {/* Primary Navigation */}
+            <nav className="flex items-center space-x-2">
+              {primaryNavItems.map((item) => (
+                <NavLink key={item.path} item={item} />
+              ))}
+            </nav>
+
+            {/* Secondary Navigation Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="px-4 py-2">
+                  More
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                {secondaryNavItems.map((item) => (
+                  <DropdownMenuItem key={item.path} asChild>
+                    <Link
+                      to={item.path}
+                      className={`flex items-center space-x-2 ${
+                        isActive(item.path) ? 'bg-app-blue/10 text-app-blue' : ''
+                      }`}
+                    >
+                      {item.icon}
+                      <span>{item.label}</span>
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Settings and Theme Toggle */}
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleTheme}
+                className="rounded-full"
+              >
+                {theme === 'dark' ? (
+                  <Sun className="h-5 w-5" />
+                ) : (
+                  <Moon className="h-5 w-5" />
+                )}
+              </Button>
+              <Link
+                to="/settings"
+                className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors font-medium text-sm ${
+                  isActive('/settings')
+                    ? 'bg-app-blue dark:bg-app-blue-light text-white shadow-md'
+                    : 'text-app-text dark:text-gray-200 hover:bg-app-blue/10 hover:text-app-blue dark:hover:bg-app-blue-light/10 dark:hover:text-app-blue-light'
+                }`}
+              >
+                <Settings className="w-4 h-4" />
+                <span>Settings</span>
+              </Link>
+            </div>
+          </div>
+
+          {/* Mobile Menu Button */}
+          <div className="md:hidden flex items-center space-x-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              className="rounded-full"
+            >
+              {theme === 'dark' ? (
+                <Sun className="h-5 w-5" />
+              ) : (
+                <Moon className="h-5 w-5" />
+              )}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="rounded-full"
+            >
+              {isMobileMenuOpen ? (
+                <X className="h-5 w-5" />
+              ) : (
+                <Menu className="h-5 w-5" />
+              )}
+            </Button>
+          </div>
         </div>
-        {/* Navigation Center */}
-        <nav className="flex-1 flex justify-center items-center space-x-2">
-          {navItems.filter(item => item.path !== '/settings').map((item) => (
+
+        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden py-4 space-y-2">
+            {[...primaryNavItems, ...secondaryNavItems].map((item) => (
+              <NavLink key={item.path} item={item} />
+            ))}
             <Link
-              key={item.path}
-              to={item.path}
-              className={`flex items-center space-x-2 px-5 py-2 rounded-full transition-colors font-medium text-base shadow-sm border border-transparent hover:bg-app-blue/10 hover:text-app-blue dark:hover:bg-app-blue-light/10 dark:hover:text-app-blue-light focus:outline-none focus:ring-2 focus:ring-app-blue/30 ${
-                isActive(item.path)
+              to="/settings"
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors font-medium text-sm ${
+                isActive('/settings')
                   ? 'bg-app-blue dark:bg-app-blue-light text-white shadow-md'
-                  : 'bg-white/70 dark:bg-gray-700/70 text-app-text dark:text-gray-200'
+                  : 'text-app-text dark:text-gray-200 hover:bg-app-blue/10 hover:text-app-blue dark:hover:bg-app-blue-light/10 dark:hover:text-app-blue-light'
               }`}
             >
-              {item.icon}
-              <span>{item.label}</span>
+              <Settings className="w-4 h-4" />
+              <span>Settings</span>
             </Link>
-          ))}
-        </nav>
-        {/* Settings and Theme Toggle Right */}
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleTheme}
-            className="w-12 h-12 rounded-full border border-border/40 bg-white/70 dark:bg-gray-700/70 hover:bg-app-blue/10 dark:hover:bg-app-blue-light/10 text-app-text dark:text-gray-200 hover:text-app-blue dark:hover:text-app-blue-light transition shadow-sm focus:outline-none focus:ring-2 focus:ring-app-blue/30"
-            aria-label="Toggle theme"
-          >
-            {theme === 'dark' ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
-          </Button>
-          <Link
-            to="/settings"
-            className={`flex items-center justify-center w-12 h-12 rounded-full border border-border/40 bg-white/70 dark:bg-gray-700/70 hover:bg-app-blue/10 dark:hover:bg-app-blue-light/10 text-app-text dark:text-gray-200 hover:text-app-blue dark:hover:text-app-blue-light transition shadow-sm focus:outline-none focus:ring-2 focus:ring-app-blue/30 ${
-              isActive('/settings') ? 'bg-app-blue dark:bg-app-blue-light text-white shadow-md' : ''
-            }`}
-            aria-label="Settings"
-          >
-            <Settings className="w-6 h-6" />
-          </Link>
-        </div>
+          </div>
+        )}
       </div>
     </header>
   );
