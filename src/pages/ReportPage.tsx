@@ -457,10 +457,10 @@ const ReportPage: React.FC = () => {
           <div class="pdf-stat">
             <div class="pdf-stat-value">${resolutionRate}%</div>
             <div class="pdf-stat-label">Resolution Rate</div>
-          </div>
         </div>
+      </div>
 
-        <div class="pdf-section">
+      <div class="pdf-section">
           <h2 class="pdf-section-title">Score Distribution</h2>
           <table class="pdf-distribution-table" style="width:100%">
             <tr>
@@ -503,7 +503,7 @@ const ReportPage: React.FC = () => {
                 </div>
               </td>
             </tr>
-          </table>
+        </table>
         </div>
       </div>
 
@@ -526,12 +526,12 @@ const ReportPage: React.FC = () => {
               <td>
                 <div class="pdf-score ${Number(scenario.resolutionRate) >= 80 ? 'pdf-score-high' : Number(scenario.resolutionRate) >= 50 ? 'pdf-score-med' : 'pdf-score-low'}">
                   ${scenario.resolutionRate}%
-                </div>
+          </div>
               </td>
               <td>
                 <div class="pdf-score ${Number(scenario.avgCPR) >= 4 ? 'pdf-score-high' : Number(scenario.avgCPR) >= 3 ? 'pdf-score-med' : 'pdf-score-low'}">
                   ${scenario.avgCPR}
-                </div>
+          </div>
               </td>
               <td>${scenario.avgCoherence}</td>
               <td>${scenario.avgPoliteness}</td>
@@ -543,10 +543,10 @@ const ReportPage: React.FC = () => {
 
       <div class="page-break"></div>
 
-      <div class="pdf-section">
+        <div class="pdf-section">
         <h2 class="pdf-section-title">Chatlogs Requiring Attention</h2>
         ${chatlogsForReview.map((chat, index) => `
-          <div class="pdf-chatlog">
+            <div class="pdf-chatlog">
             <div class="pdf-chatlog-content">${truncateText(chat.chatlog, 300)}</div>
             <div class="pdf-score-grid">
               <div class="pdf-score-box pdf-score-${chat.coherence <= 2 ? 'low' : chat.coherence === 3 ? 'med' : 'high'}">
@@ -561,10 +561,10 @@ const ReportPage: React.FC = () => {
               <div class="pdf-score-box pdf-score-${chat.resolution === 1 ? 'high' : 'low'}">
                 <strong>Resolution:</strong> ${chat.resolution === 1 ? 'Yes' : 'No'}
               </div>
+              </div>
             </div>
-          </div>
-        `).join('')}
-      </div>
+          `).join('')}
+        </div>
 
       <div class="pdf-section">
         <h2 class="pdf-section-title">Evaluation Configuration</h2>
@@ -701,7 +701,7 @@ const ReportPage: React.FC = () => {
                     <div className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{averageCoherence}</div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">out of 5</p>
                   </CardContent>
-                </Card>
+            </Card>
                 <Card className="bg-white/60 dark:bg-gray-900/80 shadow-md border border-border/40 dark:border-gray-800">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">Politeness</CardTitle>
@@ -710,7 +710,7 @@ const ReportPage: React.FC = () => {
                     <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">{averagePoliteness}</div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">out of 5</p>
                   </CardContent>
-                </Card>
+            </Card>
                 <Card className="bg-white/60 dark:bg-gray-900/80 shadow-md border border-border/40 dark:border-gray-800">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">Relevance</CardTitle>
@@ -719,7 +719,7 @@ const ReportPage: React.FC = () => {
                     <div className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">{averageRelevance}</div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">out of 5</p>
                   </CardContent>
-                </Card>
+            </Card>
                 <Card className="bg-white/60 dark:bg-gray-900/80 shadow-md border border-border/40 dark:border-gray-800">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">Resolution Rate</CardTitle>
@@ -728,8 +728,8 @@ const ReportPage: React.FC = () => {
                     <div className="text-3xl font-bold text-green-600 dark:text-green-400">{resolutionRate}%</div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">{resolvedCount} of {evaluationResults.length}</p>
                   </CardContent>
-                </Card>
-              </div>
+            </Card>
+          </div>
 
               {/* Distribution cards */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -763,22 +763,22 @@ const ReportPage: React.FC = () => {
                             value={(dist.medium / evaluationResults.length) * 100} 
                             className={`h-2 ${color === 'indigo' ? 'bg-indigo-100 dark:bg-indigo-950' : color === 'purple' ? 'bg-purple-100 dark:bg-purple-950' : 'bg-yellow-100 dark:bg-yellow-950'}`}
                           />
-                        </div>
+                  </div>
                         <div>
                           <div className="flex justify-between mb-1">
                             <span className="text-sm font-medium">Low (1-2)</span>
                             <span className="text-sm font-medium">{((dist.low / evaluationResults.length) * 100).toFixed(1)}%</span>
-                          </div>
+                  </div>
                           <Progress 
                             value={(dist.low / evaluationResults.length) * 100} 
                             className={`h-2 ${color === 'indigo' ? 'bg-indigo-100 dark:bg-indigo-950' : color === 'purple' ? 'bg-purple-100 dark:bg-purple-950' : 'bg-yellow-100 dark:bg-yellow-950'}`}
                           />
-                        </div>
-                      </div>
+                  </div>
+                </div>
                     </CardContent>
-                  </Card>
-                ))}
-              </div>
+              </Card>
+            ))}
+          </div>
 
               {/* Top and bottom performers */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -854,7 +854,7 @@ const ReportPage: React.FC = () => {
                           </div>
                         </div>
                       ))}
-                    </div>
+              </div>
                   </CardContent>
                 </Card>
               </div>
@@ -926,15 +926,15 @@ const ReportPage: React.FC = () => {
                                   <Badge variant="outline" className="text-xs">P: {chat.politeness}</Badge>
                                   <Badge variant="outline" className="text-xs">R: {chat.relevance}</Badge>
                                 </div>
-                              </div>
+                    </div>
                             ))}
-                        </div>
+                    </div>
                       </CardContent>
                     )}
                   </Card>
                 ))}
-              </div>
-            </div>
+                    </div>
+                    </div>
           </TabsContent>
 
           {/* Chatlogs Tab */}
@@ -1077,7 +1077,7 @@ const ReportPage: React.FC = () => {
                       <pre className="text-sm whitespace-pre-wrap font-sans overflow-auto max-h-80">{promptTemplate || "No prompt template specified"}</pre>
                     </div>
                   </CardContent>
-                </Card>
+            </Card>
               </div>
 
               <div>
@@ -1092,7 +1092,7 @@ const ReportPage: React.FC = () => {
                       <pre className="text-sm whitespace-pre-wrap font-sans overflow-auto max-h-80">{rubricText || "No rubric specified"}</pre>
                     </div>
                   </CardContent>
-                </Card>
+            </Card>
               </div>
 
               <div>
@@ -1145,9 +1145,9 @@ const ReportPage: React.FC = () => {
                       </Table>
                     </div>
                   </CardContent>
-                </Card>
-              </div>
-            </div>
+            </Card>
+          </div>
+        </div>
           </TabsContent>
         </Tabs>
       </div>

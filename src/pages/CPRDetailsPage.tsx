@@ -337,10 +337,10 @@ const CPRDetailsPage: React.FC = () => {
               <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'coherence' | 'politeness' | 'relevance')} className="w-full">
                 <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800">
                   <TabsList className="grid w-full grid-cols-3 bg-card border rounded-lg shadow-sm">
-                    <TabsTrigger value="coherence" className="data-[state=active]:bg-app-blue data-[state=active]:text-white data-[state=active]:shadow-md">Coherence</TabsTrigger>
-                    <TabsTrigger value="politeness" className="data-[state=active]:bg-app-blue data-[state=active]:text-white data-[state=active]:shadow-md">Politeness</TabsTrigger>
-                    <TabsTrigger value="relevance" className="data-[state=active]:bg-app-blue data-[state=active]:text-white data-[state=active]:shadow-md">Relevance</TabsTrigger>
-                  </TabsList>
+                  <TabsTrigger value="coherence" className="data-[state=active]:bg-app-blue data-[state=active]:text-white data-[state=active]:shadow-md">Coherence</TabsTrigger>
+                  <TabsTrigger value="politeness" className="data-[state=active]:bg-app-blue data-[state=active]:text-white data-[state=active]:shadow-md">Politeness</TabsTrigger>
+                  <TabsTrigger value="relevance" className="data-[state=active]:bg-app-blue data-[state=active]:text-white data-[state=active]:shadow-md">Relevance</TabsTrigger>
+                </TabsList>
                 </div>
                 
                 <div className="p-6">
@@ -352,28 +352,28 @@ const CPRDetailsPage: React.FC = () => {
                           <CardTitle className="text-base font-medium text-app-text dark:text-white">
                             {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Score Breakdown
                           </CardTitle>
-                        </CardHeader>
+                    </CardHeader>
                         <CardContent className="py-4">
                           <div className="flex flex-col md:flex-row gap-4 items-center">
                             <div className="flex-1 text-center p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                              <div className="text-2xl font-bold text-red-600 dark:text-red-300">{scoreBreakdown.low.count}</div>
+                          <div className="text-2xl font-bold text-red-600 dark:text-red-300">{scoreBreakdown.low.count}</div>
                               <div className="text-sm text-gray-700 dark:text-gray-200">Low (1-2)</div>
                               <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{scoreBreakdown.low.pct.toFixed(1)}%</div>
-                            </div>
+                        </div>
                             <div className="flex-1 text-center p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
                               <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-300">{scoreBreakdown.medium.count}</div>
                               <div className="text-sm text-gray-700 dark:text-gray-200">Medium (3)</div>
                               <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{scoreBreakdown.medium.pct.toFixed(1)}%</div>
-                            </div>
+                        </div>
                             <div className="flex-1 text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                              <div className="text-2xl font-bold text-green-600 dark:text-green-300">{scoreBreakdown.high.count}</div>
+                          <div className="text-2xl font-bold text-green-600 dark:text-green-300">{scoreBreakdown.high.count}</div>
                               <div className="text-sm text-gray-700 dark:text-gray-200">High (4-5)</div>
                               <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{scoreBreakdown.high.pct.toFixed(1)}%</div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
                   </div>
                   
                   {/* Score Distribution Chart */}
@@ -425,9 +425,9 @@ const CPRDetailsPage: React.FC = () => {
                           <CardTitle className="text-base font-medium text-app-text dark:text-white">
                             {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Trends
                           </CardTitle>
-                        </CardHeader>
+                    </CardHeader>
                         <CardContent className="h-[280px]">
-                          <ResponsiveContainer width="100%" height="100%">
+                      <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={trendsData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
                               <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.5} />
                               <XAxis dataKey="name" />
@@ -451,11 +451,11 @@ const CPRDetailsPage: React.FC = () => {
                                 radius={[4, 4, 0, 0]} 
                                 name="Avg. Score" 
                               />
-                            </BarChart>
-                          </ResponsiveContainer>
-                        </CardContent>
-                      </Card>
-                    </div>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                </div>
                   </div>
                   
                   {/* Chatlog Table */}
@@ -468,19 +468,19 @@ const CPRDetailsPage: React.FC = () => {
                           </CardTitle>
                           
                           <div className="flex flex-wrap gap-3 items-center">
-                            <div>
+                  <div>
                               <select value={scoreFilter} onChange={e => setScoreFilter(e.target.value)} className="border rounded px-2 py-1 text-xs bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-700">
                                 <option value="">All Scores</option>
-                                {[1,2,3,4,5].map(n => <option key={n} value={n}>{n}</option>)}
-                              </select>
-                            </div>
-                            <div>
+                      {[1,2,3,4,5].map(n => <option key={n} value={n}>{n}</option>)}
+                    </select>
+                  </div>
+                  <div>
                               <select value={resolutionFilter} onChange={e => setResolutionFilter(e.target.value)} className="border rounded px-2 py-1 text-xs bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-700">
                                 <option value="">All Resolution</option>
-                                <option value="1">Resolved</option>
-                                <option value="0">Unresolved</option>
-                              </select>
-                            </div>
+                      <option value="1">Resolved</option>
+                      <option value="0">Unresolved</option>
+                    </select>
+                  </div>
                             <Button 
                               onClick={() => handleExport('csv')}
                               size="sm" 
@@ -489,54 +489,54 @@ const CPRDetailsPage: React.FC = () => {
                             >
                               <Download className="h-3 w-3 mr-1" />
                               Export
-                            </Button>
-                          </div>
+                    </Button>
+                  </div>
                         </CardHeader>
                         
                         <CardContent className="pt-4 pb-2 px-0">
                           <div className="rounded-md overflow-hidden">
                             <div className="[&_th]:bg-gray-50 dark:[&_th]:bg-gray-800/80 [&_th]:text-gray-500 dark:[&_th]:text-gray-300 [&_th]:font-medium [&_th]:text-xs [&_th]:border-gray-200 dark:[&_th]:border-gray-700 [&_td]:border-gray-200 dark:[&_td]:border-gray-700 [&_tr:hover]:bg-gray-50/80 dark:[&_tr:hover]:bg-gray-800/30">
-                              <table className="w-full caption-bottom text-sm">
-                                <thead>
-                                  <tr>
-                                    {getColumnsForMetric(activeTab).map((columnDef) => (
+                    <table className="w-full caption-bottom text-sm">
+                      <thead>
+                        <tr>
+                          {getColumnsForMetric(activeTab).map((columnDef) => (
                                       <th key={String(columnDef.accessorKey)} className="h-10 px-4 text-left align-middle">
-                                        {typeof columnDef.header === 'function' ? columnDef.header() : columnDef.header}
-                                      </th>
-                                    ))}
-                                  </tr>
-                                </thead>
-                                <tbody>
+                              {typeof columnDef.header === 'function' ? columnDef.header() : columnDef.header}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
                                   {paginatedResults.length > 0 ? (
                                     paginatedResults.map((rowItem, rowIndex) => (
-                                      <React.Fragment key={rowItem.originalIndex ?? rowIndex}>
+                            <React.Fragment key={rowItem.originalIndex ?? rowIndex}>
                                         <tr className="border-b transition-colors">
-                                          {getColumnsForMetric(activeTab).map((columnDef) => (
+                                {getColumnsForMetric(activeTab).map((columnDef) => (
                                             <td key={String(columnDef.accessorKey)} className="p-2 align-middle">
-                                              {columnDef.cell ? columnDef.cell(rowItem) : (rowItem[columnDef.accessorKey as keyof EvaluationResultItem] as React.ReactNode)}
-                                            </td>
-                                          ))}
-                                        </tr>
-                                        {expandedChatlog?.tab === activeTab && expandedChatlog?.originalIndex === rowItem.originalIndex && (
+                                    {columnDef.cell ? columnDef.cell(rowItem) : (rowItem[columnDef.accessorKey as keyof EvaluationResultItem] as React.ReactNode)}
+                                  </td>
+                                ))}
+                              </tr>
+                              {expandedChatlog?.tab === activeTab && expandedChatlog?.originalIndex === rowItem.originalIndex && (
                                           <tr key={rowItem.originalIndex + '-expanded'} className="bg-gray-50/80 dark:bg-gray-800/30">
-                                            <td colSpan={getColumnsForMetric(activeTab).length} className="p-2 border-t">
-                                              <ChatBubbleView chatlogText={rowItem.chatlog} />
-                                            </td>
-                                          </tr>
-                                        )}
-                                      </React.Fragment>
-                                    ))
-                                  ) : (
-                                    <tr>
-                                      <td colSpan={getColumnsForMetric(activeTab).length} className="p-4 h-24 text-center text-muted-foreground">
-                                        No chatlogs found for this filter.
-                                      </td>
-                                    </tr>
-                                  )}
-                                </tbody>
-                              </table>
-                            </div>
-                          </div>
+                                  <td colSpan={getColumnsForMetric(activeTab).length} className="p-2 border-t">
+                                    <ChatBubbleView chatlogText={rowItem.chatlog} />
+                                  </td>
+                                </tr>
+                              )}
+                            </React.Fragment>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={getColumnsForMetric(activeTab).length} className="p-4 h-24 text-center text-muted-foreground">
+                              No chatlogs found for this filter.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
                           
                           {/* Pagination Controls */}
                           {pageCount > 1 && (
@@ -589,8 +589,8 @@ const CPRDetailsPage: React.FC = () => {
                               </div>
                             </div>
                           )}
-                        </CardContent>
-                      </Card>
+                    </CardContent>
+                  </Card>
                     </div>
                   </div>
                 </div>
