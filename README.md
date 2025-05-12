@@ -1,8 +1,5 @@
-<<<<<<< HEAD
-# Chat-Scribe Clarity Analyzer
-=======
 # Chat-Scribe Chatlog Analyzer
->>>>>>> d7541db9b0a722be0d4fc031c5be96d31482c326
+
 
 A powerful AI-driven tool for analyzing and improving customer service chat interactions. Transform your customer service quality through advanced analytics and insights.
 
