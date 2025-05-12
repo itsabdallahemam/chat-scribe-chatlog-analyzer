@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Home, BarChart2, Smile, CheckCircle, Settings, FileText, Info, Moon, Sun, UploadCloud, Menu, X } from 'lucide-react';
+import { Home, BarChart2, Smile, CheckCircle, Settings, FileText, Info, Moon, Sun, UploadCloud, Menu, X, UserCircle } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,6 +15,7 @@ const Header: React.FC = () => {
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user, logout } = useAuth();
 
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -67,8 +69,9 @@ const Header: React.FC = () => {
             {/* Secondary Navigation Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="px-4 py-2">
-                  More
+                <Button variant="ghost" className="px-4 py-2 flex items-center gap-2">
+                  <Info className="w-4 h-4" />
+                  <span>More</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
@@ -102,18 +105,35 @@ const Header: React.FC = () => {
                   <Moon className="h-5 w-5" />
                 )}
               </Button>
-              <Link
-                to="/settings"
-                className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors font-medium text-sm ${
-                  isActive('/settings')
-                    ? 'bg-app-blue dark:bg-app-blue-light text-white shadow-md'
-                    : 'text-app-text dark:text-gray-200 hover:bg-app-blue/10 hover:text-app-blue dark:hover:bg-app-blue-light/10 dark:hover:text-app-blue-light'
-                }`}
-              >
-                <Settings className="w-4 h-4" />
-                <span>Settings</span>
-              </Link>
             </div>
+
+            {/* User Authentication */}
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <UserCircle className="h-6 w-6" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile">Profile</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={logout}>
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <div className="flex items-center space-x-2">
+                <Link to="/login">
+                  <Button variant="ghost">Login</Button>
+                </Link>
+                <Link to="/signup">
+                  <Button>Sign Up</Button>
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -151,17 +171,6 @@ const Header: React.FC = () => {
             {[...primaryNavItems, ...secondaryNavItems].map((item) => (
               <NavLink key={item.path} item={item} />
             ))}
-            <Link
-              to="/settings"
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors font-medium text-sm ${
-                isActive('/settings')
-                  ? 'bg-app-blue dark:bg-app-blue-light text-white shadow-md'
-                  : 'text-app-text dark:text-gray-200 hover:bg-app-blue/10 hover:text-app-blue dark:hover:bg-app-blue-light/10 dark:hover:text-app-blue-light'
-              }`}
-            >
-              <Settings className="w-4 h-4" />
-              <span>Settings</span>
-            </Link>
           </div>
         )}
       </div>

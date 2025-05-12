@@ -115,15 +115,14 @@ const HomePage: React.FC = () => {
                   </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {features.map((feature, index) => (
-            <Card key={index} className="group hover:shadow-lg transition-all duration-300 dark:bg-gray-900/50 dark:border-gray-800 dark:hover:border-gray-700">
-              <CardHeader>
-                <div className={`inline-flex items-center justify-center p-3 rounded-lg bg-gradient-to-r ${feature.color} text-white mb-4 shadow-lg`}>
-                  {feature.icon}
-                </div>
-                <CardTitle className="text-xl text-foreground">{feature.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="mb-4 dark:text-gray-400">{feature.description}</CardDescription>
+            <Card key={index} className="group hover:shadow-lg transition-all duration-300 dark:bg-gray-900/50 dark:border-gray-800 dark:hover:border-gray-700 flex flex-col h-full">
+              <div className={`flex flex-col items-center justify-center rounded-lg bg-gradient-to-r ${feature.color} text-white mb-6 p-6 min-h-44`}>
+                {feature.icon}
+                <h3 className="text-xl font-bold mt-2 mb-1 text-center">{feature.title}</h3>
+                <p className="text-sm text-center opacity-90">{feature.description}</p>
+              </div>
+              <div className="flex-1" />
+              <div className="px-4 pb-4">
                 <Button 
                   onClick={() => navigate(feature.path)}
                   variant="ghost"
@@ -132,11 +131,11 @@ const HomePage: React.FC = () => {
                   Get Started
                   <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                 </Button>
-              </CardContent>
+              </div>
             </Card>
           ))}
-                </div>
-                  </div>
+        </div>
+      </div>
 
       {/* Benefits Section */}
       <div className="bg-muted/30 dark:bg-gray-900/50 py-20">
