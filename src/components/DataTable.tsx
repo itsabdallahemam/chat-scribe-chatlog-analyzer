@@ -88,24 +88,26 @@ export function DataTable<TData extends { expandedContent?: React.ReactNode }>({
             ))}
           </thead>
           <tbody>
-            {table.getRowModel().rows.map((row, index) => (
-              <React.Fragment key={row.id}>
-                <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                  {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="p-4 align-middle text-center">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
-                  ))}
-                </tr>
-                {expandedRowIndex === index && row.original.expandedContent && (
-                  <tr className="bg-muted/50">
-                    <td colSpan={columns.length} className="p-4 border-t">
-                      {row.original.expandedContent}
-                    </td>
+            {table.getRowModel().rows.map((row, index) => {
+              return (
+                <React.Fragment key={row.id}>
+                  <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                    {row.getVisibleCells().map((cell) => (
+                      <td key={cell.id} className="p-4 align-middle text-center">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    ))}
                   </tr>
-                )}
-              </React.Fragment>
-            ))}
+                  {expandedRowIndex === index && row.original.expandedContent && (
+                    <tr className="bg-muted/50">
+                      <td colSpan={columns.length} className="p-4 border-t">
+                        {row.original.expandedContent}
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              );
+            })}
           </tbody>
         </table>
       </div>

@@ -1,16 +1,17 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageTitle from '@/components/PageTitle';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { useChatlog } from '@/contexts/ChatlogContext';
 import { evaluateSingleChatlog } from '@/services/googleAI';
 import { parseCSV } from '@/utils/csvParser';
 import { useToast } from '@/hooks/use-toast';
-import { UploadCloud, FileText, X, AlertCircle } from 'lucide-react';
+import { UploadCloud, AlertCircle, FileText, X, CheckCircle, RefreshCw, PauseCircle, PlayCircle, StopCircle, ArrowRight } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 // Type expected by the ChatlogContext for evaluationResults
 interface EvaluationResultForContext {
@@ -22,14 +23,6 @@ interface EvaluationResultForContext {
   resolution: number;
   timestamp: Date;
 }
-
-const OrSeparator: React.FC = () => (
-  <div className="flex items-center w-full py-4">
-    <div className="flex-grow h-px bg-border" />
-    <span className="mx-3 px-3 py-0.5 rounded-full bg-muted text-muted-foreground text-xs font-semibold shadow-sm border border-border">OR</span>
-    <div className="flex-grow h-px bg-border" />
-  </div>
-);
 
 const ChatlogEvaluationPage: React.FC = () => {
   const navigate = useNavigate();
@@ -47,47 +40,126 @@ const ChatlogEvaluationPage: React.FC = () => {
   } = useChatlog();
 
   const [file, setFile] = useState<File | null>(null);
-  const [pastedChatlog, setPastedChatlog] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [progress, setProgress] = useState<number>(0);
   const [currentStatus, setCurrentStatus] = useState<string>('');
   const [isPaused, setIsPaused] = useState<boolean>(false);
+  const [csvPreview, setCsvPreview] = useState<{ chatlog: string; scenario: string }[]>([]);
+  const [previewLoading, setPreviewLoading] = useState<boolean>(false);
+  const [csvErrorMessage, setCsvErrorMessage] = useState<string>('');
   const cancelEvaluationRef = useRef<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dropAreaRef = useRef<HTMLDivElement>(null);
 
-  // Load saved chat logs when component mounts
   useEffect(() => {
-    loadSavedChatLogs();
-  }, [loadSavedChatLogs]);
+    // Setup drag and drop handlers
+    const dropArea = dropAreaRef.current;
+    if (!dropArea) return;
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const selectedFile = e.target.files[0];
-      if (selectedFile.size > 5 * 1024 * 1024) { // 5MB limit
-        toast({
-          title: "File too large",
-          description: "Please select a file smaller than 5MB",
-          variant: "destructive"
-        });
-        return;
+    const preventDefaults = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    const highlight = () => {
+      dropArea.classList.add('border-blue-500', 'bg-blue-50', 'dark:bg-blue-950/30');
+    };
+
+    const unhighlight = () => {
+      dropArea.classList.remove('border-blue-500', 'bg-blue-50', 'dark:bg-blue-950/30');
+    };
+
+    const handleDrop = (e: DragEvent) => {
+      preventDefaults(e);
+      unhighlight();
+      
+      const dt = e.dataTransfer;
+      if (dt?.files && dt.files.length) {
+        handleFile(dt.files[0]);
       }
-      setFile(selectedFile);
-      setPastedChatlog(''); // Clear pasted text if file is selected
+    };
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      dropArea.addEventListener(eventName, preventDefaults, false);
+    });
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropArea.addEventListener(eventName, highlight, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropArea.addEventListener(eventName, unhighlight, false);
+    });
+
+    dropArea.addEventListener('drop', handleDrop, false);
+
+    return () => {
+      if (dropArea) {
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+          dropArea.removeEventListener(eventName, preventDefaults);
+        });
+        ['dragenter', 'dragover'].forEach(eventName => {
+          dropArea.removeEventListener(eventName, highlight);
+        });
+        ['dragleave', 'drop'].forEach(eventName => {
+          dropArea.removeEventListener(eventName, unhighlight);
+        });
+        dropArea.removeEventListener('drop', handleDrop);
+      }
+    };
+  }, []);
+
+  const handleFile = async (selectedFile: File) => {
+    if (selectedFile.size > 5 * 1024 * 1024) { // 5MB limit
+      toast({
+        title: "File too large",
+        description: "Please select a file smaller than 5MB",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!selectedFile.name.toLowerCase().endsWith('.csv')) {
+      toast({
+        title: "Invalid file format",
+        description: "Please upload a CSV file",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setFile(selectedFile);
+    setPreviewLoading(true);
+    setCsvErrorMessage('');
+    
+    try {
+      const text = await selectedFile.text();
+      const parsedData = parseCSV(text);
+      
+      if (parsedData.length === 0) {
+        setCsvErrorMessage('No valid data found in CSV file');
+        setFile(null);
+      } else {
+        setCsvPreview(parsedData.slice(0, 3)); // Show first 3 entries
+      }
+    } catch (error) {
+      setCsvErrorMessage(`Error parsing CSV: ${error instanceof Error ? error.message : String(error)}`);
+      setFile(null);
+    } finally {
+      setPreviewLoading(false);
     }
   };
 
-  const handlePastedChatlogChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setPastedChatlog(e.target.value);
-    if (e.target.value.trim()) {
-      setFile(null); // Clear file if text is pasted
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''; // Clear file input
-      }
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      handleFile(e.target.files[0]);
     }
   };
 
   const handleRemoveFile = () => {
     setFile(null);
+    setCsvPreview([]);
+    setCsvErrorMessage('');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -111,6 +183,10 @@ const ChatlogEvaluationPage: React.FC = () => {
       toast({ title: "Model Not Selected", description: "Please select a model in Settings.", variant: "destructive" });
       return;
     }
+    if (!file) {
+      toast({ title: "No File Selected", description: "Please upload a CSV file with chatlogs.", variant: "destructive" });
+      return;
+    }
 
     setGlobalIsLoading(true);
     setIsProcessing(true);
@@ -126,23 +202,16 @@ const ChatlogEvaluationPage: React.FC = () => {
     let failedEvals = 0;
 
     try {
-      if (file) {
-        const text = await file.text();
-        try {
-          chatlogsToProcess = parseCSV(text);
-          setCurrentStatus(`Parsed ${chatlogsToProcess.length} chatlogs from CSV.`);
-        } catch (error) {
-          throw new Error(`CSV parsing error: ${error instanceof Error ? error.message : String(error)}`);
-        }
-      } else if (pastedChatlog.trim()) {
-        chatlogsToProcess = [{ chatlog: pastedChatlog.trim(), scenario: "Manual Entry" }];
-        setCurrentStatus('Processing pasted chatlog.');
-      } else {
-        throw new Error("Please upload a CSV file or paste a chatlog.");
+      const text = await file.text();
+      try {
+        chatlogsToProcess = parseCSV(text);
+        setCurrentStatus(`Parsed ${chatlogsToProcess.length} chatlogs from CSV.`);
+      } catch (error) {
+        throw new Error(`CSV parsing error: ${error instanceof Error ? error.message : String(error)}`);
       }
 
       if (chatlogsToProcess.length === 0) {
-        throw new Error("No valid chatlogs found in the input.");
+        throw new Error("No valid chatlogs found in the CSV file.");
       }
 
       setGlobalIsLoading(false);
@@ -169,29 +238,35 @@ const ChatlogEvaluationPage: React.FC = () => {
         const currentInputItem = chatlogsToProcess[i];
         setCurrentStatus(`Evaluating chatlog ${i + 1} of ${chatlogsToProcess.length} using ${selectedModel.split('/').pop()}...`);
         
-        const apiResult = await evaluateSingleChatlog(
-          apiKey,
-          selectedModel,
-          promptTemplate,
-          rubricText,
-          currentInputItem.chatlog
-        );
-
-        if (apiResult.scores && apiResult.error === null) {
-          processedResultsForContext.push({
-            chatlog: apiResult.original_chatlog,
-            scenario: currentInputItem.scenario,
-            coherence: apiResult.scores.Coherence,
-            politeness: apiResult.scores.Politeness,
-            relevance: apiResult.scores.Relevance,
-            resolution: apiResult.scores.Resolution,
-            timestamp: new Date(),
-          });
-          successfulEvals++;
-        } else {
+        try {
+          const apiResult = await evaluateSingleChatlog(
+            apiKey,
+            selectedModel,
+            promptTemplate,
+            rubricText,
+            currentInputItem.chatlog
+          );
+  
+          if (apiResult.scores && apiResult.error === null) {
+            processedResultsForContext.push({
+              chatlog: apiResult.original_chatlog,
+              scenario: currentInputItem.scenario || "Unnamed Scenario",
+              coherence: apiResult.scores.Coherence,
+              politeness: apiResult.scores.Politeness,
+              relevance: apiResult.scores.Relevance,
+              resolution: apiResult.scores.Resolution,
+              timestamp: new Date(),
+            });
+            successfulEvals++;
+          } else {
+            failedEvals++;
+            console.warn(`Evaluation failed for chatlog index ${i}: ${apiResult.error || 'Unknown error'}. Chatlog: ${currentInputItem.chatlog.substring(0,100)}... Raw Response: ${apiResult.raw_response?.substring(0,100)}`);
+          }
+        } catch (evalError) {
           failedEvals++;
-          console.warn(`Evaluation failed for chatlog index ${i}: ${apiResult.error || 'Unknown error'}. Chatlog: ${currentInputItem.chatlog.substring(0,100)}... Raw Response: ${apiResult.raw_response?.substring(0,100)}`);
+          console.error(`Error evaluating chatlog at index ${i}:`, evalError);
         }
+        
         setProgress(Math.round(((i + 1) / chatlogsToProcess.length) * 100));
       }
 
@@ -203,19 +278,19 @@ const ChatlogEvaluationPage: React.FC = () => {
       }
 
       // Set evaluation results and wait for them to be saved
-      setEvaluationResults(processedResultsForContext);
-      setCurrentStatus('Saving results...');
-      
-      // Wait a moment to ensure the save operation completes
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setCurrentStatus('Evaluation complete!');
-      toast({
-        title: "Evaluation Complete",
-        description: `Successfully evaluated ${successfulEvals} chatlogs. ${failedEvals > 0 ? `${failedEvals} failed.` : ''}`
-      });
-      
       if (successfulEvals > 0) {
+        setEvaluationResults(processedResultsForContext);
+        setCurrentStatus('Saving results...');
+        
+        // Wait a moment to ensure the save operation completes
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        setCurrentStatus('Evaluation complete!');
+        toast({
+          title: "Evaluation Complete",
+          description: `Successfully evaluated ${successfulEvals} chatlogs. ${failedEvals > 0 ? `${failedEvals} failed.` : ''}`
+        });
+        
         // Reload saved chat logs before navigation
         await loadSavedChatLogs();
         navigate('/dashboard');
@@ -249,162 +324,164 @@ const ChatlogEvaluationPage: React.FC = () => {
     setIsPaused(false);
   };
 
-  const isInputValid = file !== null || pastedChatlog.trim().length > 0;
-
   return (
-    <div className="min-h-screen bg-background p-4 md:p-6">
+    <div className="container mx-auto px-4 py-8">
       <PageTitle
-        title={<span className="inline-block bg-gradient-to-r from-blue-500 via-cyan-400 to-green-400 bg-clip-text text-transparent">Chatlog Quality Analyzer</span>}
-        description="Upload or paste customer service chatlogs to receive automated quality scores using Google's generative AI models."
+        title="Chatlog Evaluation"
+        description="Upload a CSV file with customer service chatlogs to evaluate their quality."
       />
-
-      <div className="max-w-6xl mx-auto mt-8">
-        {!isProcessing ? (
-          <Card className="rounded-xl shadow-lg border-0 bg-card">
-            <CardHeader className="pb-6 bg-gradient-to-r from-blue-50 via-cyan-50 to-green-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 rounded-t-xl">
-              <div className="flex items-center space-x-3">
-                <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 via-cyan-400 to-green-400 text-white shadow-lg dark:from-blue-900 dark:via-cyan-900 dark:to-green-900">
-                  <UploadCloud className="w-7 h-7" />
-                </span>
-                <CardTitle className="text-2xl font-bold text-card-foreground">Start New Evaluation</CardTitle>
-              </div>
-              <CardDescription className="text-muted-foreground mt-2">
-                Choose your preferred method to analyze chatlogs
+      
+      {!isProcessing && (
+        <div className="mt-8 max-w-3xl mx-auto">
+          <Card className="shadow-md">
+            <CardHeader>
+              <CardTitle className="text-center text-2xl">Upload Your CSV File</CardTitle>
+              <CardDescription className="text-center">
+                Upload a CSV file containing chatlog data for evaluation.
               </CardDescription>
             </CardHeader>
-            <CardContent className="p-6">
-              <div className="grid grid-cols-1 gap-8">
-                {/* CSV Upload Section */}
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <UploadCloud className="h-5 w-5 text-blue-500 dark:text-blue-300" />
-                    <h3 className="text-lg font-semibold text-blue-700 bg-blue-50 rounded-full px-3 py-1 dark:text-blue-200 dark:bg-blue-900/40">Upload CSV File</h3>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="relative">
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept=".csv"
-                        onChange={handleFileChange}
-                        className="hidden"
-                        id="csv-upload"
-                      />
-                      <label
-                        htmlFor="csv-upload"
-                        className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-blue-300 rounded-lg cursor-pointer bg-blue-50/40 hover:bg-blue-100/60 transition-colors dark:border-blue-800 dark:bg-blue-900/30 dark:hover:bg-blue-900/60"
-                      >
-                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                          <UploadCloud className="w-10 h-10 mb-3 text-blue-400 dark:text-blue-200" />
-                          <p className="mb-2 text-sm text-blue-700 dark:text-blue-200">
-                            <span className="font-semibold">Click to upload</span> or drag and drop
-                          </p>
-                          <p className="text-xs text-blue-500 dark:text-blue-300">CSV files only (max 5MB)</p>
-                        </div>
-                      </label>
+            <CardContent>
+              <div 
+                ref={dropAreaRef}
+                className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl p-8 transition-colors duration-200 cursor-pointer bg-card flex flex-col items-center justify-center min-h-[250px]"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {!file ? (
+                  <>
+                    <div className="mb-4 p-3 bg-primary/10 rounded-full">
+                      <UploadCloud className="h-8 w-8 text-primary" />
                     </div>
-                    {file && (
-                      <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg dark:bg-blue-900/40">
-                        <div className="flex items-center space-x-2">
-                          <FileText className="h-5 w-5 text-blue-500 dark:text-blue-300" />
-                          <div>
-                            <p className="text-sm font-medium text-green-600 dark:text-green-300">{file.name}</p>
-                            <p className="text-xs text-blue-400 dark:text-blue-200">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                          </div>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={handleRemoveFile}
-                          className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    )}
-                    <p className="text-sm text-blue-500 dark:text-blue-300">
-                      CSV must contain a 'Chatlog' column with the conversation text
+                    <p className="text-lg font-medium mb-2">Upload CSV file</p>
+                    <p className="text-sm text-muted-foreground mb-4 text-center">
+                      Drag and drop your CSV file here or click to browse
                     </p>
-                  </div>
-                </div>
-                <div className="flex items-center w-full py-4">
-                  <div className="flex-grow h-px bg-gradient-to-r from-blue-200 via-cyan-200 to-green-200 dark:from-blue-900 dark:via-cyan-900 dark:to-green-900" />
-                  <span className="mx-3 px-3 py-0.5 rounded-full bg-gradient-to-r from-blue-100 via-cyan-100 to-green-100 text-blue-600 text-xs font-semibold shadow-sm border border-blue-200 dark:from-blue-900 dark:via-cyan-900 dark:to-green-900 dark:text-blue-200 dark:border-blue-800">OR</span>
-                  <div className="flex-grow h-px bg-gradient-to-r from-blue-200 via-cyan-200 to-green-200 dark:from-blue-900 dark:via-cyan-900 dark:to-green-900" />
-                </div>
-                {/* Paste Chatlog Section */}
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <FileText className="h-5 w-5 text-green-500 dark:text-green-300" />
-                    <h3 className="text-lg font-semibold text-green-700 bg-green-50 rounded-full px-3 py-1 dark:text-green-200 dark:bg-green-900/40">Paste Single Chatlog</h3>
-                  </div>
-                  <div className="space-y-2">
-                    <Textarea
-                      placeholder="Paste your chatlog conversation here..."
-                      className="min-h-[150px] resize-none border-input focus-visible:ring-ring"
-                      value={pastedChatlog}
-                      onChange={handlePastedChatlogChange}
+                    <Button size="sm" variant="outline">
+                      Select File
+                    </Button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      onChange={handleFileChange}
+                      className="hidden"
+                      accept=".csv"
                     />
-                    <p className="text-sm text-green-600 dark:text-green-300">
-                      Paste a single chatlog conversation to evaluate
-                    </p>
+                  </>
+                ) : (
+                  <div className="w-full">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center">
+                        <div className="p-2 bg-muted rounded-full mr-3">
+                          <FileText className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium">{file.name}</p>
+                          <p className="text-xs text-muted-foreground">{(file.size / 1024).toFixed(1)} KB</p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveFile();
+                        }}
+                      >
+                        <X className="h-5 w-5" />
+                      </Button>
+                    </div>
+                    
+                    {previewLoading ? (
+                      <div className="flex justify-center my-4">
+                        <RefreshCw className="h-5 w-5 animate-spin" />
+                      </div>
+                    ) : csvErrorMessage ? (
+                      <Alert variant="destructive" className="my-4">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>CSV Error</AlertTitle>
+                        <AlertDescription>{csvErrorMessage}</AlertDescription>
+                      </Alert>
+                    ) : csvPreview.length > 0 ? (
+                      <div className="my-4">
+                        <p className="font-medium mb-2 text-sm">Preview (first 3 entries):</p>
+                        <div className="bg-muted p-3 rounded-md max-h-[200px] overflow-y-auto text-xs">
+                          {csvPreview.map((item, index) => (
+                            <div key={index} className="mb-2 pb-2 border-b last:border-0 border-border">
+                              <p className="font-semibold">Scenario: {item.scenario || "Unnamed"}</p>
+                              <p className="line-clamp-2">{item.chatlog.substring(0, 100)}...</p>
+                            </div>
+                          ))}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Total entries: {csvPreview.length === 3 ? '3+' : csvPreview.length}
+                        </p>
+                      </div>
+                    ) : null}
                   </div>
-                </div>
+                )}
               </div>
 
-              {/* Evaluate Button */}
-              <div className="mt-8 flex justify-center">
-                <Button
-                  onClick={handleEvaluate}
-                  disabled={!isInputValid || globalIsLoading}
-                  className={`px-8 py-6 text-lg font-semibold rounded-xl transition-all ${
-                    isInputValid
-                      ? 'bg-primary hover:bg-primary/90 text-primary-foreground'
-                      : 'bg-muted text-muted-foreground cursor-not-allowed'
-                  }`}
-                  size="lg"
-                >
-                  {globalIsLoading && !isProcessing ? (
-                    <LoadingSpinner />
-                  ) : (
-                    'Evaluate Chatlogs'
-                  )}
-                </Button>
+              <div className="mt-6">
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>CSV Format Requirements</AlertTitle>
+                  <AlertDescription>
+                    <p>Your CSV file should have the following columns:</p>
+                    <ul className="list-disc list-inside mt-1 ml-1 text-sm">
+                      <li><code className="px-1 py-0.5 bg-muted rounded">chatlog</code> - The full conversation text</li>
+                      <li><code className="px-1 py-0.5 bg-muted rounded">scenario</code> (optional) - A label to identify the conversation</li>
+                    </ul>
+                  </AlertDescription>
+                </Alert>
               </div>
             </CardContent>
+            <CardFooter className="flex justify-end">
+              <Button 
+                variant="default" 
+                size="lg"
+                onClick={handleEvaluate}
+                disabled={!file || previewLoading || !!csvErrorMessage}
+                className="px-8"
+              >
+                Evaluate
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </CardFooter>
           </Card>
-        ) : (
-          <Card className="rounded-xl shadow-lg border-0 bg-card">
-            <CardHeader className="pb-6">
-              <CardTitle className="text-2xl font-bold text-card-foreground">Evaluation Progress</CardTitle>
-              <CardDescription className="text-muted-foreground">
-                {currentStatus}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-6 space-y-6">
+        </div>
+      )}
+
+      {isProcessing && (
+        <Card className="mt-8 max-w-3xl mx-auto shadow-md">
+          <CardHeader>
+            <CardTitle>Processing Chatlogs</CardTitle>
+            <CardDescription>Analyzing your customer service interactions</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium">{`Progress: ${progress}%`}</span>
+                <span className="text-sm text-muted-foreground">{currentStatus}</span>
+              </div>
               <Progress value={progress} className="h-2" />
-              <div className="flex justify-end space-x-4">
-                <Button
-                  onClick={handlePauseResume}
-                  variant="outline"
-                  disabled={cancelEvaluationRef.current}
-                  className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-                >
-                  {isPaused ? 'Resume' : 'Pause'}
-                </Button>
-                <Button
-                  onClick={handleCancel}
-                  variant="destructive"
-                  disabled={cancelEvaluationRef.current}
-                  className="bg-destructive hover:bg-destructive/90"
-                >
-                  Cancel Evaluation
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+            </div>
+            
+            <div className="flex justify-center space-x-3">
+              <Button variant="outline" size="icon" onClick={handlePauseResume}>
+                {isPaused ? (
+                  <PlayCircle className="h-5 w-5 text-green-600 dark:text-green-500" />
+                ) : (
+                  <PauseCircle className="h-5 w-5 text-amber-600 dark:text-amber-500" />
+                )}
+              </Button>
+              <Button variant="outline" size="icon" onClick={handleCancel}>
+                <StopCircle className="h-5 w-5 text-red-600 dark:text-red-500" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {globalIsLoading && <LoadingSpinner />}
     </div>
   );
 };

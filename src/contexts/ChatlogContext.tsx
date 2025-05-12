@@ -1,8 +1,11 @@
-import React, { createContext, useState, useContext, ReactNode, useEffect } from "react";
+import React, { createContext, useState, useContext, ReactNode, useEffect, useRef } from "react";
 import { saveChatLogs, getAllChatLogs, deleteChatLog, ChatLog } from "@/services/database";
+import api from "@/lib/axios";
+import { useAuth } from './AuthContext';
+import { getUserChatLogEvaluations, saveChatLogEvaluations, deleteChatLogEvaluation, ChatLogEvaluation } from "@/services/chatLogEvaluationService";
 
 interface EvaluationResult {
-  id?: number;
+  id?: number | string;
   chatlog: string;
   scenario: string;
   coherence: number;
@@ -33,7 +36,7 @@ interface ChatlogContextType {
   testResponse: string;
   setTestResponse: (response: string) => void;
   loadSavedChatLogs: () => Promise<void>;
-  deleteChatLogById: (id: number) => Promise<void>;
+  deleteChatLogById: (id: number | string) => Promise<void>;
 }
 
 const defaultPromptTemplate = `Your task is to evaluate the following customer service chatlog:
@@ -75,8 +78,8 @@ Resolution (0 or 1):
 const ChatlogContext = createContext<ChatlogContextType | undefined>(undefined);
 
 export const ChatlogProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // Load stored values from localStorage if available
-  const [apiKey, setApiKey] = useState<string>(localStorage.getItem("apiKey") || "");
+  // Change apiKey to not load from localStorage initially
+  const [apiKey, setApiKey] = useState<string>("");
   const [selectedModel, setSelectedModel] = useState<string>(localStorage.getItem("selectedModel") || "");
   const [modelOptions, setModelOptions] = useState<{ display_name: string; id: string }[]>([]);
   const [promptTemplate, setPromptTemplate] = useState<string>(
@@ -90,22 +93,65 @@ export const ChatlogProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [error, setError] = useState<string | null>(null);
   const [testPrompt, setTestPrompt] = useState<string>("");
   const [testResponse, setTestResponse] = useState<string>("");
+  const { user } = useAuth();
+  
+  // Add flags to prevent infinite loop
+  const isLoadingRef = useRef(false);
+  const isSavingRef = useRef(false);
+  const manuallySetRef = useRef(false);
 
   // Load saved chat logs from database on mount
   useEffect(() => {
-    loadSavedChatLogs();
-  }, []);
-
-  // Save evaluation results to database whenever they change
-  useEffect(() => {
-    if (evaluationResults.length > 0) {
-      saveChatLogs(evaluationResults);
+    if (!isLoadingRef.current && !isSavingRef.current) {
+      loadSavedChatLogs();
     }
-  }, [evaluationResults]);
+  }, [user]);
+
+  // Save evaluation results to database only when manually set (not from loadSavedChatLogs)
+  useEffect(() => {
+    if (evaluationResults.length > 0 && manuallySetRef.current && !isSavingRef.current) {
+      if (user) {
+        // Logged in - save to server database
+        const saveToServer = async () => {
+          try {
+            isSavingRef.current = true;
+            console.log('[Context] Saving evaluations to server database');
+            await saveChatLogEvaluations(evaluationResults);
+            isSavingRef.current = false;
+          } catch (err) {
+            console.error('Error saving evaluations to server:', err);
+            setError('Failed to save evaluations to server');
+            isSavingRef.current = false;
+          }
+        };
+        saveToServer();
+      } else {
+        // Not logged in - save to local Dexie database
+        isSavingRef.current = true;
+        saveChatLogs(evaluationResults);
+        isSavingRef.current = false;
+      }
+      
+      // Reset the manual flag after saving
+      manuallySetRef.current = false;
+    }
+  }, [evaluationResults, user]);
 
   const loadSavedChatLogs = async () => {
+    if (isLoadingRef.current) return;
+    
     try {
-      const savedLogs = await getAllChatLogs();
+      isLoadingRef.current = true;
+      let savedLogs;
+      
+      if (user) {
+        // Logged in - load from server database
+        savedLogs = await getUserChatLogEvaluations();
+      } else {
+        // Not logged in - load from local Dexie database
+        savedLogs = await getAllChatLogs();
+      }
+      
       console.log('[Context] loadSavedChatLogs fetched', savedLogs.length, 'logs:', savedLogs);
       if (savedLogs.length > 0) {
         setEvaluationResults(savedLogs);
@@ -114,15 +160,27 @@ export const ChatlogProvider: React.FC<{ children: ReactNode }> = ({ children })
         setEvaluationResults([]);
         console.log('[Context] setEvaluationResults called with 0 logs (empty array)');
       }
+      isLoadingRef.current = false;
     } catch (error) {
       console.error('Error loading saved chat logs:', error);
       setError('Failed to load saved chat logs');
+      isLoadingRef.current = false;
     }
   };
 
-  const deleteChatLogById = async (id: number) => {
+  const deleteChatLogById = async (id: number | string) => {
     try {
-      const success = await deleteChatLog(id);
+      let success = false;
+      
+      if (user) {
+        // Logged in - delete from server database
+        await deleteChatLogEvaluation(id as string);
+        success = true;
+      } else {
+        // Not logged in - delete from local Dexie database
+        success = await deleteChatLog(id as number);
+      }
+      
       if (success) {
         // Update the local state by removing the deleted chat log
         setEvaluationResults(prevResults => prevResults.filter(result => result.id !== id));
@@ -137,10 +195,6 @@ export const ChatlogProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   // Update localStorage when values change
   React.useEffect(() => {
-    if (apiKey) localStorage.setItem("apiKey", apiKey);
-  }, [apiKey]);
-
-  React.useEffect(() => {
     if (selectedModel) localStorage.setItem("selectedModel", selectedModel);
   }, [selectedModel]);
 
@@ -152,15 +206,12 @@ export const ChatlogProvider: React.FC<{ children: ReactNode }> = ({ children })
     if (rubricText) localStorage.setItem("rubricText", rubricText);
   }, [rubricText]);
 
-  // Wrap setEvaluationResults to log changes
+  // Wrap setEvaluationResults to log changes and set the manual flag
   const setEvaluationResultsWithLog = async (results: EvaluationResult[]) => {
     console.log('[Context] setEvaluationResultsWithLog called with', results.length, 'logs:', results);
     try {
-      // Save to database first
-      if (results.length > 0) {
-        await saveChatLogs(results);
-        console.log('[Context] Successfully saved', results.length, 'logs to database');
-      }
+      // Set the manual flag to indicate this is a user-triggered update
+      manuallySetRef.current = true;
       
       // Then update state with new results (only once)
       setEvaluationResults(results);

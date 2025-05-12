@@ -271,12 +271,13 @@ const SatisfactionPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f8fafc] via-[#e8ecf3] to-[#f5f7fa] dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-8 px-2 md:px-8">
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-3xl font-bold text-app-blue dark:text-white">Customer Satisfaction Insights</h1>
         <p className="mt-1 text-app-text dark:text-gray-300">Analysis of politeness scores and resolution rates across all chatlogs.</p>
       </div>
-      {/* Stat Cards Row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+      
+      {/* Stat Cards - Full Width Row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-6 max-w-7xl mx-auto">
         <ScoreCard
           title="Average Politeness"
           value={isNaN(avgPoliteness) ? 'N/A' : avgPoliteness.toFixed(2)}
@@ -299,36 +300,113 @@ const SatisfactionPage: React.FC = () => {
           icon={<MessageCircle className="w-6 h-6 text-[#00bcd4]" />}
         />
       </div>
-      {/* Main Content Grid: 2/3 left, 1/3 right */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-        {/* Left: Main Insights */}
-        <div className="lg:col-span-2 flex flex-col gap-8">
-          {/* Score Distribution */}
-          <Card className="rounded-3xl border-0 bg-white/60 dark:bg-gray-900/70 backdrop-blur-xl shadow-xl p-8">
-            <CardHeader>
-              <CardTitle className="text-2xl font-bold">Politeness Score Distribution</CardTitle>
-              <CardDescription className="text-base text-muted-foreground">Frequency of each politeness score (1-5).</CardDescription>
+      
+      {/* Main Bento Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-7xl mx-auto mb-6">
+        {/* Score Distribution - 8 columns */}
+        <Card className="rounded-3xl border-0 bg-white/60 dark:bg-gray-900/70 backdrop-blur-xl shadow-xl p-6 lg:col-span-8">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-2xl font-bold text-app-text dark:text-gray-100">Politeness Score Distribution</CardTitle>
+            <CardDescription className="text-base text-app-text-secondary dark:text-gray-300">Frequency of each politeness score (1-5).</CardDescription>
             </CardHeader>
-            <CardContent className="h-[300px] md:h-[350px]">
+          <CardContent className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={politenessDistribution} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5}/>
                   <XAxis dataKey="name" name="Score" stroke="hsl(var(--foreground))" fontSize={14} />
                   <YAxis allowDecimals={false} stroke="hsl(var(--foreground))" fontSize={14} label={{ value: 'Number of Chatlogs', angle: -90, position: 'insideLeft', offset: 0, style: {textAnchor: 'middle', fontSize: '14px', fill: 'hsl(var(--foreground))'} }}/>
-                  <Tooltip wrapperStyle={{ color: '#333', fontSize: '14px' }} contentStyle={{ background: 'hsl(var(--popover))', borderRadius: 'var(--radius)', border: '1px solid hsl(var(--border))' }}/>
+                <Tooltip wrapperStyle={{ color: 'hsl(var(--foreground))', fontSize: '14px' }} contentStyle={{ background: 'hsl(var(--background))', borderRadius: 'var(--radius)', border: '1px solid hsl(var(--border))' }}/>
                   <Legend verticalAlign="top" height={36} wrapperStyle={{fontSize: '14px'}}/>
-                  <Bar dataKey="count" fill={BAR_CHART_COLOR_POLITENESS} name="Chatlog Count" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="count" fill={BAR_CHART_COLOR_POLITENESS} name="Chatlog Count" radius={[8, 8, 0, 0]} barSize={25} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
-          {/* User Satisfaction by Scenario (replaces Politeness Trends) */}
-          <Card className="rounded-3xl border-0 bg-white/60 dark:bg-gray-900/70 backdrop-blur-xl shadow-xl p-8">
-            <CardHeader>
-              <CardTitle className="text-lg font-bold text-app-text dark:text-white">User Satisfaction by Scenario</CardTitle>
-              <CardDescription className="text-base text-muted-foreground">Average politeness and resolution rates across different scenarios</CardDescription>
+        
+        {/* Politeness Breakdown - 4 columns */}
+        <Card className="rounded-3xl border-0 bg-white dark:bg-gray-900 shadow-xl p-6 lg:col-span-4">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xl font-bold text-app-text dark:text-gray-100">Politeness Breakdown</CardTitle>
+            <CardDescription className="text-base text-app-text-secondary dark:text-gray-300">Chatlogs by politeness category.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4 text-base pt-4">
+            <div>
+              <div className="flex justify-between mb-1">
+                <span>Excellent (4-5)</span>
+                <span className="font-semibold text-green-600 dark:text-green-400">{excellentPolitenessCount}</span>
+              </div>
+              <div className="w-full h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${totalValidLogs > 0 ? (excellentPolitenessCount / totalValidLogs) * 100 : 0}%`,
+                    background: 'linear-gradient(90deg, #22c55e 0%, #4ade80 100%)',
+                  }}
+                />
+              </div>
+            </div>
+            <div>
+              <div className="flex justify-between mb-1">
+                <span>Average (3)</span>
+                <span className="font-semibold text-yellow-500 dark:text-yellow-300">{averagePolitenessCount}</span>
+              </div>
+              <div className="w-full h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${totalValidLogs > 0 ? (averagePolitenessCount / totalValidLogs) * 100 : 0}%`,
+                    background: 'linear-gradient(90deg, #facc15 0%, #fbbf24 100%)',
+                  }}
+                />
+              </div>
+            </div>
+            <div>
+              <div className="flex justify-between mb-1">
+                <span>Poor (1-2)</span>
+                <span className="font-semibold text-red-500 dark:text-red-400">{poorPolitenessCount}</span>
+              </div>
+              <div className="w-full h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${totalValidLogs > 0 ? (poorPolitenessCount / totalValidLogs) * 100 : 0}%`,
+                    background: 'linear-gradient(90deg, #ef4444 0%, #f87171 100%)',
+                  }}
+                />
+              </div>
+            </div>
+            
+            {/* Score Breakdown section */}
+            <div className="pt-4 mt-4 border-t border-gray-100 dark:border-gray-800">
+              <h4 className="text-base font-semibold mb-3 text-app-text dark:text-gray-100">Politeness Score Breakdown</h4>
+              <div className="flex flex-row justify-between gap-2">
+                <div className="flex-1 text-center p-2 rounded-lg bg-red-50 dark:bg-red-900/30">
+                  <div className="text-lg font-bold text-red-600 dark:text-red-300">{politenessScoreBreakdown.low.count}</div>
+                  <div className="text-xs text-muted-foreground dark:text-gray-300">Low (1-2)</div>
+                  <div className="text-xs text-muted-foreground dark:text-gray-400">{politenessScoreBreakdown.low.pct.toFixed(1)}%</div>
+                </div>
+                <div className="flex-1 text-center p-2 rounded-lg bg-yellow-50 dark:bg-yellow-900/30">
+                  <div className="text-lg font-bold text-yellow-600 dark:text-yellow-300">{politenessScoreBreakdown.medium.count}</div>
+                  <div className="text-xs text-muted-foreground dark:text-gray-300">Medium (3)</div>
+                  <div className="text-xs text-muted-foreground dark:text-gray-400">{politenessScoreBreakdown.medium.pct.toFixed(1)}%</div>
+                </div>
+                <div className="flex-1 text-center p-2 rounded-lg bg-green-50 dark:bg-green-900/30">
+                  <div className="text-lg font-bold text-green-600 dark:text-green-300">{politenessScoreBreakdown.high.count}</div>
+                  <div className="text-xs text-muted-foreground dark:text-gray-300">High (4-5)</div>
+                  <div className="text-xs text-muted-foreground dark:text-gray-400">{politenessScoreBreakdown.high.pct.toFixed(1)}%</div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        {/* User Satisfaction by Scenario - 8 columns */}
+        <Card className="rounded-3xl border-0 bg-white/60 dark:bg-gray-900/70 backdrop-blur-xl shadow-xl p-6 lg:col-span-8">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xl font-bold text-app-text dark:text-gray-100">User Satisfaction by Scenario</CardTitle>
+            <CardDescription className="text-base text-app-text-secondary dark:text-gray-300">Average politeness and resolution rates across different scenarios</CardDescription>
             </CardHeader>
-            <CardContent className="h-[300px] md:h-[350px]">
+          <CardContent className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={scenarioMetrics}
@@ -378,103 +456,32 @@ const SatisfactionPage: React.FC = () => {
               </ResponsiveContainer>
             </CardContent>
           </Card>
-          {/* Score Breakdown card */}
-          <Card className="rounded-2xl border-0 bg-white/60 dark:bg-gray-900/90 dark:border-gray-700 shadow p-6">
+        
+        {/* Needs Attention card - 4 columns */}
+        <Card className="rounded-3xl border-0 bg-white/60 dark:bg-gray-900/70 backdrop-blur-xl shadow-xl p-6 lg:col-span-4">
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-bold text-app-text dark:text-white">Politeness Score Breakdown</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1 text-center">
-                  <div className="text-2xl font-bold text-red-600 dark:text-red-300">{politenessScoreBreakdown.low.count}</div>
-                  <div className="text-sm text-muted-foreground dark:text-gray-200">Low (1-2)</div>
-                  <div className="text-xs text-muted-foreground dark:text-gray-400">{politenessScoreBreakdown.low.pct.toFixed(1)}%</div>
-                </div>
-                <div className="flex-1 text-center">
-                  <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-200">{politenessScoreBreakdown.medium.count}</div>
-                  <div className="text-sm text-muted-foreground dark:text-gray-200">Medium (3)</div>
-                  <div className="text-xs text-muted-foreground dark:text-gray-400">{politenessScoreBreakdown.medium.pct.toFixed(1)}%</div>
-                </div>
-                <div className="flex-1 text-center">
-                  <div className="text-2xl font-bold text-green-600 dark:text-green-300">{politenessScoreBreakdown.high.count}</div>
-                  <div className="text-sm text-muted-foreground dark:text-gray-200">High (4-5)</div>
-                  <div className="text-xs text-muted-foreground dark:text-gray-400">{politenessScoreBreakdown.high.pct.toFixed(1)}%</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-        {/* Right: Summary/Diagnostic Cards */}
-        <div className="flex flex-col gap-8">
-          {/* Politeness Breakdown */}
-          <Card className="rounded-3xl border-0 bg-white dark:bg-gray-900 shadow-xl p-8">
-            <CardHeader>
-              <CardTitle className="text-2xl font-bold">Politeness Breakdown</CardTitle>
-              <CardDescription className="text-base text-muted-foreground">Chatlogs by politeness category.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4 text-base">
-              <div>
-                <div className="flex justify-between mb-1">
-                  <span>Excellent (4-5)</span>
-                  <span className="font-semibold text-green-600">{excellentPolitenessCount}</span>
-                </div>
-                <div className="w-full h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{
-                      width: `${totalValidLogs > 0 ? (excellentPolitenessCount / totalValidLogs) * 100 : 0}%`,
-                      background: 'linear-gradient(90deg, #22c55e 0%, #4ade80 100%)',
-                    }}
-                  />
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between mb-1">
-                  <span>Average (3)</span>
-                  <span className="font-semibold text-yellow-500">{averagePolitenessCount}</span>
-                </div>
-                <div className="w-full h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{
-                      width: `${totalValidLogs > 0 ? (averagePolitenessCount / totalValidLogs) * 100 : 0}%`,
-                      background: 'linear-gradient(90deg, #facc15 0%, #fbbf24 100%)',
-                    }}
-                  />
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between mb-1">
-                  <span>Poor (1-2)</span>
-                  <span className="font-semibold text-red-500">{poorPolitenessCount}</span>
-                </div>
-                <div className="w-full h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{
-                      width: `${totalValidLogs > 0 ? (poorPolitenessCount / totalValidLogs) * 100 : 0}%`,
-                      background: 'linear-gradient(90deg, #ef4444 0%, #f87171 100%)',
-                    }}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          {/* Needs Attention card */}
-          <Card className="rounded-3xl border-0 bg-white/60 dark:bg-gray-900/70 backdrop-blur-xl shadow-xl p-8 flex flex-col justify-between">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-2xl font-bold text-app-text">Needs Attention</CardTitle>
-              <CardDescription className="text-base text-app-text-secondary">Lowest politeness chatlogs</CardDescription>
+            <CardTitle className="text-xl font-bold text-app-text dark:text-gray-100">Needs Attention</CardTitle>
+            <CardDescription className="text-base text-app-text-secondary dark:text-gray-300">Lowest politeness chatlogs</CardDescription>
             </CardHeader>
             <CardContent className="pt-4">
-              <div className="flex flex-col gap-4 bg-white/70 dark:bg-gray-900/60 rounded-2xl p-4 shadow-sm">
+            <div className="bg-white/70 dark:bg-gray-900/60 rounded-xl p-4 shadow-sm">
                 {needsAttention.length === 0 ? (
                   <span className="text-base text-muted-foreground">No chatlogs need attention.</span>
                 ) : (
                   needsAttention.map((item, idx) => (
-                    <div key={item.originalIndex} className="flex items-center justify-between py-2 border-b last:border-b-0">
-                      <span className="text-base font-medium text-app-text-secondary">Chatlog #{item.originalIndex! + 1}</span>
-                      <span className="text-base font-semibold text-red-600">Score: {item.politeness.toFixed(1)}</span>
+                  <div key={item.originalIndex} className="flex items-center justify-between py-2 border-b last:border-b-0 dark:border-gray-700">
+                    <span className="text-base font-medium text-app-text-secondary dark:text-gray-300">Chatlog #{item.originalIndex! + 1}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-base font-semibold text-red-600 dark:text-red-400">{item.politeness.toFixed(1)}</span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleToggleChatlogView(item.originalIndex as number)}
+                        className="h-8 px-2 text-xs border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-900/20"
+                      >
+                        View
+                      </Button>
+                    </div>
                     </div>
                   ))
                 )}
@@ -482,14 +489,14 @@ const SatisfactionPage: React.FC = () => {
             </CardContent>
           </Card>
         </div>
-      </div>
-      {/* Chatlogs Requiring Attention Table with Pagination (full width) */}
-      <Card className="rounded-3xl border-0 bg-white/60 dark:bg-gray-900/70 backdrop-blur-xl shadow-xl p-8 mt-8">
-        <CardHeader>
-          <div className="flex justify-between items-center">
+      
+      {/* Chatlogs Requiring Attention Table - Full Width */}
+      <Card className="rounded-3xl border-0 bg-white/60 dark:bg-gray-900/70 backdrop-blur-xl shadow-xl p-6 max-w-7xl mx-auto">
+        <CardHeader className="pb-2">
+          <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
             <div>
-              <CardTitle className="text-2xl font-bold">Chatlogs Requiring Attention ({attentionRequired.length})</CardTitle>
-              <CardDescription className="text-base text-muted-foreground">
+              <CardTitle className="text-2xl font-bold text-app-text dark:text-gray-100">Chatlogs Requiring Attention ({attentionRequired.length})</CardTitle>
+              <CardDescription className="text-base text-app-text-secondary dark:text-gray-300">
                 Low politeness (≤ 2) or unresolved issues. Click 'View' to see chat.
               </CardDescription>
             </div>
@@ -515,11 +522,11 @@ const SatisfactionPage: React.FC = () => {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="rounded-md border">
+        <CardContent className="pt-4">
+          <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden bg-white/80 dark:bg-gray-800/80">
             <table className="w-full caption-bottom text-sm">
-              <thead className="[&_tr]:border-b">
-                <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+              <thead className="[&_tr]:border-b bg-gray-50 dark:bg-gray-900/50">
+                <tr className="border-b transition-colors">
                   {attentionColumns.map((columnDef) => (
                     <th
                       key={String(columnDef.accessorKey)}
@@ -534,7 +541,7 @@ const SatisfactionPage: React.FC = () => {
                 {attentionPageData.length > 0 ? (
                   attentionPageData.map((rowItem, rowIndex) => (
                     <React.Fragment key={rowItem.originalIndex ?? (attentionStartIndex + rowIndex)}>
-                      <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                      <tr className="border-b transition-colors hover:bg-gray-50/80 dark:hover:bg-gray-800/60">
                         {attentionColumns.map((columnDef) => (
                           <td
                             key={String(columnDef.accessorKey)}
@@ -545,8 +552,8 @@ const SatisfactionPage: React.FC = () => {
                         ))}
                       </tr>
                       {expandedChatlogIndex === (rowItem.originalIndex) && (
-                        <tr key={rowItem.originalIndex + '-expanded'} className="bg-muted/50">
-                          <td colSpan={attentionColumns.length} className="p-2 border-t">
+                        <tr key={rowItem.originalIndex + '-expanded'} className="bg-gray-50/80 dark:bg-gray-800/60">
+                          <td colSpan={attentionColumns.length} className="p-4 border-t">
                             <ChatBubbleView chatlogText={rowItem.chatlog} />
                           </td>
                         </tr>
@@ -568,7 +575,7 @@ const SatisfactionPage: React.FC = () => {
           </div>
           {/* Pagination Controls */}
           {attentionPageCount > 1 && (
-            <div className="flex items-center justify-between mt-4 pt-4 border-t">
+            <div className="flex items-center justify-between mt-4 pt-4 border-t dark:border-gray-700">
               <div className="text-sm text-muted-foreground">
                 Page {attentionTableCurrentPage + 1} of {attentionPageCount}
               </div>
@@ -578,6 +585,7 @@ const SatisfactionPage: React.FC = () => {
                   size="sm"
                   onClick={() => setAttentionTableCurrentPage(0)}
                   disabled={attentionTableCurrentPage === 0}
+                  className="dark:border-gray-700"
                 >
                   <ChevronsLeft className="h-4 w-4" />
                 </Button>
@@ -586,6 +594,7 @@ const SatisfactionPage: React.FC = () => {
                   size="sm"
                   onClick={() => setAttentionTableCurrentPage(prev => Math.max(0, prev - 1))}
                   disabled={attentionTableCurrentPage === 0}
+                  className="dark:border-gray-700"
                 >
                   <ChevronLeft className="h-4 w-4" />
                   Previous
@@ -595,6 +604,7 @@ const SatisfactionPage: React.FC = () => {
                   size="sm"
                   onClick={() => setAttentionTableCurrentPage(prev => Math.min(attentionPageCount - 1, prev + 1))}
                   disabled={attentionTableCurrentPage >= attentionPageCount - 1}
+                  className="dark:border-gray-700"
                 >
                   Next
                   <ChevronRight className="h-4 w-4" />
@@ -604,6 +614,7 @@ const SatisfactionPage: React.FC = () => {
                   size="sm"
                   onClick={() => setAttentionTableCurrentPage(attentionPageCount - 1)}
                   disabled={attentionTableCurrentPage >= attentionPageCount - 1}
+                  className="dark:border-gray-700"
                 >
                   <ChevronsRight className="h-4 w-4" />
                 </Button>

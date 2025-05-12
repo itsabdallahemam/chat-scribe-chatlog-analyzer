@@ -13,4 +13,13 @@ export interface AuthResponse {
 
 export interface ApiError {
   message: string;
+}
+
+export interface UserFeature {
+  id: string;
+  userId: string;
+  featureName: string;
+  featureValue: string;
+  createdAt: string;
+  updatedAt: string;
 } 
