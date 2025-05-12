@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 # Chat-Scribe Clarity Analyzer
+=======
+# Chat-Scribe Chatlog Analyzer
+>>>>>>> d7541db9b0a722be0d4fc031c5be96d31482c326
 
 A powerful AI-driven tool for analyzing and improving customer service chat interactions. Transform your customer service quality through advanced analytics and insights.
 
@@ -152,10 +156,13 @@ chat-scribe-clarity-analyzer/
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
+<<<<<<< HEAD
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
+=======
+>>>>>>> d7541db9b0a722be0d4fc031c5be96d31482c326
 ## Support
 
 For support, please open an issue in the GitHub repository or contact the development team.
