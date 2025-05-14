@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String              @id @default(cuid())
+  email              String              @unique
+  passwordHash       String
+  fullName           String?
+  role               String              @default("agent") // Can be "admin", "team_leader", or "agent"
+  teamLeaderId       String?             // ID of the team leader this agent belongs to
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  chatLogEvaluations ChatLogEvaluation[]
+  dashboardData      DashboardData[]
+  evaluations        Evaluation[]
+  userFeatures       UserFeature[]
+  teamMembers        User[]              @relation("TeamLeaderToAgents")
+  teamLeader         User?               @relation("TeamLeaderToAgents", fields: [teamLeaderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([teamLeaderId])
+}
+
+model Evaluation {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model DashboardData {
+  id        String   @id @default(cuid())
+  userId    String
+  data      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model UserFeature {
+  id           String   @id @default(cuid())
+  userId       String
+  featureName  String
+  featureValue String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([userId, featureName])
+}
+
+model ChatLogEvaluation {
+  id         String   @id @default(cuid())
+  userId     String
+  chatlog    String   @db.Text
+  scenario   String
+  coherence  Int
+  politeness Int
+  relevance  Int
+  resolution Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
