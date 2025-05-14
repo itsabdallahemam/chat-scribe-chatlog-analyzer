@@ -6,6 +6,7 @@ import cors from 'cors';
 import authRoutes from './routes/auth';
 import userFeatureRoutes from './routes/userFeature';
 import chatLogEvaluationRoutes from './routes/chatLogEvaluation';
+import performanceRoutes from './routes/performance';
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use('/api/auth', authRoutes);
 app.use('/api/user-features', userFeatureRoutes);
 app.use('/api/chat-log-evaluations', chatLogEvaluationRoutes);
+app.use('/api/performance', performanceRoutes);
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

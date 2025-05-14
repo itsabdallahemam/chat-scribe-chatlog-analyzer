@@ -9,10 +9,10 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 export const signup = async (req: Request, res: Response) => {
   try {
-    const { email, password, name } = req.body;
+    const { email, password, name, role } = req.body;
 
     // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
+    const existingUser = await (prisma as any).agent.findUnique({
       where: { email },
     });
 
@@ -23,12 +23,13 @@ export const signup = async (req: Request, res: Response) => {
     // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // Create user
-    const user = await prisma.user.create({
+    // Create user with role (default to "Agent" if not provided)
+    const user = await (prisma as any).agent.create({
       data: {
         email,
         passwordHash,
         fullName: name,
+        role: role || "Agent",
       },
     });
 
@@ -51,7 +52,7 @@ export const login = async (req: Request, res: Response) => {
     const { email, password } = req.body;
 
     // Find user
-    const user = await prisma.user.findUnique({
+    const user = await (prisma as any).agent.findUnique({
       where: { email },
     });
 
@@ -83,7 +84,7 @@ export const getMe = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.userId;
 
-    const user = await prisma.user.findUnique({
+    const user = await (prisma as any).agent.findUnique({
       where: { id: userId },
     });
 
@@ -104,7 +105,7 @@ export const updateProfile = async (req: Request, res: Response) => {
     const userId = (req as any).user.userId;
     const { name } = req.body;
 
-    const user = await prisma.user.update({
+    const user = await (prisma as any).agent.update({
       where: { id: userId },
       data: { fullName: name },
     });
@@ -113,6 +114,113 @@ export const updateProfile = async (req: Request, res: Response) => {
     res.json(userWithoutPassword);
   } catch (error) {
     console.error('Update profile error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+export const getAllUsers = async (req: Request, res: Response) => {
+  try {
+    const users = await (prisma as any).agent.findMany({
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    res.json(users);
+  } catch (error) {
+    console.error('Get all users error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+// Add a new function to get a user by ID
+export const getUserById = async (req: Request, res: Response) => {
+  try {
+    const userId = req.params.id;
+
+    const user = await (prisma as any).agent.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error('Get user by ID error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+// Update the deleteUser function to handle related records
+export const deleteUser = async (req: Request, res: Response) => {
+  try {
+    const userId = req.params.id;
+
+    // Check if user exists
+    const existingUser = await (prisma as any).agent.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+
+    if (!existingUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Prevent deleting a Team Leader (optional validation)
+    if (existingUser.role === 'Team Leader') {
+      return res.status(403).json({ message: 'Team Leaders cannot be deleted through this endpoint' });
+    }
+
+    // Delete all related records first to avoid foreign key constraints
+    
+    // Delete UserFeature records
+    await (prisma as any).userFeature.deleteMany({
+      where: { userId },
+    });
+    
+    // Delete ChatLogEvaluation records
+    await (prisma as any).chatLogEvaluation.deleteMany({
+      where: { userId },
+    });
+    
+    // Delete Evaluation records
+    await (prisma as any).evaluation.deleteMany({
+      where: { userId },
+    });
+    
+    // Delete DashboardData records
+    await (prisma as any).dashboardData.deleteMany({
+      where: { userId },
+    });
+
+    // Now delete the agent
+    await (prisma as any).agent.delete({
+      where: {
+        id: userId,
+      },
+    });
+
+    res.status(200).json({ message: 'User deleted successfully' });
+  } catch (error) {
+    console.error('Delete user error:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 }; 

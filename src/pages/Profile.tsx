@@ -19,7 +19,9 @@ import {
   FileEdit,
   Trash2,
   Lightbulb,
-  Bot
+  Bot,
+  Users as UsersIcon,
+  BarChart2
 } from 'lucide-react';
 import { useChatlog } from '../contexts/ChatlogContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -42,6 +44,8 @@ import {
 import { deleteAllChatLogEvaluations } from '../services/chatLogEvaluationService';
 import { Badge } from '../components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar';
+import { useNavigate } from 'react-router-dom';
+import RatingsTab from '../components/RatingsTab';
 
 export const Profile: React.FC = () => {
   const { user, logout, updateUser } = useAuth();
@@ -50,6 +54,7 @@ export const Profile: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState("profile");
+  const navigate = useNavigate();
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,32 +101,57 @@ export const Profile: React.FC = () => {
                 </Avatar>
                 <h3 className="font-semibold text-xl mb-1">{user.fullName || 'User'}</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{user.email}</p>
+                <Badge 
+                  variant="outline" 
+                  className={`mb-2 ${
+                    user.role === 'Team Leader' 
+                      ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
+                      : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                  }`}
+                >
+                  {user.role === 'Team Leader' ? (
+                    <><UsersIcon className="w-3 h-3 mr-1" /> Team Leader</>
+                  ) : (
+                    <><UserIcon className="w-3 h-3 mr-1" /> Agent</>
+                  )}
+                </Badge>
                 <Badge variant="outline" className="bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-foreground mb-5">
                   {theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
                 </Badge>
                 
                 <div className="w-full">
-                  <div className="flex flex-col w-full rounded-none bg-transparent gap-1">
+                  <div className="flex flex-col w-full rounded-none bg-transparent gap-2">
                     <button 
                       onClick={() => setActiveTab("profile")}
-                      className={`flex items-center justify-start px-3 py-2 rounded-md transition-colors w-full text-left ${
+                      className={`flex items-center justify-start px-4 py-2.5 rounded-md transition-colors w-full text-left ${
                         activeTab === "profile" 
-                          ? "bg-gray-100 dark:bg-gray-800 font-medium" 
-                          : "hover:bg-gray-100/50 dark:hover:bg-gray-800/50"
+                          ? "bg-gray-100 dark:bg-gray-800 font-medium text-gray-900 dark:text-white" 
+                          : "text-gray-600 dark:text-gray-400 hover:bg-gray-100/70 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-300"
                       }`}
                     >
-                      <UserIcon className="w-4 h-4 mr-2" />
+                      <UserIcon className="w-5 h-5 mr-3" />
                       Profile
                     </button>
                     <button 
-                      onClick={() => setActiveTab("settings")}
-                      className={`flex items-center justify-start px-3 py-2 rounded-md transition-colors w-full text-left ${
-                        activeTab === "settings" 
-                          ? "bg-gray-100 dark:bg-gray-800 font-medium" 
-                          : "hover:bg-gray-100/50 dark:hover:bg-gray-800/50"
+                      onClick={() => setActiveTab("performance")}
+                      className={`flex items-center justify-start px-4 py-2.5 rounded-md transition-colors w-full text-left ${
+                        activeTab === "performance" 
+                          ? "bg-blue-100 dark:bg-blue-800/50 font-medium text-blue-700 dark:text-blue-300" 
+                          : "text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-700 dark:hover:text-blue-300"
                       }`}
                     >
-                      <SettingsIcon className="w-4 h-4 mr-2" />
+                      <BarChart2 className="w-5 h-5 mr-3" />
+                      Performance
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab("settings")}
+                      className={`flex items-center justify-start px-4 py-2.5 rounded-md transition-colors w-full text-left ${
+                        activeTab === "settings" 
+                          ? "bg-gray-100 dark:bg-gray-800 font-medium text-gray-900 dark:text-white" 
+                          : "text-gray-600 dark:text-gray-400 hover:bg-gray-100/70 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-300"
+                      }`}
+                    >
+                      <SettingsIcon className="w-5 h-5 mr-3" />
                       Settings
                     </button>
                   </div>
@@ -130,10 +160,10 @@ export const Profile: React.FC = () => {
                 <Button 
                   variant="destructive" 
                   onClick={logout} 
-                  className="w-full mt-auto mt-4"
+                  className="w-full mt-auto mt-4 bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 flex items-center justify-center"
                 >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Logout
+                  <LogOut className="w-5 h-5 mr-2" />
+                  <span>Logout</span>
                 </Button>
               </div>
             </div>
@@ -151,6 +181,22 @@ export const Profile: React.FC = () => {
                     handleUpdateProfile={handleUpdateProfile}
                     error={error}
                   />
+                </div>
+              )}
+              {activeTab === "performance" && (
+                <div className="p-6">
+                  <div className="flex items-center mb-6">
+                    <div className="text-blue-500 mr-3">
+                      <BarChart2 className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold mb-1">Performance Metrics</h2>
+                      <p className="text-gray-500 dark:text-gray-400">
+                        View your performance based on chat evaluations
+                      </p>
+                    </div>
+                  </div>
+                  <RatingsTab userId={user.id} />
                 </div>
               )}
               {activeTab === "settings" && (
@@ -233,6 +279,22 @@ const ProfileContent: React.FC<{
               {error && (
                 <p className="text-red-500 text-sm mt-2">{error}</p>
               )}
+            </div>
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+                Role
+              </label>
+              <div className={`inline-flex items-center text-sm p-2.5 rounded-md border bg-white dark:bg-gray-900/60 ${
+                user.role === 'Team Leader' 
+                  ? 'text-green-700 border-green-200 dark:text-green-400 dark:border-green-800/30' 
+                  : 'text-blue-700 border-blue-200 dark:text-blue-400 dark:border-blue-800/30'
+              }`}>
+                {user.role === 'Team Leader' ? (
+                  <><UsersIcon className="w-3.5 h-3.5 mr-1.5" /> Team Leader</>
+                ) : (
+                  <><UserIcon className="w-3.5 h-3.5 mr-1.5" /> Agent</>
+                )}
+              </div>
             </div>
           </div>
         </div>

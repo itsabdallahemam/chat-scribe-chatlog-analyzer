@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Home, BarChart2, Smile, CheckCircle, FileText, Info, Moon, Sun, UploadCloud, Menu, X, UserCircle, ChevronDown } from 'lucide-react';
+import { Home, BarChart2, Smile, CheckCircle, FileText, Info, Moon, Sun, UploadCloud, Menu, X, UserCircle, ChevronDown, Users } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import {
@@ -13,6 +13,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+
+interface NavItem {
+  path: string;
+  label: string;
+  icon: React.ReactNode;
+  allowedRoles: string[];
+}
 
 const Header: React.FC = () => {
   const location = useLocation();
@@ -38,40 +45,54 @@ const Header: React.FC = () => {
     return location.pathname === path;
   };
 
-  const primaryNavItems = [
-    { path: '/', label: 'Home', icon: <Home className="w-4 h-4" /> },
-    { path: '/evaluate', label: 'Evaluate', icon: <UploadCloud className="w-4 h-4" /> },
-    { path: '/dashboard', label: 'Dashboard', icon: <BarChart2 className="w-4 h-4" /> },
-  ];
-
-  const analyticsNavItems = [
-    { path: '/satisfaction', label: 'Satisfaction', icon: <Smile className="w-4 h-4" /> },
-    { path: '/cpr-details', label: 'CPR Details', icon: <Info className="w-4 h-4" /> },
-    { path: '/resolution', label: 'Resolution', icon: <CheckCircle className="w-4 h-4" /> },
-  ];
-
-  const reportItem = { 
-    path: '/report', 
-    label: 'Reports', 
-    icon: <FileText className="w-4 h-4" /> 
+  const isAllowedToView = (requiredRoles: string[] = []) => {
+    if (requiredRoles.length === 0) return true;
+    
+    if (!user) return false;
+    
+    return requiredRoles.includes(user.role);
   };
 
-  const NavLink = ({ item, className }: { item: typeof primaryNavItems[0]; className?: string }) => (
-    <Link
-      to={item.path}
-      className={cn(
-        "flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm font-medium",
-        isActive(item.path)
-          ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md dark:from-indigo-500 dark:to-purple-500"
-          : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800",
-        className
-      )}
-      onClick={() => setIsMobileMenuOpen(false)}
-    >
-      {item.icon}
-      <span>{item.label}</span>
-    </Link>
-  );
+  const primaryNavItems: NavItem[] = [
+    { path: '/', label: 'Home', icon: <Home className="w-4 h-4" />, allowedRoles: [] },
+    { path: '/evaluate', label: 'Evaluate', icon: <UploadCloud className="w-4 h-4" />, allowedRoles: ['Agent'] },
+    { path: '/dashboard', label: 'Dashboard', icon: <BarChart2 className="w-4 h-4" />, allowedRoles: ['Agent'] },
+    { path: '/agents-dashboard', label: 'Agents Dashboard', icon: <Users className="w-4 h-4" />, allowedRoles: ['Team Leader'] },
+  ];
+
+  const analyticsNavItems: NavItem[] = [
+    { path: '/satisfaction', label: 'Satisfaction', icon: <Smile className="w-4 h-4" />, allowedRoles: ['Agent'] },
+    { path: '/cpr-details', label: 'CPR Details', icon: <Info className="w-4 h-4" />, allowedRoles: ['Agent'] },
+    { path: '/resolution', label: 'Resolution', icon: <CheckCircle className="w-4 h-4" />, allowedRoles: ['Agent'] },
+  ];
+
+  const reportItem: NavItem = { 
+    path: '/report', 
+    label: 'Reports', 
+    icon: <FileText className="w-4 h-4" />,
+    allowedRoles: ['Agent']
+  };
+
+  const NavLink = ({ item, className }: { item: NavItem; className?: string }) => {
+    if (!isAllowedToView(item.allowedRoles)) return null;
+    
+    return (
+      <Link
+        to={item.path}
+        className={cn(
+          "flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm font-medium",
+          isActive(item.path)
+            ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md dark:from-indigo-500 dark:to-purple-500"
+            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800",
+          className
+        )}
+        onClick={() => setIsMobileMenuOpen(false)}
+      >
+        {item.icon}
+        <span>{item.label}</span>
+      </Link>
+    );
+  };
 
   return (
     <header 
@@ -111,34 +132,38 @@ const Header: React.FC = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="center" className="w-48 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg">
                 {analyticsNavItems.map((item) => (
-                  <DropdownMenuItem key={item.path} asChild>
-                    <Link
-                      to={item.path}
+                  isAllowedToView(item.allowedRoles) && (
+                    <DropdownMenuItem key={item.path} asChild>
+                      <Link
+                        to={item.path}
+                        className={cn(
+                          "flex items-center gap-2 w-full py-2",
+                          isActive(item.path) ? "bg-gray-100 dark:bg-gray-800 text-indigo-600 dark:text-indigo-400" : ""
+                        )}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        {item.icon}
+                        <span>{item.label}</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )
+                ))}
+                <DropdownMenuSeparator />
+                {isAllowedToView(reportItem.allowedRoles) && (
+                  <DropdownMenuItem asChild>
+                    <Link 
+                      to="/report" 
                       className={cn(
                         "flex items-center gap-2 w-full py-2",
-                        isActive(item.path) ? "bg-gray-100 dark:bg-gray-800 text-indigo-600 dark:text-indigo-400" : ""
+                        isActive("/report") ? "bg-gray-100 dark:bg-gray-800 text-indigo-600 dark:text-indigo-400" : ""
                       )}
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
-                      {item.icon}
-                      <span>{item.label}</span>
+                      <FileText className="w-4 h-4" />
+                      <span>Reports</span>
                     </Link>
                   </DropdownMenuItem>
-                ))}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link 
-                    to="/report" 
-                    className={cn(
-                      "flex items-center gap-2 w-full py-2",
-                      isActive("/report") ? "bg-gray-100 dark:bg-gray-800 text-indigo-600 dark:text-indigo-400" : ""
-                    )}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <FileText className="w-4 h-4" />
-                    <span>Reports</span>
-                  </Link>
-                </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -231,18 +256,24 @@ const Header: React.FC = () => {
             <div className="container mx-auto px-4 flex flex-col gap-1">
               <div className="font-medium text-xs uppercase text-gray-500 dark:text-gray-400 px-3 py-2">Main Navigation</div>
               {primaryNavItems.map((item) => (
-                <NavLink key={item.path} item={item} className="w-full" />
+                isAllowedToView(item.allowedRoles) && (
+                  <NavLink key={item.path} item={item} className="w-full" />
+                )
               ))}
               
               <div className="font-medium text-xs uppercase text-gray-500 dark:text-gray-400 mt-4 px-3 py-2">Analytics</div>
               {analyticsNavItems.map((item) => (
-                <NavLink key={item.path} item={item} className="w-full" />
+                isAllowedToView(item.allowedRoles) && (
+                  <NavLink key={item.path} item={item} className="w-full" />
+                )
               ))}
               
-              <NavLink 
-                item={reportItem} 
-                className="w-full" 
-              />
+              {isAllowedToView(reportItem.allowedRoles) && (
+                <NavLink 
+                  item={reportItem} 
+                  className="w-full" 
+                />
+              )}
             </div>
           </div>
         )}

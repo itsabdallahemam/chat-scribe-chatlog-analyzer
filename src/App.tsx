@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import Header from './components/Header';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { RoleProtectedRoute } from './components/RoleProtectedRoute';
+import { SelfOrRoleProtectedRoute } from './components/SelfOrRoleProtectedRoute';
 import { LoginForm } from './components/auth/LoginForm';
 import { SignupForm } from './components/auth/SignupForm';
 import { Profile } from './pages/Profile';
@@ -16,6 +18,8 @@ import SatisfactionPage from './pages/SatisfactionPage';
 import ResolutionPage from './pages/ResolutionPage';
 import ReportPage from './pages/ReportPage';
 import CPRDetailsPage from './pages/CPRDetailsPage';
+import AgentsDashboardPage from './pages/AgentsDashboardPage';
+import AgentProfilePage from './pages/AgentProfilePage';
 
 function App() {
   return (
@@ -39,10 +43,22 @@ function App() {
                     }
                   />
                   <Route
+                    path="/agents-dashboard"
+                    element={
+                      <ProtectedRoute>
+                        <RoleProtectedRoute allowedRoles={["Team Leader"]}>
+                          <AgentsDashboardPage />
+                        </RoleProtectedRoute>
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
                     path="/evaluate"
                     element={
                       <ProtectedRoute>
-                        <ChatlogEvaluationPage />
+                        <RoleProtectedRoute allowedRoles={["Agent"]}>
+                          <ChatlogEvaluationPage />
+                        </RoleProtectedRoute>
                       </ProtectedRoute>
                     }
                   />
@@ -50,7 +66,9 @@ function App() {
                     path="/dashboard"
                     element={
                       <ProtectedRoute>
-                        <DashboardPage />
+                        <RoleProtectedRoute allowedRoles={["Agent"]}>
+                          <DashboardPage />
+                        </RoleProtectedRoute>
                       </ProtectedRoute>
                     }
                   />
@@ -58,7 +76,9 @@ function App() {
                     path="/satisfaction"
                     element={
                       <ProtectedRoute>
-                        <SatisfactionPage />
+                        <RoleProtectedRoute allowedRoles={["Agent"]}>
+                          <SatisfactionPage />
+                        </RoleProtectedRoute>
                       </ProtectedRoute>
                     }
                   />
@@ -66,7 +86,9 @@ function App() {
                     path="/cpr-details"
                     element={
                       <ProtectedRoute>
-                        <CPRDetailsPage />
+                        <RoleProtectedRoute allowedRoles={["Agent"]}>
+                          <CPRDetailsPage />
+                        </RoleProtectedRoute>
                       </ProtectedRoute>
                     }
                   />
@@ -74,7 +96,9 @@ function App() {
                     path="/resolution"
                     element={
                       <ProtectedRoute>
-                        <ResolutionPage />
+                        <RoleProtectedRoute allowedRoles={["Agent"]}>
+                          <ResolutionPage />
+                        </RoleProtectedRoute>
                       </ProtectedRoute>
                     }
                   />
@@ -82,7 +106,19 @@ function App() {
                     path="/report"
                     element={
                       <ProtectedRoute>
-                        <ReportPage />
+                        <RoleProtectedRoute allowedRoles={["Agent"]}>
+                          <ReportPage />
+                        </RoleProtectedRoute>
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/agent/:id"
+                    element={
+                      <ProtectedRoute>
+                        <SelfOrRoleProtectedRoute allowedRoles={["Team Leader"]}>
+                          <AgentProfilePage />
+                        </SelfOrRoleProtectedRoute>
                       </ProtectedRoute>
                     }
                   />
