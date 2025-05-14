@@ -1,13 +1,12 @@
 // src/pages/HomePage.tsx
 import React, { useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { 
   FileText, 
   BarChart2, 
-  Settings, 
-  MessageSquare, 
+  CheckCircle, 
   ArrowRight, 
   Sparkles, 
   Shield, 
@@ -16,18 +15,16 @@ import {
   Github, 
   Twitter, 
   Linkedin, 
-  Mail, 
-  ExternalLink,
-  ChevronRight,
-  Star,
   Gauge,
-  Check
+  UserCircle,
+  LineChart,
+  PieChart,
+  Award,
+  MessageSquare
 } from 'lucide-react';
-import { useTheme } from '@/contexts/ThemeContext';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  const { theme } = useTheme();
   const [animateHero, setAnimateHero] = useState(false);
   
   // Start animation after component mounts
@@ -35,67 +32,89 @@ const HomePage: React.FC = () => {
     setAnimateHero(true);
   }, []);
 
+  // Key features of the product
   const features = [
     {
-      title: "Chatlog Evaluation",
-      description: "Upload chatlogs to analyze quality using advanced AI models that measure coherence, politeness and relevance.",
-      icon: <FileText className="h-6 w-6" />,
-      path: "/evaluate",
+      title: "AI-Powered Analysis",
+      description: "Our intelligent models measure conversation quality across coherence, politeness, and relevance metrics.",
+      icon: <Sparkles className="h-6 w-6" />,
       gradient: "from-purple-500 to-indigo-600 dark:from-purple-400 dark:to-indigo-500"
     },
     {
-      title: "Interactive Dashboard",
-      description: "View comprehensive analytics with interactive visualizations to track performance metrics over time.",
+      title: "Interactive Dashboards",
+      description: "Track performance metrics with beautiful, real-time visualizations tailored to your role.",
       icon: <BarChart2 className="h-6 w-6" />,
-      path: "/dashboard",
       gradient: "from-blue-500 to-cyan-500 dark:from-blue-400 dark:to-cyan-400"
     },
     {
-      title: "Resolution Analysis",
-      description: "Track resolution rates and understand what factors contribute to successful customer interactions.",
-      icon: <MessageSquare className="h-6 w-6" />,
-      path: "/resolution-details",
+      title: "Resolution Analytics",
+      description: "Understand what factors lead to successful customer interactions and improved satisfaction.",
+      icon: <CheckCircle className="h-6 w-6" />,
       gradient: "from-emerald-500 to-green-500 dark:from-emerald-400 dark:to-green-400"
     },
     {
-      title: "CPR Detail Insights",
-      description: "Deep dive into Coherence, Politeness, and Relevance metrics to understand customer satisfaction.",
-      icon: <Gauge className="h-6 w-6" />,
-      path: "/cpr-details",
+      title: "Role-Based Experience",
+      description: "Customized interfaces and insights for agents and team leaders to drive improvement.",
+      icon: <Users className="h-6 w-6" />,
       gradient: "from-amber-500 to-orange-500 dark:from-amber-400 dark:to-orange-400"
     }
   ];
 
-  const benefits = [
+  // Role-specific benefits
+  const roleBenefits = [
     {
-      title: "AI-Powered Analysis",
-      description: "Leverage state-of-the-art language models to analyze conversations with unprecedented accuracy.",
-      icon: <Sparkles className="h-5 w-5" />,
+      role: "Support Agents",
+      description: "Gain personal insights to improve your conversation skills and boost performance metrics.",
+      features: [
+        "Personal performance dashboard", 
+        "Conversation quality analysis", 
+        "Self-improvement guidance",
+        "Historical trend tracking"
+      ],
+      icon: <UserCircle className="h-8 w-8" />,
+      color: "bg-gradient-to-r from-purple-600 to-indigo-600 dark:from-purple-500 dark:to-indigo-500",
+      action: () => navigate('/test-login')
+    },
+    {
+      role: "Team Leaders",
+      description: "Monitor team performance, identify coaching opportunities, and drive organizational excellence.",
+      features: [
+        "Team performance overview", 
+        "Agent comparisons", 
+        "Coaching opportunity identification",
+        "Trend analysis and reporting"
+      ],
+      icon: <Users className="h-8 w-8" />,
+      color: "bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-500 dark:to-teal-500",
+      action: () => navigate('/test-login')
+    }
+  ];
+
+  // CPR metrics explanation
+  const cprMetrics = [
+    {
+      title: "Coherence",
+      description: "Measures logical flow and consistency throughout the conversation",
+      icon: <LineChart className="h-5 w-5" />,
+      color: "text-indigo-500 dark:text-indigo-400"
+    },
+    {
+      title: "Politeness",
+      description: "Evaluates tone, courtesy, and professional language usage",
+      icon: <MessageSquare className="h-5 w-5" />,
       color: "text-purple-500 dark:text-purple-400"
     },
     {
-      title: "Secure & Private",
-      description: "All data is processed securely and stored with enterprise-grade encryption.",
-      icon: <Shield className="h-5 w-5" />,
-      color: "text-blue-500 dark:text-blue-400"
-    },
-    {
-      title: "Real-time Insights",
-      description: "Get instant feedback on chat quality with our efficient processing system.",
-      icon: <Zap className="h-5 w-5" />,
-      color: "text-amber-500 dark:text-amber-400"
-    },
-    {
-      title: "Team Collaboration",
-      description: "Share insights across your organization to improve customer service quality.",
-      icon: <Users className="h-5 w-5" />,
+      title: "Relevance",
+      description: "Assesses how directly responses address customer questions and needs",
+      icon: <PieChart className="h-5 w-5" />,
       color: "text-emerald-500 dark:text-emerald-400"
     }
   ];
   
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50 dark:from-gray-950 dark:to-gray-900">
-      {/* Hero Section with Animation */}
+      {/* Hero Section */}
       <div className="relative overflow-hidden">
         {/* Background Elements */}
         <div className="absolute inset-0 -z-10 overflow-hidden">
@@ -103,11 +122,11 @@ const HomePage: React.FC = () => {
           
           {/* Animated gradient orbs */}
           <div 
-            className={`absolute top-20 left-1/4 w-[500px] h-[500px] rounded-full bg-gradient-to-r from-purple-500/20 to-blue-500/20 dark:from-purple-400/30 dark:to-blue-400/30 blur-3xl opacity-0 transition-opacity duration-1000 ease-in-out ${animateHero ? 'opacity-100' : ''}`} 
+            className={`absolute top-20 left-1/4 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] rounded-full bg-gradient-to-r from-purple-500/20 to-blue-500/20 dark:from-purple-400/30 dark:to-blue-400/30 blur-3xl opacity-0 transition-opacity duration-1000 ease-in-out ${animateHero ? 'opacity-100' : ''}`} 
             style={{ transform: 'translate(-30%, -30%)' }}
           />
           <div 
-            className={`absolute bottom-20 right-1/4 w-[400px] h-[400px] rounded-full bg-gradient-to-r from-cyan-500/20 to-emerald-500/20 dark:from-cyan-400/30 dark:to-emerald-400/30 blur-3xl opacity-0 transition-opacity duration-1000 delay-300 ease-in-out ${animateHero ? 'opacity-100' : ''}`} 
+            className={`absolute bottom-20 right-1/4 w-[250px] sm:w-[400px] h-[250px] sm:h-[400px] rounded-full bg-gradient-to-r from-cyan-500/20 to-emerald-500/20 dark:from-cyan-400/30 dark:to-emerald-400/30 blur-3xl opacity-0 transition-opacity duration-1000 delay-300 ease-in-out ${animateHero ? 'opacity-100' : ''}`} 
             style={{ transform: 'translate(20%, 20%)' }}
           />
           
@@ -115,52 +134,122 @@ const HomePage: React.FC = () => {
           <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] bg-center opacity-5 dark:opacity-10" />
         </div>
         
-        <div className="container mx-auto px-4 py-24 md:py-32 relative z-10">
+        <div className="container mx-auto px-4 py-16 sm:py-24 lg:py-32 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
             <div className={`transform transition-all duration-700 ease-out ${animateHero ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold mb-6 bg-gradient-to-r from-purple-600 via-blue-500 to-cyan-500 dark:from-purple-400 dark:via-blue-400 dark:to-cyan-400 bg-clip-text text-transparent">
-                Chat-Scribe Chatlog Analyzer
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold mb-4 sm:mb-6 bg-gradient-to-r from-purple-600 via-blue-500 to-cyan-500 dark:from-purple-400 dark:via-blue-400 dark:to-cyan-400 bg-clip-text text-transparent">
+                Chat-Scribe Analyzer
               </h1>
             </div>
             
             <div className={`transform transition-all duration-700 delay-200 ease-out ${animateHero ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-              <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 mb-8 md:mb-10 max-w-3xl mx-auto leading-relaxed">
-                Transform customer service with AI-powered conversation analysis that measures coherence, politeness, and relevance.
+              <p className="text-lg sm:text-xl md:text-2xl text-gray-600 dark:text-gray-300 mb-6 sm:mb-8 md:mb-10 max-w-3xl mx-auto leading-relaxed">
+                Elevate your customer service with AI-powered conversation analysis that provides actionable insights for agents and team leaders.
               </p>
             </div>
             
             <div className={`flex flex-col sm:flex-row gap-4 justify-center items-center transition-all duration-700 delay-400 ease-out ${animateHero ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
               <Button 
                 size="lg"
-                onClick={() => navigate('/evaluate')}
-                className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-full text-lg py-6 px-8"
+                onClick={() => navigate('/signup')}
+                className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-full text-base sm:text-lg py-5 sm:py-6 px-6 sm:px-8"
               >
-                Start Analyzing
-                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                Get Started
+                <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
               <Button 
                 variant="outline"
                 size="lg"
-                onClick={() => navigate('/dashboard')}
-                className="text-lg py-6 px-8 border-2 border-gray-300 hover:border-gray-400 dark:border-gray-700 dark:hover:border-gray-600 rounded-full"
+                onClick={() => navigate('/test-login')}
+                className="w-full sm:w-auto text-base sm:text-lg py-5 sm:py-6 px-6 sm:px-8 border-2 border-gray-300 hover:border-gray-400 dark:border-gray-700 dark:hover:border-gray-600 rounded-full"
               >
-                View Demo
+                Try Demo
               </Button>
             </div>
             
             {/* Key metrics */}
-            <div className={`mt-16 grid grid-cols-1 md:grid-cols-3 gap-6 text-center transition-all duration-700 delay-600 ease-out ${animateHero ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-              <div className="bg-white/80 dark:bg-gray-800/50 rounded-xl p-6 backdrop-blur-sm shadow-md border border-gray-200 dark:border-gray-700">
-                <div className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-2">95%</div>
-                <div className="text-gray-600 dark:text-gray-300">Accuracy Rate</div>
+            <div className={`mt-12 sm:mt-16 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 text-center transition-all duration-700 delay-600 ease-out ${animateHero ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
+              <div className="bg-white/80 dark:bg-gray-800/50 rounded-xl p-4 sm:p-6 backdrop-blur-sm shadow-md border border-gray-200 dark:border-gray-700">
+                <div className="text-3xl sm:text-4xl font-bold text-blue-600 dark:text-blue-400 mb-1 sm:mb-2">95%</div>
+                <div className="text-sm sm:text-base text-gray-600 dark:text-gray-300">Evaluation Accuracy</div>
               </div>
-              <div className="bg-white/80 dark:bg-gray-800/50 rounded-xl p-6 backdrop-blur-sm shadow-md border border-gray-200 dark:border-gray-700">
-                <div className="text-4xl font-bold text-emerald-600 dark:text-emerald-400 mb-2">+40%</div>
-                <div className="text-gray-600 dark:text-gray-300">Customer Satisfaction</div>
+              <div className="bg-white/80 dark:bg-gray-800/50 rounded-xl p-4 sm:p-6 backdrop-blur-sm shadow-md border border-gray-200 dark:border-gray-700">
+                <div className="text-3xl sm:text-4xl font-bold text-emerald-600 dark:text-emerald-400 mb-1 sm:mb-2">+42%</div>
+                <div className="text-sm sm:text-base text-gray-600 dark:text-gray-300">Customer Satisfaction</div>
               </div>
-              <div className="bg-white/80 dark:bg-gray-800/50 rounded-xl p-6 backdrop-blur-sm shadow-md border border-gray-200 dark:border-gray-700">
-                <div className="text-4xl font-bold text-purple-600 dark:text-purple-400 mb-2">3x</div>
-                <div className="text-gray-600 dark:text-gray-300">Faster Analysis</div>
+              <div className="bg-white/80 dark:bg-gray-800/50 rounded-xl p-4 sm:p-6 backdrop-blur-sm shadow-md border border-gray-200 dark:border-gray-700">
+                <div className="text-3xl sm:text-4xl font-bold text-purple-600 dark:text-purple-400 mb-1 sm:mb-2">3.5x</div>
+                <div className="text-sm sm:text-base text-gray-600 dark:text-gray-300">Agent Efficiency</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* What is Chat-Scribe Section */}
+      <div className="container mx-auto px-4 py-16 sm:py-20">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-4">What is Chat-Scribe?</h2>
+              <p className="text-base sm:text-lg text-gray-600 dark:text-gray-300 mb-6">
+                Chat-Scribe is an advanced analytics platform that evaluates customer service conversations using our proprietary CPR methodology: Coherence, Politeness, and Relevance.
+              </p>
+              <p className="text-base sm:text-lg text-gray-600 dark:text-gray-300 mb-6">
+                Our AI-powered system provides actionable insights to customer support teams, helping agents improve their communication skills and enabling team leaders to identify coaching opportunities.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
+                {cprMetrics.map((metric, index) => (
+                  <div key={index} className="flex flex-col items-center text-center p-4 rounded-xl bg-white/90 dark:bg-gray-800/50 shadow-sm border border-gray-100 dark:border-gray-700">
+                    <div className={`${metric.color} mb-2`}>
+                      {metric.icon}
+                    </div>
+                    <h3 className="font-medium mb-1">{metric.title}</h3>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">{metric.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="relative">
+              <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 dark:from-blue-500/20 dark:to-purple-500/20 rounded-3xl p-4 sm:p-8 relative overflow-hidden">
+                <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] bg-center opacity-10"></div>
+                <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 z-10">
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="bg-blue-500/10 dark:bg-blue-500/20 p-3 rounded-full">
+                      <MessageSquare className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-medium">Conversation Analysis</h3>
+                      <p className="text-sm text-gray-500">Customer chat with Agent #1242</p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4 mb-6">
+                    <div className="p-3 bg-gray-100 dark:bg-gray-700/50 rounded-lg text-sm">
+                      <p className="text-gray-800 dark:text-gray-200">Hello, I'm having trouble resetting my password on your website. Can you help?</p>
+                      <p className="text-xs text-gray-500 mt-1">Customer - 10:15 AM</p>
+                    </div>
+                    <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm">
+                      <p className="text-gray-800 dark:text-gray-200">Hi there! I'd be happy to help you reset your password. Could you tell me which page you're having trouble with specifically?</p>
+                      <p className="text-xs text-gray-500 mt-1">Agent - 10:16 AM</p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="text-center p-2 rounded-lg bg-indigo-50 dark:bg-indigo-900/20">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Coherence</p>
+                      <p className="font-medium text-indigo-600 dark:text-indigo-400">92%</p>
+                    </div>
+                    <div className="text-center p-2 rounded-lg bg-purple-50 dark:bg-purple-900/20">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Politeness</p>
+                      <p className="font-medium text-purple-600 dark:text-purple-400">95%</p>
+                    </div>
+                    <div className="text-center p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Relevance</p>
+                      <p className="font-medium text-emerald-600 dark:text-emerald-400">90%</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -168,122 +257,168 @@ const HomePage: React.FC = () => {
       </div>
 
       {/* Features Section */}
-      <div className="container mx-auto px-4 py-24">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">Powerful Features</h2>
-          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-            Comprehensive tools to analyze, measure, and improve your customer interactions
+      <div className="bg-gray-50 dark:bg-gray-900/70 py-16 sm:py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12 sm:mb-16">
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">Powerful Features</h2>
+            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+              Comprehensive tools to analyze, measure, and improve customer interactions
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 max-w-7xl mx-auto">
+            {features.map((feature, index) => (
+              <Card 
+                key={index} 
+                className="group overflow-hidden rounded-2xl border-0 shadow-lg hover:shadow-xl transition-all duration-300 dark:bg-gray-800/50 h-full flex flex-col"
+              >
+                <div className={`h-2 w-full bg-gradient-to-r ${feature.gradient}`}></div>
+                <CardHeader className="pt-6">
+                  <div className={`mb-4 p-3 rounded-xl inline-flex bg-gradient-to-r ${feature.gradient} text-white`}>
+                    {feature.icon}
+                  </div>
+                  <CardTitle className="text-xl">{feature.title}</CardTitle>
+                  <CardDescription className="text-sm">{feature.description}</CardDescription>
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Role-based Cards Section */}
+      <div className="container mx-auto px-4 py-16 sm:py-20">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">Tailored For Your Role</h2>
+          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+            Chat-Scribe provides role-specific experiences that deliver exactly what you need
           </p>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {features.map((feature, index) => (
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
+          {roleBenefits.map((roleBenefit, index) => (
             <Card 
               key={index} 
-              className="group overflow-hidden rounded-2xl border-0 shadow-lg hover:shadow-xl transition-all duration-300 dark:bg-gray-800/50 h-full flex flex-col"
+              className="overflow-hidden rounded-2xl border-0 shadow-xl hover:shadow-2xl transition-all duration-300 dark:bg-gray-800/50 h-full flex flex-col relative"
             >
-              <div className={`h-2 w-full bg-gradient-to-r ${feature.gradient}`}></div>
-              <CardHeader className="pt-8">
-                <div className={`mb-6 p-3 rounded-xl inline-flex bg-gradient-to-r ${feature.gradient} text-white`}>
-                  {feature.icon}
+              <div className={`${roleBenefit.color} text-white p-6`}>
+                <div className="flex items-center gap-3 mb-3">
+                  {roleBenefit.icon}
+                  <h3 className="text-2xl font-bold">{roleBenefit.role}</h3>
                 </div>
-                <CardTitle className="text-2xl">{feature.title}</CardTitle>
-                <CardDescription className="text-base">{feature.description}</CardDescription>
-              </CardHeader>
-              <CardFooter className="mt-auto pt-6">
-                <Link 
-                  to={feature.path}
-                  className="group px-0 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 flex items-center font-medium"
+                <p className="text-white/90 text-lg">{roleBenefit.description}</p>
+              </div>
+              <CardContent className="pt-6 pb-4 flex-grow">
+                <ul className="space-y-3">
+                  {roleBenefit.features.map((feature, featureIndex) => (
+                    <li key={featureIndex} className="flex items-center gap-2">
+                      <CheckCircle className="h-5 w-5 text-green-500 dark:text-green-400 shrink-0" />
+                      <span className="text-gray-700 dark:text-gray-300">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+              <CardFooter className="px-6 pb-6">
+                <Button 
+                  className={`w-full ${roleBenefit.color} text-white hover:opacity-90`}
+                  onClick={roleBenefit.action}
                 >
-                  <span>Learn more</span>
-                  <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </Link>
+                  Try {roleBenefit.role} Demo
+                </Button>
               </CardFooter>
             </Card>
           ))}
         </div>
       </div>
 
-      {/* Benefits Section with Animation */}
-      <div className="bg-gray-50 dark:bg-gray-900/70 py-24">
-        <div className="container mx-auto px-4">
-          <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-              {/* Left side - Image */}
-              <div className="lg:col-span-5 relative">
-                <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-                  <img 
-                    src="/dashboard-preview.svg" 
-                    alt="Dashboard Preview" 
-                    className="w-full h-auto rounded-2xl"
-                    onError={(e) => e.currentTarget.src = 'https://placehold.co/600x400/e4e8f0/1e293b?text=Dashboard+Preview'}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-gray-900/70 to-transparent flex items-end">
-                    <div className="p-6 text-white">
-                      <h3 className="text-xl font-bold mb-2">Actionable Insights</h3>
-                      <p className="text-sm text-gray-200">Make data-driven decisions with clear visualizations</p>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Floating element */}
-                <div className="absolute -top-8 -right-8 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 hidden md:block">
-                  <div className="flex items-center gap-2">
-                    <div className="bg-green-100 dark:bg-green-900/50 p-2 rounded-full">
-                      <Zap className="h-5 w-5 text-green-600 dark:text-green-400" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-semibold">Quick Analysis</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">Results in seconds</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Right side - Benefits list */}
-              <div className="lg:col-span-7">
-                <h2 className="text-3xl font-bold mb-8 text-gray-900 dark:text-white">Why Choose Chat-Scribe?</h2>
-                
-                <div className="space-y-6">
-                  {benefits.map((benefit, index) => (
-                    <div key={index} className="flex gap-4 items-start p-4 rounded-xl bg-white dark:bg-gray-800/50 shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-100 dark:border-gray-700">
-                      <div className={`shrink-0 p-3 rounded-xl ${benefit.color} bg-opacity-10 dark:bg-opacity-20`}>
-                        {benefit.icon}
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold mb-1 text-gray-900 dark:text-white">{benefit.title}</h3>
-                        <p className="text-gray-600 dark:text-gray-300">{benefit.description}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+      {/* Call to Action */}
+      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-500 dark:to-purple-500 py-16 sm:py-20">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold text-white mb-6">Ready to transform your customer service?</h2>
+          <p className="text-lg text-white/80 max-w-2xl mx-auto mb-8">
+            Join thousands of customer service teams using Chat-Scribe to improve conversation quality
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button 
+              size="lg"
+              onClick={() => navigate('/signup')}
+              className="bg-white text-indigo-600 hover:bg-gray-100 rounded-full font-medium py-6 px-8"
+            >
+              Get Started Today
+            </Button>
+            <Button 
+              variant="outline"
+              size="lg"
+              onClick={() => navigate('/test-login')}
+              className="text-white border-white hover:bg-white/10 rounded-full font-medium py-6 px-8"
+            >
+              Try Demo
+            </Button>
           </div>
         </div>
       </div>
       
       {/* Footer */}
-      <footer className="bg-gray-50 dark:bg-gray-900/70 py-12">
+      <footer className="bg-gray-900 py-12">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="mb-6 md:mb-0">
-              <h3 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">Chat-Scribe</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">© 2025 Chat-Scribe. All rights reserved.</p>
+          <div className="flex flex-col md:flex-row justify-between items-center gap-8 mb-8">
+            <div className="text-center md:text-left">
+              <h3 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">Chat-Scribe</h3>
+              <p className="text-sm text-gray-400 max-w-md">
+                Elevating customer service through AI-powered conversation analytics.
+              </p>
             </div>
-            <div className="flex gap-4">
-              <Button variant="ghost" size="icon" className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
-                <Github className="h-5 w-5" />
-              </Button>
-              <Button variant="ghost" size="icon" className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
-                <Twitter className="h-5 w-5" />
-              </Button>
-              <Button variant="ghost" size="icon" className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
-                <Linkedin className="h-5 w-5" />
-              </Button>
-              <Button variant="ghost" size="icon" className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
-                <Mail className="h-5 w-5" />
-              </Button>
+            
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 text-center sm:text-left">
+              <div>
+                <h4 className="text-sm font-semibold text-white mb-3">Product</h4>
+                <ul className="space-y-2 text-sm">
+                  <li><Button variant="link" className="text-gray-400 hover:text-white p-0 h-auto">Features</Button></li>
+                  <li><Button variant="link" className="text-gray-400 hover:text-white p-0 h-auto">Pricing</Button></li>
+                  <li><Button variant="link" className="text-gray-400 hover:text-white p-0 h-auto">Demo</Button></li>
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="text-sm font-semibold text-white mb-3">Company</h4>
+                <ul className="space-y-2 text-sm">
+                  <li><Button variant="link" className="text-gray-400 hover:text-white p-0 h-auto">About</Button></li>
+                  <li><Button variant="link" className="text-gray-400 hover:text-white p-0 h-auto">Blog</Button></li>
+                  <li><Button variant="link" className="text-gray-400 hover:text-white p-0 h-auto">Careers</Button></li>
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="text-sm font-semibold text-white mb-3">Resources</h4>
+                <ul className="space-y-2 text-sm">
+                  <li><Button variant="link" className="text-gray-400 hover:text-white p-0 h-auto">Documentation</Button></li>
+                  <li><Button variant="link" className="text-gray-400 hover:text-white p-0 h-auto">Help Center</Button></li>
+                  <li><Button variant="link" className="text-gray-400 hover:text-white p-0 h-auto">API</Button></li>
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="text-sm font-semibold text-white mb-3">Connect</h4>
+                <div className="flex gap-4 justify-center sm:justify-start">
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-white">
+                    <Github className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-white">
+                    <Twitter className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-white">
+                    <Linkedin className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="border-t border-gray-800 pt-8 flex flex-col sm:flex-row justify-between items-center">
+            <p className="text-xs text-gray-500">© 2025 Chat-Scribe. All rights reserved.</p>
+            <div className="flex gap-6 mt-4 sm:mt-0">
+              <Button variant="link" className="text-xs text-gray-500 hover:text-gray-400 p-0 h-auto">Privacy Policy</Button>
+              <Button variant="link" className="text-xs text-gray-500 hover:text-gray-400 p-0 h-auto">Terms of Service</Button>
             </div>
           </div>
         </div>

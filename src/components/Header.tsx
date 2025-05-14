@@ -122,50 +122,52 @@ const Header: React.FC = () => {
             </nav>
 
             {/* Analytics Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="px-3 py-2 flex items-center gap-2 h-auto">
-                  <BarChart2 className="w-4 h-4" />
-                  <span>Analytics</span>
-                  <ChevronDown className="w-3 h-3 opacity-50" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="center" className="w-48 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg">
-                {analyticsNavItems.map((item) => (
-                  isAllowedToView(item.allowedRoles) && (
-                    <DropdownMenuItem key={item.path} asChild>
-                      <Link
-                        to={item.path}
+            {user && user.role !== 'Team Leader' && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="px-3 py-2 flex items-center gap-2 h-auto">
+                    <BarChart2 className="w-4 h-4" />
+                    <span>Analytics</span>
+                    <ChevronDown className="w-3 h-3 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="center" className="w-48 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg">
+                  {analyticsNavItems.map((item) => (
+                    isAllowedToView(item.allowedRoles) && (
+                      <DropdownMenuItem key={item.path} asChild>
+                        <Link
+                          to={item.path}
+                          className={cn(
+                            "flex items-center gap-2 w-full py-2",
+                            isActive(item.path) ? "bg-gray-100 dark:bg-gray-800 text-indigo-600 dark:text-indigo-400" : ""
+                          )}
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          {item.icon}
+                          <span>{item.label}</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    )
+                  ))}
+                  <DropdownMenuSeparator />
+                  {isAllowedToView(reportItem.allowedRoles) && (
+                    <DropdownMenuItem asChild>
+                      <Link 
+                        to="/report" 
                         className={cn(
                           "flex items-center gap-2 w-full py-2",
-                          isActive(item.path) ? "bg-gray-100 dark:bg-gray-800 text-indigo-600 dark:text-indigo-400" : ""
+                          isActive("/report") ? "bg-gray-100 dark:bg-gray-800 text-indigo-600 dark:text-indigo-400" : ""
                         )}
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
-                        {item.icon}
-                        <span>{item.label}</span>
+                        <FileText className="w-4 h-4" />
+                        <span>Reports</span>
                       </Link>
                     </DropdownMenuItem>
-                  )
-                ))}
-                <DropdownMenuSeparator />
-                {isAllowedToView(reportItem.allowedRoles) && (
-                  <DropdownMenuItem asChild>
-                    <Link 
-                      to="/report" 
-                      className={cn(
-                        "flex items-center gap-2 w-full py-2",
-                        isActive("/report") ? "bg-gray-100 dark:bg-gray-800 text-indigo-600 dark:text-indigo-400" : ""
-                      )}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      <FileText className="w-4 h-4" />
-                      <span>Reports</span>
-                    </Link>
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
 
           {/* Right Side Actions */}
@@ -205,6 +207,9 @@ const Header: React.FC = () => {
                 <DropdownMenuContent align="end" className="w-48 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg">
                   <div className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-800">
                     Signed in as <span className="font-medium">{user.email}</span>
+                  </div>
+                  <div className="px-3 py-2 text-xs font-medium text-indigo-600 dark:text-indigo-400 border-b border-gray-100 dark:border-gray-800">
+                    Role: {user.role}
                   </div>
                   <DropdownMenuItem asChild className="py-2">
                     <Link to="/profile" onClick={() => setIsMobileMenuOpen(false)}>
@@ -261,18 +266,23 @@ const Header: React.FC = () => {
                 )
               ))}
               
-              <div className="font-medium text-xs uppercase text-gray-500 dark:text-gray-400 mt-4 px-3 py-2">Analytics</div>
-              {analyticsNavItems.map((item) => (
-                isAllowedToView(item.allowedRoles) && (
-                  <NavLink key={item.path} item={item} className="w-full" />
-                )
-              ))}
-              
-              {isAllowedToView(reportItem.allowedRoles) && (
-                <NavLink 
-                  item={reportItem} 
-                  className="w-full" 
-                />
+              {/* Only show Analytics section for non-Team Leaders */}
+              {user && user.role !== 'Team Leader' && (
+                <>
+                  <div className="font-medium text-xs uppercase text-gray-500 dark:text-gray-400 mt-4 px-3 py-2">Analytics</div>
+                  {analyticsNavItems.map((item) => (
+                    isAllowedToView(item.allowedRoles) && (
+                      <NavLink key={item.path} item={item} className="w-full" />
+                    )
+                  ))}
+                  
+                  {isAllowedToView(reportItem.allowedRoles) && (
+                    <NavLink 
+                      item={reportItem} 
+                      className="w-full" 
+                    />
+                  )}
+                </>
               )}
             </div>
           </div>

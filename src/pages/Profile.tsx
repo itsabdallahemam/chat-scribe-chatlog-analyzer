@@ -56,6 +56,14 @@ export const Profile: React.FC = () => {
   const [activeTab, setActiveTab] = useState("profile");
   const navigate = useNavigate();
 
+  // Set initial tab based on user role
+  useEffect(() => {
+    // Ensure Team Leaders can never have performance tab active
+    if (user?.role === 'Team Leader' && activeTab === 'performance') {
+      setActiveTab('profile');
+    }
+  }, [user?.role, activeTab]);
+
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -132,17 +140,22 @@ export const Profile: React.FC = () => {
                       <UserIcon className="w-5 h-5 mr-3" />
                       Profile
                     </button>
-                    <button 
-                      onClick={() => setActiveTab("performance")}
-                      className={`flex items-center justify-start px-4 py-2.5 rounded-md transition-colors w-full text-left ${
-                        activeTab === "performance" 
-                          ? "bg-blue-100 dark:bg-blue-800/50 font-medium text-blue-700 dark:text-blue-300" 
-                          : "text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-700 dark:hover:text-blue-300"
-                      }`}
-                    >
-                      <BarChart2 className="w-5 h-5 mr-3" />
-                      Performance
-                    </button>
+                    
+                    {/* Only show Performance tab for Agents, not for Team Leaders */}
+                    {user.role === 'Agent' && (
+                      <button 
+                        onClick={() => setActiveTab("performance")}
+                        className={`flex items-center justify-start px-4 py-2.5 rounded-md transition-colors w-full text-left ${
+                          activeTab === "performance" 
+                            ? "bg-blue-100 dark:bg-blue-800/50 font-medium text-blue-700 dark:text-blue-300" 
+                            : "text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-700 dark:hover:text-blue-300"
+                        }`}
+                      >
+                        <BarChart2 className="w-5 h-5 mr-3" />
+                        Performance
+                      </button>
+                    )}
+                    
                     <button 
                       onClick={() => setActiveTab("settings")}
                       className={`flex items-center justify-start px-4 py-2.5 rounded-md transition-colors w-full text-left ${
@@ -170,7 +183,7 @@ export const Profile: React.FC = () => {
             
             {/* Main content area */}
             <div className="flex-1 bg-white dark:bg-gray-900">
-              {activeTab === "profile" && (
+              {(activeTab === "profile" || (activeTab === "performance" && user.role !== 'Agent')) && (
                 <div className="p-6">
                   <ProfileContent 
                     user={user} 
@@ -183,7 +196,7 @@ export const Profile: React.FC = () => {
                   />
                 </div>
               )}
-              {activeTab === "performance" && (
+              {activeTab === "performance" && user.role === 'Agent' && (
                 <div className="p-6">
                   <div className="flex items-center mb-6">
                     <div className="text-blue-500 mr-3">
@@ -332,6 +345,9 @@ const SettingsTab: React.FC = () => {
   const [isKeyHidden, setIsKeyHidden] = useState<boolean>(true);
   const [isLoadingModels, setIsLoadingModels] = useState<boolean>(false);
   const [isTestingModel, setIsTestingModel] = useState<boolean>(false);
+  
+  // Check if user is a team leader
+  const isTeamLeader = user?.role === 'Team Leader';
 
   // Load API key from database when component mounts
   useEffect(() => {
@@ -462,6 +478,16 @@ const SettingsTab: React.FC = () => {
   };
 
   const handleSavePrompt = () => {
+    // Add check to ensure only team leaders can save changes
+    if (!isTeamLeader) {
+      toast({
+        title: "Permission Denied",
+        description: "Only team leaders can modify prompt templates",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     if (!promptTemplate.trim()) {
       toast({
         title: "Error",
@@ -478,6 +504,16 @@ const SettingsTab: React.FC = () => {
   };
 
   const handleSaveRubric = () => {
+    // Add check to ensure only team leaders can save changes
+    if (!isTeamLeader) {
+      toast({
+        title: "Permission Denied",
+        description: "Only team leaders can modify scoring rubrics",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     if (!rubricText.trim()) {
       toast({
         title: "Error",
@@ -795,25 +831,38 @@ const SettingsTab: React.FC = () => {
             <CardTitle className="flex items-center text-base">
               <FileEdit className="h-4 w-4 text-amber-500 mr-2" />
               <span>Prompt Template</span>
+              {!isTeamLeader && (
+                <Badge variant="outline" className="ml-2 text-[10px] py-0 bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">
+                  Read-only
+                </Badge>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-xs text-gray-500 dark:text-gray-400">
               Use <span className="font-mono bg-gray-100 dark:bg-gray-700 px-1 rounded text-[10px]">{'{chatlog_text}'}</span> and <span className="font-mono bg-gray-100 dark:bg-gray-700 px-1 rounded text-[10px]">{'{rubric_text}'}</span> as placeholders.
+              {!isTeamLeader && (
+                <span className="block mt-1 text-amber-600 dark:text-amber-400">
+                  Only team leaders can modify prompt templates.
+                </span>
+              )}
             </p>
             <Textarea
               value={promptTemplate}
-              onChange={(e) => setPromptTemplate(e.target.value)}
-              className="min-h-[120px] font-mono text-xs"
+              onChange={(e) => isTeamLeader && setPromptTemplate(e.target.value)}
+              className={`min-h-[120px] font-mono text-xs ${!isTeamLeader ? 'cursor-not-allowed bg-gray-50 dark:bg-gray-800/50' : ''}`}
               placeholder="Enter prompt template..."
+              readOnly={!isTeamLeader}
             />
-            <Button 
-              onClick={handleSavePrompt}
-              className="w-full h-8 text-xs"
-              size="sm"
-            >
-              Save Template
-            </Button>
+            {isTeamLeader && (
+              <Button 
+                onClick={handleSavePrompt}
+                className="w-full h-8 text-xs"
+                size="sm"
+              >
+                Save Template
+              </Button>
+            )}
           </CardContent>
         </Card>
         
@@ -823,25 +872,38 @@ const SettingsTab: React.FC = () => {
             <CardTitle className="flex items-center text-base">
               <Lightbulb className="h-4 w-4 text-amber-500 mr-2" />
               <span>Scoring Rubric</span>
+              {!isTeamLeader && (
+                <Badge variant="outline" className="ml-2 text-[10px] py-0 bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">
+                  Read-only
+                </Badge>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-xs text-gray-500 dark:text-gray-400">
               Define the scoring criteria included in evaluation prompts.
+              {!isTeamLeader && (
+                <span className="block mt-1 text-amber-600 dark:text-amber-400">
+                  Only team leaders can modify scoring rubrics.
+                </span>
+              )}
             </p>
             <Textarea
               value={rubricText}
-              onChange={(e) => setRubricText(e.target.value)}
-              className="min-h-[120px] font-mono text-xs"
+              onChange={(e) => isTeamLeader && setRubricText(e.target.value)}
+              className={`min-h-[120px] font-mono text-xs ${!isTeamLeader ? 'cursor-not-allowed bg-gray-50 dark:bg-gray-800/50' : ''}`}
               placeholder="Enter scoring rubric..."
+              readOnly={!isTeamLeader}
             />
-            <Button 
-              onClick={handleSaveRubric}
-              className="w-full h-8 text-xs"
-              size="sm"
-            >
-              Save Rubric
-            </Button>
+            {isTeamLeader && (
+              <Button 
+                onClick={handleSaveRubric}
+                className="w-full h-8 text-xs"
+                size="sm"
+              >
+                Save Rubric
+              </Button>
+            )}
           </CardContent>
         </Card>
         

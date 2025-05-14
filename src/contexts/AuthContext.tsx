@@ -10,6 +10,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   error: string | null;
   updateUser: (user: User) => void;
+  setTestUser: (role: string) => void; // For testing different user roles
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -20,31 +21,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    console.log("AuthProvider initialized, checking auth state...");
     checkAuth();
   }, []);
 
+  // This function adds logging to help debug authentication issues
   const checkAuth = async () => {
     try {
+      console.log("Checking auth token...");
       const token = localStorage.getItem('token');
+      
       if (token) {
-        const response = await api.get<User>('/auth/me');
-        setUser(response.data);
+        console.log("Token found, verifying user...");
+        try {
+          const response = await api.get<User>('/auth/me');
+          console.log("User data received:", response.data);
+          setUser(response.data);
+          console.log("Auth state updated with user data");
+        } catch (apiError) {
+          console.error("API error during auth check:", apiError);
+          localStorage.removeItem('token');
+          setUser(null);
+        }
+      } else {
+        console.log("No token found, user not authenticated");
+        setUser(null);
       }
     } catch (error) {
+      console.error("Error during auth check:", error);
       localStorage.removeItem('token');
+      setUser(null);
     } finally {
       setLoading(false);
+      console.log("Auth loading complete");
     }
   };
 
   const login = async (email: string, password: string) => {
     try {
+      console.log(`Attempting login for email: ${email}`);
       setError(null);
       const response = await api.post<AuthResponse>('/auth/login', { email, password });
       const { token, user } = response.data;
+      console.log("Login successful, user data:", user);
       localStorage.setItem('token', token);
       setUser(user);
+      console.log(`User authenticated with role: ${user.role}`);
     } catch (error: any) {
+      console.error("Login error:", error);
       setError(error.response?.data?.message || 'Login failed');
       throw error;
     }
@@ -52,12 +76,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signup = async (email: string, password: string, name: string, role: string) => {
     try {
+      console.log(`Attempting signup for email: ${email}, role: ${role}`);
       setError(null);
       const response = await api.post<AuthResponse>('/auth/signup', { email, password, name, role });
       const { token, user } = response.data;
+      console.log("Signup successful, user data:", user);
       localStorage.setItem('token', token);
       setUser(user);
+      console.log(`User created with role: ${user.role}`);
     } catch (error: any) {
+      console.error("Signup error:", error);
       setError(error.response?.data?.message || 'Signup failed');
       throw error;
     }
@@ -65,19 +93,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
+      console.log("Logging out user");
       localStorage.removeItem('token');
       setUser(null);
+      console.log("User logged out successfully");
     } catch (error) {
       console.error('Logout error:', error);
     }
   };
 
   const updateUser = (updatedUser: User) => {
+    console.log("Updating user data:", updatedUser);
     setUser(updatedUser);
   };
 
+  // For testing different user roles without backend
+  const setTestUser = (role: string) => {
+    console.log(`Setting test user with role: ${role}`);
+    const testUser: User = {
+      id: 'test-user-id',
+      email: `test-${role.toLowerCase()}@example.com`,
+      fullName: `Test ${role}`,
+      role: role,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    localStorage.setItem('token', 'test-token');
+    setUser(testUser);
+    console.log("Test user set:", testUser);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, logout, error, updateUser }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      loading, 
+      login, 
+      signup, 
+      logout, 
+      error, 
+      updateUser,
+      setTestUser 
+    }}>
       {children}
     </AuthContext.Provider>
   );
