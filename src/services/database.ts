@@ -8,6 +8,8 @@ export interface ChatLog {
   politeness: number;
   relevance: number;
   resolution: number;
+  shift?: string;
+  dateTime?: string;
   timestamp: Date;
 }
 

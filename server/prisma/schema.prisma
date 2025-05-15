@@ -63,6 +63,8 @@ model ChatLogEvaluation {
   politeness  Int
   relevance   Int
   resolution  Int
+  shift       String?
+  dateTime    DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }

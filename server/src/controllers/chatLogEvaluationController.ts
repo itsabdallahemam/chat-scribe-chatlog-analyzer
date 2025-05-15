@@ -47,6 +47,8 @@ export const saveChatLogEvaluations = async (req: Request, res: Response) => {
             politeness: evaluation.politeness,
             relevance: evaluation.relevance,
             resolution: evaluation.resolution,
+            shift: evaluation.shift || null,
+            dateTime: evaluation.dateTime ? new Date(evaluation.dateTime) : null,
           },
         });
       })

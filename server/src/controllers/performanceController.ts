@@ -60,14 +60,21 @@ export const getAgentPerformance = async (req: Request, res: Response) => {
 
 // Helper function to calculate performance metrics for a user
 async function getPerformanceForUser(userId: string, res: Response) {
+  console.log(`[PERFORMANCE DEBUG] Getting performance data for user ID: ${userId}`);
+  
   // Get all evaluations for the user
   const evaluations = await (prisma as any).chatLogEvaluation.findMany({
     where: { userId },
   });
 
+  console.log(`[PERFORMANCE DEBUG] Found ${evaluations.length} evaluations for user ${userId}`);
+
   if (evaluations.length === 0) {
+    console.log(`[PERFORMANCE DEBUG] No evaluations found for user ${userId}, returning 404`);
     return res.status(404).json({ message: 'No evaluations found for this user' });
   }
+
+  console.log(`[PERFORMANCE DEBUG] Evaluation data sample:`, evaluations[0]);
 
   // Calculate average scores for each metric
   const totalEvaluations = evaluations.length;
@@ -82,23 +89,46 @@ async function getPerformanceForUser(userId: string, res: Response) {
     { coherence: 0, politeness: 0, relevance: 0, resolution: 0 }
   );
 
+  console.log(`[PERFORMANCE DEBUG] Calculated sums:`, sum);
+
+  // Calculate the metrics - ensure resolution is on a 0-1 scale
+  const coherenceAvg = parseFloat((sum.coherence / totalEvaluations).toFixed(2));
+  const politenessAvg = parseFloat((sum.politeness / totalEvaluations).toFixed(2));
+  const relevanceAvg = parseFloat((sum.relevance / totalEvaluations).toFixed(2));
+  
+  // Resolution is on a 0-1 scale, but might have been stored as 0-5
+  // Check the sample to see if we need to normalize
+  const sampleResolution = evaluations[0].resolution;
+  const isResolutionNormalized = sampleResolution <= 1;
+  
+  // If resolution is already 0-1, use it directly, otherwise normalize from 0-5 to 0-1
+  const resolutionAvg = isResolutionNormalized 
+    ? parseFloat((sum.resolution / totalEvaluations).toFixed(2))
+    : parseFloat(((sum.resolution / totalEvaluations) / 5).toFixed(2));
+  
+  console.log(`[PERFORMANCE DEBUG] Resolution average calculation. Is normalized: ${isResolutionNormalized}, value: ${resolutionAvg}`);
+
+  // Calculate weighted average using the normalized resolution value
+  const calculatedAverage = parseFloat(
+    (
+      (coherenceAvg * 0.25) +
+      (politenessAvg * 0.20) +
+      (relevanceAvg * 0.25) +
+      // If resolution is already normalized (0-1), multiply by 5 to get it on the same scale as other metrics
+      ((isResolutionNormalized ? resolutionAvg * 5 : sum.resolution / totalEvaluations) * 0.30)
+    ).toFixed(2)
+  );
+
   const metrics: PerformanceMetrics = {
-    coherence: parseFloat((sum.coherence / totalEvaluations).toFixed(2)),
-    politeness: parseFloat((sum.politeness / totalEvaluations).toFixed(2)),
-    relevance: parseFloat((sum.relevance / totalEvaluations).toFixed(2)),
-    resolution: parseFloat((sum.resolution / totalEvaluations).toFixed(2)),
+    coherence: coherenceAvg,
+    politeness: politenessAvg,
+    relevance: relevanceAvg,
+    resolution: resolutionAvg,
     totalEvaluations,
-    // Calculate weighted average (based on weights in the frontend)
-    // Coherence (25%), Politeness (20%), Relevance (25%), Resolution (30%)
-    averageScore: parseFloat(
-      (
-        (sum.coherence / totalEvaluations) * 0.25 +
-        (sum.politeness / totalEvaluations) * 0.20 +
-        (sum.relevance / totalEvaluations) * 0.25 +
-        (sum.resolution / totalEvaluations) * 0.30
-      ).toFixed(2)
-    ),
+    averageScore: calculatedAverage
   };
+
+  console.log(`[PERFORMANCE DEBUG] Calculated metrics:`, metrics);
 
   return res.json(metrics);
 } 

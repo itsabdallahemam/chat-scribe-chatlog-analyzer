@@ -9,6 +9,8 @@ export interface ChatLogEvaluation {
   politeness: number;
   relevance: number;
   resolution: number;
+  shift?: string;
+  dateTime?: string;
   createdAt?: string;
   updatedAt?: string;
 }

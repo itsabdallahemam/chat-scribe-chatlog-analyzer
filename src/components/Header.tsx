@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Home, BarChart2, Smile, CheckCircle, FileText, Info, Moon, Sun, UploadCloud, Menu, X, UserCircle, ChevronDown, Users } from 'lucide-react';
+import { 
+  Home, BarChart2, Smile, CheckCircle, FileText, Info, Moon, Sun, 
+  UploadCloud, Menu, X, UserCircle, Users, Gauge, 
+  LayoutDashboard, Settings, LogOut
+} from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import {
@@ -11,14 +15,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface NavItem {
   path: string;
   label: string;
   icon: React.ReactNode;
   allowedRoles: string[];
+  description?: string;
 }
 
 const Header: React.FC = () => {
@@ -53,44 +59,119 @@ const Header: React.FC = () => {
     return requiredRoles.includes(user.role);
   };
 
-  const primaryNavItems: NavItem[] = [
-    { path: '/', label: 'Home', icon: <Home className="w-4 h-4" />, allowedRoles: [] },
-    { path: '/evaluate', label: 'Evaluate', icon: <UploadCloud className="w-4 h-4" />, allowedRoles: ['Agent'] },
-    { path: '/dashboard', label: 'Dashboard', icon: <BarChart2 className="w-4 h-4" />, allowedRoles: ['Agent'] },
-    { path: '/agents-dashboard', label: 'Agents Dashboard', icon: <Users className="w-4 h-4" />, allowedRoles: ['Team Leader'] },
-  ];
-
-  const analyticsNavItems: NavItem[] = [
-    { path: '/satisfaction', label: 'Satisfaction', icon: <Smile className="w-4 h-4" />, allowedRoles: ['Agent'] },
-    { path: '/cpr-details', label: 'CPR Details', icon: <Info className="w-4 h-4" />, allowedRoles: ['Agent'] },
-    { path: '/resolution', label: 'Resolution', icon: <CheckCircle className="w-4 h-4" />, allowedRoles: ['Agent'] },
-  ];
-
-  const reportItem: NavItem = { 
-    path: '/report', 
-    label: 'Reports', 
-    icon: <FileText className="w-4 h-4" />,
-    allowedRoles: ['Agent']
+  // Get role-based color for user avatar
+  const getRoleBorderColor = (role?: string) => {
+    switch (role) {
+      case 'Team Leader':
+        return "border-[#4582ff]"; // Blue for Team Leader
+      case 'Agent':
+        return "border-[#22c55e]"; // Green for Agent
+      case 'Admin':
+        return "border-purple-500"; // Purple for Admin
+      default:
+        return "border-gray-200 dark:border-gray-700"; // Default
+    }
   };
+
+  const navItems: NavItem[] = [
+    { 
+      path: '/', 
+      label: 'Home', 
+      icon: <Home className="w-4 h-4" />, 
+      allowedRoles: [],
+      description: "Upload and analyze chatlogs"
+    },
+    { 
+      path: '/evaluate', 
+      label: 'Evaluate', 
+      icon: <UploadCloud className="w-4 h-4" />, 
+      allowedRoles: ['Agent'],
+      description: "Upload and evaluate new chatlogs"
+    },
+    { 
+      path: '/dashboard', 
+      label: 'Dashboard', 
+      icon: <LayoutDashboard className="w-4 h-4" />, 
+      allowedRoles: ['Agent'],
+      description: "View performance metrics"
+    },
+    { 
+      path: '/agents-dashboard', 
+      label: 'Agents', 
+      icon: <Users className="w-4 h-4" />, 
+      allowedRoles: ['Team Leader'],
+      description: "Manage team performance"
+    },
+    { 
+      path: '/satisfaction', 
+      label: 'Satisfaction', 
+      icon: <Smile className="w-4 h-4" />, 
+      allowedRoles: ['Agent'],
+      description: "Customer satisfaction metrics"
+    },
+    { 
+      path: '/cpr-details', 
+      label: 'CPR', 
+      icon: <Gauge className="w-4 h-4" />, 
+      allowedRoles: ['Agent'],
+      description: "Coherence, Politeness, Relevance metrics"
+    },
+    { 
+      path: '/resolution', 
+      label: 'Resolution', 
+      icon: <CheckCircle className="w-4 h-4" />, 
+      allowedRoles: ['Agent'],
+      description: "Resolution rate analysis"
+    },
+    { 
+      path: '/report', 
+      label: 'Reports', 
+      icon: <FileText className="w-4 h-4" />,
+      allowedRoles: ['Agent'],
+      description: "Generate and view reports"
+    }
+  ];
 
   const NavLink = ({ item, className }: { item: NavItem; className?: string }) => {
     if (!isAllowedToView(item.allowedRoles)) return null;
     
     return (
-      <Link
-        to={item.path}
-        className={cn(
-          "flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm font-medium",
-          isActive(item.path)
-            ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md dark:from-indigo-500 dark:to-purple-500"
-            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800",
-          className
-        )}
-        onClick={() => setIsMobileMenuOpen(false)}
-      >
-        {item.icon}
-        <span>{item.label}</span>
-      </Link>
+      <TooltipProvider delayDuration={300}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link
+              to={item.path}
+              className={cn(
+                "flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm font-medium",
+                isActive(item.path)
+                  ? "bg-white dark:bg-gray-800/60 text-[#252A3A] dark:text-white border-b-2 border-[#22c55e]"
+                  : "text-gray-600 dark:text-gray-300 hover:bg-white/80 dark:hover:bg-gray-800/80 hover:text-[#252A3A] dark:hover:text-white",
+                className
+              )}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <div className={cn(
+                "p-1.5 rounded-md",
+                isActive(item.path) 
+                  ? item.path === '/satisfaction' 
+                    ? "bg-white dark:bg-gray-800 text-[#D4A000] dark:text-amber-400 ring-1 ring-amber-200 dark:ring-amber-900"
+                    : item.path === '/cpr-details'
+                    ? "bg-white dark:bg-gray-800 text-[#4582ff] dark:text-blue-400 ring-1 ring-blue-200 dark:ring-blue-900"
+                    : item.path === '/resolution'
+                    ? "bg-white dark:bg-gray-800 text-[#22c55e] dark:text-green-400 ring-1 ring-green-200 dark:ring-green-900"
+                    : "bg-white dark:bg-gray-800 text-[#252A3A] dark:text-white ring-1 ring-gray-200 dark:ring-gray-700"
+                  : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
+              )}>
+                {item.icon}
+              </div>
+              <span>{item.label}</span>
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="bg-white dark:bg-gray-800 text-xs">
+            {item.description}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     );
   };
 
@@ -99,131 +180,113 @@ const Header: React.FC = () => {
       className={cn(
         "sticky top-0 z-50 w-full transition-all duration-300 backdrop-blur-lg border-b",
         scrolled 
-          ? "bg-white/90 dark:bg-gray-900/90 border-gray-200/50 dark:border-gray-800/50 shadow-sm" 
-          : "bg-gradient-to-r from-white/80 to-gray-50/80 dark:from-gray-900/80 dark:to-gray-800/80 border-transparent"
+          ? "bg-[#f5f7fa]/95 dark:bg-[#161925]/95 border-gray-200/50 dark:border-gray-800/50 shadow-sm" 
+          : "bg-[#f5f7fa]/80 dark:bg-[#161925]/80 border-transparent"
       )}
     >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            <div className="font-bold text-transparent text-2xl bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">
+            <div className="bg-gradient-to-r from-[#22c55e] to-[#4582ff] p-2 rounded-lg shadow-md">
+              <CheckCircle className="h-5 w-5 text-white" />
+            </div>
+            <div className="font-bold text-2xl text-[#252A3A] dark:text-white">
               ChatScribe
             </div>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center gap-1">
-            {/* Primary Navigation */}
-            <nav className="flex items-center gap-1 mr-2">
-              {primaryNavItems.map((item) => (
+          <div className="hidden lg:flex items-center gap-2">
+            {/* Navigation */}
+            <nav className="flex items-center gap-2 mr-2 bg-gray-100/80 dark:bg-gray-800/80 px-2 py-1 rounded-lg">
+              {navItems.map((item) => (
                 <NavLink key={item.path} item={item} />
               ))}
             </nav>
-
-            {/* Analytics Dropdown */}
-            {user && user.role !== 'Team Leader' && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="px-3 py-2 flex items-center gap-2 h-auto">
-                    <BarChart2 className="w-4 h-4" />
-                    <span>Analytics</span>
-                    <ChevronDown className="w-3 h-3 opacity-50" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="center" className="w-48 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg">
-                  {analyticsNavItems.map((item) => (
-                    isAllowedToView(item.allowedRoles) && (
-                      <DropdownMenuItem key={item.path} asChild>
-                        <Link
-                          to={item.path}
-                          className={cn(
-                            "flex items-center gap-2 w-full py-2",
-                            isActive(item.path) ? "bg-gray-100 dark:bg-gray-800 text-indigo-600 dark:text-indigo-400" : ""
-                          )}
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                          {item.icon}
-                          <span>{item.label}</span>
-                        </Link>
-                      </DropdownMenuItem>
-                    )
-                  ))}
-                  <DropdownMenuSeparator />
-                  {isAllowedToView(reportItem.allowedRoles) && (
-                    <DropdownMenuItem asChild>
-                      <Link 
-                        to="/report" 
-                        className={cn(
-                          "flex items-center gap-2 w-full py-2",
-                          isActive("/report") ? "bg-gray-100 dark:bg-gray-800 text-indigo-600 dark:text-indigo-400" : ""
-                        )}
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        <FileText className="w-4 h-4" />
-                        <span>Reports</span>
-                      </Link>
-                    </DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
           </div>
 
           {/* Right Side Actions */}
-          <div className="flex items-center gap-1 md:gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
             {/* Theme Toggle */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleTheme}
-              className="rounded-full h-8 w-8 flex items-center justify-center bg-gray-100 dark:bg-gray-800"
-            >
-              {theme === 'dark' ? (
-                <Sun className="h-4 w-4 text-amber-500" />
-              ) : (
-                <Moon className="h-4 w-4 text-indigo-600" />
-              )}
-            </Button>
+            <TooltipProvider delayDuration={300}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={toggleTheme}
+                    className="rounded-lg h-9 w-9 flex items-center justify-center bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+                  >
+                    {theme === 'dark' ? (
+                      <Sun className="h-4 w-4 text-amber-500" />
+                    ) : (
+                      <Moon className="h-4 w-4 text-indigo-600" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  {theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
 
             {/* User Authentication */}
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button 
-                    variant="ghost" 
-                    className="flex items-center gap-2 px-2 py-1 h-auto rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700"
+                    variant="outline" 
+                    className="flex items-center gap-2 px-3 py-1 h-9 rounded-lg hover:bg-white/90 dark:hover:bg-gray-800/90 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
                   >
-                    <Avatar className="h-6 w-6 border border-gray-200 dark:border-gray-700">
-                      <AvatarFallback className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-xs">
+                    <Avatar className={`h-6 w-6 border-2 ${getRoleBorderColor(user.role)}`}>
+                      <AvatarFallback className="bg-gradient-to-r from-[#22c55e] to-[#4582ff] text-white text-xs">
                         {user.fullName ? user.fullName.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-sm font-medium hidden md:inline-block max-w-[100px] truncate">
+                    <span className="text-sm font-medium hidden md:inline-block max-w-[100px] truncate text-[#252A3A] dark:text-white">
                       {user.fullName || user.email.split('@')[0]}
                     </span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg">
-                  <div className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-800">
-                    Signed in as <span className="font-medium">{user.email}</span>
+                <DropdownMenuContent align="end" className="w-56 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg">
+                  <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-800">
+                    <div className="font-medium text-sm text-[#252A3A] dark:text-white">
+                      {user.fullName || user.email.split('@')[0]}
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {user.email}
+                    </div>
                   </div>
-                  <div className="px-3 py-2 text-xs font-medium text-indigo-600 dark:text-indigo-400 border-b border-gray-100 dark:border-gray-800">
-                    Role: {user.role}
+                  <div className="px-3 py-2 text-xs font-medium bg-gray-50 dark:bg-gray-800/60 border-b border-gray-100 dark:border-gray-800">
+                    <div className="flex items-center gap-2">
+                      <div className={`p-1 rounded-full ${
+                        user.role === 'Team Leader' ? 'bg-[#EEF4FF] dark:bg-blue-900/30' : 
+                        user.role === 'Agent' ? 'bg-[#ECFDF3] dark:bg-green-900/30' : 
+                        'bg-purple-100 dark:bg-purple-900/30'
+                      }`}>
+                        <UserCircle className={`h-3 w-3 ${
+                          user.role === 'Team Leader' ? 'text-[#4582ff] dark:text-blue-400' : 
+                          user.role === 'Agent' ? 'text-[#22c55e] dark:text-green-400' : 
+                          'text-purple-500 dark:text-purple-400'
+                        }`} />
+                      </div>
+                      <span className="text-[#252A3A] dark:text-white">Role: {user.role}</span>
+                    </div>
                   </div>
-                  <DropdownMenuItem asChild className="py-2">
-                    <Link to="/profile" onClick={() => setIsMobileMenuOpen(false)}>
-                      <UserCircle className="w-4 h-4 mr-2" />
-                      Profile
+                  <DropdownMenuItem asChild className="py-2 px-3">
+                    <Link to="/profile" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 w-full">
+                      <div className="p-1 rounded-md bg-gray-100 dark:bg-gray-700">
+                        <Settings className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                      </div>
+                      <span>Profile Settings</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={logout} className="text-red-600 dark:text-red-400 py-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
-                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                      <polyline points="16 17 21 12 16 7"></polyline>
-                      <line x1="21" y1="12" x2="9" y2="12"></line>
-                    </svg>
+                  <DropdownMenuItem onClick={logout} className="text-red-600 dark:text-red-400 py-2 px-3">
+                    <div className="p-1 rounded-md bg-red-50 dark:bg-red-900/20 mr-3">
+                      <LogOut className="w-4 h-4" />
+                    </div>
                     Logout
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -231,20 +294,24 @@ const Header: React.FC = () => {
             ) : (
               <div className="flex items-center gap-2">
                 <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                  <Button variant="ghost" className="text-sm">Login</Button>
+                  <Button variant="outline" className="text-sm bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                    Login
+                  </Button>
                 </Link>
                 <Link to="/signup" onClick={() => setIsMobileMenuOpen(false)}>
-                  <Button className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-sm">Sign Up</Button>
+                  <Button className="bg-gradient-to-r from-[#22c55e] to-[#4582ff] hover:opacity-90 text-white text-sm">
+                    Sign Up
+                  </Button>
                 </Link>
               </div>
             )}
 
             {/* Mobile Menu Button */}
             <Button
-              variant="ghost"
+              variant="outline"
               size="icon"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden rounded-full h-8 w-8 flex items-center justify-center bg-gray-100 dark:bg-gray-800"
+              className="lg:hidden rounded-lg h-9 w-9 flex items-center justify-center bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
             >
               {isMobileMenuOpen ? (
                 <X className="h-4 w-4" />
@@ -257,33 +324,14 @@ const Header: React.FC = () => {
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="lg:hidden py-4 absolute left-0 right-0 top-16 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-b border-gray-200 dark:border-gray-800 shadow-lg">
-            <div className="container mx-auto px-4 flex flex-col gap-1">
-              <div className="font-medium text-xs uppercase text-gray-500 dark:text-gray-400 px-3 py-2">Main Navigation</div>
-              {primaryNavItems.map((item) => (
+          <div className="lg:hidden py-4 absolute left-0 right-0 top-16 bg-[#f5f7fa]/95 dark:bg-[#161925]/95 backdrop-blur-lg border-b border-gray-200 dark:border-gray-800 shadow-lg">
+            <div className="container mx-auto px-4 flex flex-col gap-2">
+              <div className="font-medium text-xs uppercase text-gray-500 dark:text-gray-400 px-3 py-2">Navigation</div>
+              {navItems.map((item) => (
                 isAllowedToView(item.allowedRoles) && (
                   <NavLink key={item.path} item={item} className="w-full" />
                 )
               ))}
-              
-              {/* Only show Analytics section for non-Team Leaders */}
-              {user && user.role !== 'Team Leader' && (
-                <>
-                  <div className="font-medium text-xs uppercase text-gray-500 dark:text-gray-400 mt-4 px-3 py-2">Analytics</div>
-                  {analyticsNavItems.map((item) => (
-                    isAllowedToView(item.allowedRoles) && (
-                      <NavLink key={item.path} item={item} className="w-full" />
-                    )
-                  ))}
-                  
-                  {isAllowedToView(reportItem.allowedRoles) && (
-                    <NavLink 
-                      item={reportItem} 
-                      className="w-full" 
-                    />
-                  )}
-                </>
-              )}
             </div>
           </div>
         )}

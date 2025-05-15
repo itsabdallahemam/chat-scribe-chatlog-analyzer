@@ -604,13 +604,35 @@ const SettingsTab: React.FC = () => {
         return;
       }
       
+      // Process the data to ensure dateTime is properly formatted
+      const processedData = data.map(item => {
+        // Keep the original structure but process dateTime if present
+        const processed = { ...item };
+        
+        // Convert dateTime string to proper format if it exists
+        if (processed.dateTime && typeof processed.dateTime === 'string') {
+          try {
+            // Ensure it's a valid date string
+            const dateObj = new Date(processed.dateTime);
+            if (!isNaN(dateObj.getTime())) {
+              processed.dateTime = processed.dateTime;
+            }
+          } catch (e) {
+            // If parsing fails, leave as is
+            console.warn('Failed to parse dateTime:', processed.dateTime);
+          }
+        }
+        
+        return processed;
+      });
+      
       if (user) {
         // User is logged in - restore directly via setEvaluationResults
-        setEvaluationResults(data);
+        setEvaluationResults(processedData);
       } else {
         // User is not logged in - restore to local database
         await deleteAllChatLogs();
-        const logsToAdd = data.map(({ id, timestamp, ...rest }) => {
+        const logsToAdd = processedData.map(({ id, timestamp, ...rest }) => {
           let validTimestamp = timestamp;
           if (!validTimestamp || isNaN(new Date(validTimestamp).getTime())) {
             validTimestamp = new Date();
@@ -628,7 +650,7 @@ const SettingsTab: React.FC = () => {
       
       await new Promise(res => setTimeout(res, 200));
       await loadSavedChatLogs();
-      toast({ title: 'Backup Restored', description: `Imported ${data.length} chatlogs from backup.`, variant: 'default' });
+      toast({ title: 'Backup Restored', description: `Imported ${processedData.length} chatlogs from backup.`, variant: 'default' });
     } catch (error) {
       toast({ title: 'Error', description: 'Failed to restore from backup. Ensure the file is a valid backup JSON.', variant: 'destructive' });
     }
