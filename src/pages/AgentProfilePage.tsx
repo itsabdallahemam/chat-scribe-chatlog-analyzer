@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { User, Mail, Calendar, ArrowLeft, User as UserIcon, BarChart2, CheckCircle, Trash2 } from 'lucide-react';
+import { User, Mail, Calendar, ArrowLeft, User as UserIcon, BarChart2, CheckCircle, Trash2, Shield, Bell, Flag } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import api from '@/lib/axios';
@@ -95,106 +95,184 @@ const AgentProfilePage: React.FC = () => {
   };
 
   return (
-    <div className="container py-10">
-      <Button 
-        variant="ghost" 
-        onClick={handleGoBack} 
-        className="mb-6 group hover:bg-blue-50 dark:hover:bg-blue-900/20"
-      >
-        <ArrowLeft className="h-4 w-4 mr-2 group-hover:text-blue-500" />
-        <span className="group-hover:text-blue-500">
-          {isTeamLeader ? 'Back to Agents Dashboard' : 'Back to Profile'}
-        </span>
-      </Button>
+    <div className="min-h-screen bg-[#f5f7fa] dark:bg-[#161925] py-8 px-4 md:px-8">
+      {/* Header Section with Improved Alignment */}
+      <div className="mb-6 max-w-7xl mx-auto">
+        <Button 
+          variant="ghost" 
+          onClick={handleGoBack} 
+          className="mb-6 group hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2 group-hover:text-blue-500" />
+          <span className="group-hover:text-blue-500">
+            {isTeamLeader ? 'Back to Agents Dashboard' : 'Back to Profile'}
+          </span>
+        </Button>
+
+        {agent && !loading && !error && (
+          <div className="flex flex-col md:flex-row md:items-center gap-4 mb-5">
+            <div className="flex items-center gap-4">
+              <Avatar className="h-12 w-12 border-2 border-white dark:border-gray-800 shadow-md">
+                <AvatarFallback className="bg-blue-500 text-white text-lg">
+                  {agent.fullName ? agent.fullName.charAt(0).toUpperCase() : agent.email.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <h1 className="text-2xl font-bold text-[#252A3A] dark:text-white">
+                  {isSelfView ? 'Your Profile' : agent.fullName || 'Unnamed Agent'}
+                </h1>
+                <p className="mt-1 text-[#667085] dark:text-gray-300">
+                  {isSelfView 
+                    ? 'View and manage your profile information and performance metrics.' 
+                    : `View ${agent.fullName || 'this agent'}'s profile and performance metrics.`}
+                </p>
+              </div>
+            </div>
+            <Badge 
+              className={`mt-2 md:mt-0 md:ml-auto px-4 py-2 rounded-lg flex items-center ${
+                agent.role === 'Team Leader' 
+                  ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' 
+                  : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+              }`}
+            >
+              {agent.role === 'Team Leader' ? (
+                <><UserIcon className="h-4 w-4 mr-2" /> Team Leader</>
+              ) : (
+                <><UserIcon className="h-4 w-4 mr-2" /> Agent</>
+              )}
+            </Badge>
+          </div>
+        )}
+      </div>
 
       {loading ? (
         <LoadingState />
       ) : error ? (
         <ErrorState error={error} onBack={handleGoBack} />
       ) : agent ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Agent Info Card */}
-          <Card className="border border-gray-200 dark:border-gray-800 md:col-span-1">
-            <CardHeader className="text-center">
-              <div className="flex justify-center mb-4">
-                <Avatar className="h-24 w-24 border-4 border-white dark:border-gray-800 shadow-md">
-                  <AvatarFallback className="bg-blue-500 text-white text-2xl">
-                    {agent.fullName ? agent.fullName.charAt(0).toUpperCase() : agent.email.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-              </div>
-              <CardTitle className="text-xl">
-                {isSelfView ? 'Your Profile' : agent.fullName || 'Unnamed Agent'}
-              </CardTitle>
-              <div className="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-3">{agent.email}</div>
-              <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 px-3 py-1">
-                {agent.role}
-              </Badge>
-            </CardHeader>
-            
-            <CardContent>
-              <div className="space-y-4">
-                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-md p-4">
-                  <h3 className="text-sm font-medium mb-3">Account Information</h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center text-sm">
-                      <UserIcon className="h-4 w-4 text-gray-500 dark:text-gray-400 mr-3" />
-                      <span className="text-gray-600 dark:text-gray-300 flex-1">Full Name</span>
-                      <span className="font-medium">{agent.fullName || 'Not set'}</span>
-                    </div>
-                    <div className="flex items-center text-sm">
-                      <Mail className="h-4 w-4 text-gray-500 dark:text-gray-400 mr-3" />
-                      <span className="text-gray-600 dark:text-gray-300 flex-1">Email</span>
-                      <span className="font-medium">{agent.email}</span>
-                    </div>
-                    <div className="flex items-center text-sm">
-                      <Calendar className="h-4 w-4 text-gray-500 dark:text-gray-400 mr-3" />
-                      <span className="text-gray-600 dark:text-gray-300 flex-1">Joined</span>
-                      <span className="font-medium">{format(new Date(agent.createdAt), 'MMM d, yyyy')}</span>
-                    </div>
-                  </div>
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-6">
+          {/* Agent Info Card - 3 columns on desktop */}
+          <div className="md:col-span-3">
+            <Card className="border-border/40 shadow-md overflow-hidden">
+              <CardContent className="p-0">
+                <div className="flex flex-col items-center text-center p-6 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
+                  <Avatar className="h-24 w-24 mb-4 ring-4 ring-white/90 dark:ring-gray-800 shadow-md">
+                    <AvatarFallback className="bg-blue-500 text-white text-2xl">
+                      {agent.fullName ? agent.fullName.charAt(0).toUpperCase() : agent.email.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <CardTitle className="text-xl text-[#252A3A] dark:text-white mb-1">
+                    {isSelfView ? 'Your Profile' : agent.fullName || 'Unnamed Agent'}
+                  </CardTitle>
+                  <div className="text-sm text-[#667085] dark:text-gray-400 mt-1 mb-3">{agent.email}</div>
+                  <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 px-3 py-1">
+                    {agent.role}
+                  </Badge>
                 </div>
                 
-                {/* Only show delete button for Team Leaders */}
-                {isTeamLeader && !isSelfView && (
-                  <Button 
-                    variant="destructive" 
-                    className="w-full flex items-center justify-center"
-                    onClick={() => setDeleteDialogOpen(true)}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete Agent
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                <div className="p-5">
+                  <div className="space-y-4">
+                    <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
+                      <h3 className="text-sm font-medium mb-3 text-[#252A3A] dark:text-white">Account Information</h3>
+                      <div className="space-y-3">
+                        <div className="flex items-center text-sm">
+                          <div className="p-1.5 rounded-full bg-blue-100 dark:bg-blue-900/30 mr-3">
+                            <UserIcon className="h-3.5 w-3.5 text-blue-700 dark:text-blue-400" />
+                          </div>
+                          <span className="text-[#667085] dark:text-gray-300 flex-1">Full Name</span>
+                          <span className="font-medium text-[#252A3A] dark:text-white">{agent.fullName || 'Not set'}</span>
+                        </div>
+                        <div className="flex items-center text-sm">
+                          <div className="p-1.5 rounded-full bg-purple-100 dark:bg-purple-900/30 mr-3">
+                            <Mail className="h-3.5 w-3.5 text-purple-700 dark:text-purple-400" />
+                          </div>
+                          <span className="text-[#667085] dark:text-gray-300 flex-1">Email</span>
+                          <span className="font-medium text-[#252A3A] dark:text-white">{agent.email}</span>
+                        </div>
+                        <div className="flex items-center text-sm">
+                          <div className="p-1.5 rounded-full bg-amber-100 dark:bg-amber-900/30 mr-3">
+                            <Calendar className="h-3.5 w-3.5 text-amber-700 dark:text-amber-400" />
+                          </div>
+                          <span className="text-[#667085] dark:text-gray-300 flex-1">Joined</span>
+                          <span className="font-medium text-[#252A3A] dark:text-white">{format(new Date(agent.createdAt), 'MMM d, yyyy')}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Quick Actions */}
+                    <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+                      <h3 className="text-sm font-medium mb-3 text-[#252A3A] dark:text-blue-300">Quick Actions</h3>
+                      <div className="space-y-2">
+                        <Button 
+                          variant="outline" 
+                          className="w-full flex items-center justify-start border-blue-200 dark:border-blue-800/30 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800/20"
+                          size="sm"
+                          onClick={() => navigate('/dashboard')}
+                        >
+                          <BarChart2 className="h-3.5 w-3.5 mr-2" />
+                          View Dashboard
+                        </Button>
+                        {isTeamLeader && (
+                          <Button 
+                            variant="outline" 
+                            className="w-full flex items-center justify-start border-blue-200 dark:border-blue-800/30 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800/20"
+                            size="sm"
+                            onClick={() => navigate('/agents-dashboard')}
+                          >
+                            <User className="h-3.5 w-3.5 mr-2" />
+                            Manage Agents
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Only show delete button for Team Leaders */}
+                    {isTeamLeader && !isSelfView && (
+                      <Button 
+                        variant="destructive" 
+                        className="w-full flex items-center justify-center"
+                        onClick={() => setDeleteDialogOpen(true)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete Agent
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
-          {/* Main Content */}
-          <div className="md:col-span-2">
-            <Card className="border border-gray-200 dark:border-gray-800 h-full">
-              <CardHeader>
-                <h3 className="text-lg font-medium">
+          {/* Main Content - 9 columns on desktop */}
+          <div className="md:col-span-9">
+            <Card className="border-border/40 shadow-md h-full">
+              <CardHeader className="pb-2">
+                <h3 className="text-lg font-medium text-[#252A3A] dark:text-white">
                   {isSelfView ? 'Your Performance' : 'Agent Details'}
                 </h3>
+                <CardDescription>
+                  {isSelfView 
+                    ? 'Track your performance metrics and evaluation results' 
+                    : `View ${agent.fullName || 'this agent'}'s performance metrics and evaluation results`}
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <Tabs defaultValue="performance" value={activeTab} onValueChange={setActiveTab}>
-                  <TabsList className="mb-4">
+                  <TabsList className="mb-4 p-1 bg-gray-100 dark:bg-gray-800">
                     {/* Only show overview tab for Team Leaders */}
                     {(isTeamLeader || !isSelfView) && (
-                      <TabsTrigger value="overview" className="flex items-center gap-2">
+                      <TabsTrigger value="overview" className="flex items-center gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900">
                         <User className="h-4 w-4" />
                         Overview
                       </TabsTrigger>
                     )}
-                    <TabsTrigger value="performance" className="flex items-center gap-2">
+                    <TabsTrigger value="performance" className="flex items-center gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900">
                       <BarChart2 className="h-4 w-4" />
                       Performance
                     </TabsTrigger>
                     {/* Only show evaluations tab for Team Leaders */}
                     {(isTeamLeader || !isSelfView) && (
-                      <TabsTrigger value="evaluations" className="flex items-center gap-2">
+                      <TabsTrigger value="evaluations" className="flex items-center gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900">
                         <CheckCircle className="h-4 w-4" />
                         Evaluations
                       </TabsTrigger>
@@ -204,31 +282,122 @@ const AgentProfilePage: React.FC = () => {
                   {/* Only render overview tab for Team Leaders */}
                   {(isTeamLeader || !isSelfView) && (
                     <TabsContent value="overview">
-                      <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-5 text-center">
-                        <p className="text-gray-600 dark:text-gray-300">
-                          Additional agent information and statistics will be displayed here.
-                        </p>
-                        <p className="text-gray-500 dark:text-gray-400 text-sm mt-2">
-                          This feature is under development.
-                        </p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="rounded-xl bg-gradient-to-r from-blue-50 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-900/30 p-5 shadow-sm">
+                          <div className="flex items-center mb-4">
+                            <div className="p-2 rounded-full bg-white/60 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 mr-3">
+                              <User className="h-5 w-5" />
+                            </div>
+                            <h3 className="text-base font-medium text-[#252A3A] dark:text-blue-300">Agent Status</h3>
+                          </div>
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between bg-white/80 dark:bg-gray-900/60 p-3 rounded-md border border-blue-200/50 dark:border-blue-800/30">
+                              <div className="text-sm text-[#667085] dark:text-gray-400">Status</div>
+                              <Badge variant="outline" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                Active
+                              </Badge>
+                            </div>
+                            <div className="flex items-center justify-between bg-white/80 dark:bg-gray-900/60 p-3 rounded-md border border-blue-200/50 dark:border-blue-800/30">
+                              <div className="text-sm text-[#667085] dark:text-gray-400">Role</div>
+                              <span className="text-[#252A3A] dark:text-white font-medium">{agent.role}</span>
+                            </div>
+                            <div className="flex items-center justify-between bg-white/80 dark:bg-gray-900/60 p-3 rounded-md border border-blue-200/50 dark:border-blue-800/30">
+                              <div className="text-sm text-[#667085] dark:text-gray-400">Last Active</div>
+                              <span className="text-[#252A3A] dark:text-white font-medium">Today</span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="rounded-xl bg-gradient-to-r from-green-50 to-emerald-100 dark:from-green-900/20 dark:to-emerald-900/30 p-5 shadow-sm">
+                          <div className="flex items-center mb-4">
+                            <div className="p-2 rounded-full bg-white/60 dark:bg-green-900/40 text-green-600 dark:text-green-400 mr-3">
+                              <Shield className="h-5 w-5" />
+                            </div>
+                            <h3 className="text-base font-medium text-[#252A3A] dark:text-green-300">Permissions & Access</h3>
+                          </div>
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between bg-white/80 dark:bg-gray-900/60 p-3 rounded-md border border-green-200/50 dark:border-green-800/30">
+                              <div className="text-sm text-[#667085] dark:text-gray-400">Dashboard Access</div>
+                              <Badge variant="outline" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                Granted
+                              </Badge>
+                            </div>
+                            <div className="flex items-center justify-between bg-white/80 dark:bg-gray-900/60 p-3 rounded-md border border-green-200/50 dark:border-green-800/30">
+                              <div className="text-sm text-[#667085] dark:text-gray-400">User Management</div>
+                              <Badge variant="outline" className={agent.role === 'Team Leader' ? 
+                                "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : 
+                                "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"}>
+                                {agent.role === 'Team Leader' ? 'Granted' : 'Restricted'}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center justify-between bg-white/80 dark:bg-gray-900/60 p-3 rounded-md border border-green-200/50 dark:border-green-800/30">
+                              <div className="text-sm text-[#667085] dark:text-gray-400">API Access</div>
+                              <Badge variant="outline" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                Granted
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </TabsContent>
                   )}
                   
                   <TabsContent value="performance">
-                    <RatingsTab userId={id} />
+                    <div className="space-y-6">
+                      <div className="bg-gradient-to-r from-blue-50 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-900/30 rounded-xl p-5 shadow-sm">
+                        <div className="flex items-center mb-4">
+                          <div className="p-2 rounded-full bg-white/60 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 mr-3">
+                            <BarChart2 className="h-5 w-5" />
+                          </div>
+                          <h3 className="text-base font-medium text-[#252A3A] dark:text-blue-300">Performance Metrics</h3>
+                        </div>
+                        <div className="bg-white/80 dark:bg-gray-900/60 p-5 rounded-lg border border-blue-200/50 dark:border-blue-800/30">
+                          <p className="text-sm text-[#667085] dark:text-gray-400 mb-4">
+                            These metrics are calculated from <strong>{agent.fullName || "this agent"}'s</strong> chat evaluations.
+                            The ratings reflect customer interactions across different metrics.
+                          </p>
+                          <RatingsTab userId={id} />
+                        </div>
+                      </div>
+                      
+                      <div className="bg-gradient-to-r from-purple-50 to-fuchsia-100 dark:from-purple-900/20 dark:to-fuchsia-900/30 rounded-xl p-5 shadow-sm">
+                        <div className="flex items-center mb-4">
+                          <div className="p-2 rounded-full bg-white/60 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 mr-3">
+                            <CheckCircle className="h-5 w-5" />
+                          </div>
+                          <h3 className="text-base font-medium text-[#252A3A] dark:text-purple-300">Recent Achievements</h3>
+                        </div>
+                        <div className="bg-white/80 dark:bg-gray-900/60 p-5 rounded-lg border border-purple-200/50 dark:border-purple-800/30">
+                          {/* Here we'd show recent achievements if there were any */}
+                          <div className="text-center py-4">
+                            <p className="text-[#667085] dark:text-gray-400 mb-2">No recent achievements available yet.</p>
+                            <p className="text-sm text-[#667085] dark:text-gray-500">
+                              Achievements will appear here as {agent.fullName || "this agent"} continues to get evaluated chats.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </TabsContent>
                   
                   {/* Only render evaluations tab for Team Leaders */}
                   {(isTeamLeader || !isSelfView) && (
                     <TabsContent value="evaluations">
-                      <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-5 text-center">
-                        <p className="text-gray-600 dark:text-gray-300">
-                          Chat log evaluations and feedback will be displayed here.
-                        </p>
-                        <p className="text-gray-500 dark:text-gray-400 text-sm mt-2">
-                          This feature is under development.
-                        </p>
+                      <div className="rounded-xl bg-gradient-to-r from-purple-50 to-fuchsia-100 dark:from-purple-900/20 dark:to-fuchsia-900/30 p-5 shadow-sm">
+                        <div className="flex items-center mb-4">
+                          <div className="p-2 rounded-full bg-white/60 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 mr-3">
+                            <Flag className="h-5 w-5" />
+                          </div>
+                          <h3 className="text-base font-medium text-[#252A3A] dark:text-purple-300">Recent Evaluations</h3>
+                        </div>
+                        <div className="bg-white/80 dark:bg-gray-900/60 rounded-lg p-5 text-center">
+                          <p className="text-[#667085] dark:text-gray-300">
+                            Chat log evaluations and feedback will be displayed here.
+                          </p>
+                          <p className="text-[#667085] dark:text-gray-400 text-sm mt-2">
+                            This feature is under development.
+                          </p>
+                        </div>
                       </div>
                     </TabsContent>
                   )}
@@ -238,7 +407,7 @@ const AgentProfilePage: React.FC = () => {
           </div>
         </div>
       ) : (
-        <Card className="border border-gray-200 dark:border-gray-800 shadow-sm">
+        <Card className="border-border/40 shadow-md max-w-2xl mx-auto">
           <CardHeader className="text-center pb-2">
             <CardTitle>Agent Not Found</CardTitle>
             <CardDescription>The agent you're looking for doesn't exist or has been removed.</CardDescription>
@@ -286,56 +455,59 @@ const AgentProfilePage: React.FC = () => {
 
 // Loading State Component
 const LoadingState = () => (
-  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+  <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-6">
     {/* Left column - Agent info card */}
-    <Card className="border border-gray-200 dark:border-gray-800 md:col-span-1">
-      <CardHeader className="text-center">
-        <div className="flex justify-center mb-4">
-          <Skeleton className="h-24 w-24 rounded-full" />
-        </div>
-        <Skeleton className="h-6 w-40 mx-auto" />
-        <Skeleton className="h-4 w-60 mx-auto mt-2 mb-3" />
-        <Skeleton className="h-6 w-20 mx-auto" />
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="bg-gray-50 dark:bg-gray-800/50 rounded-md p-4">
-            <Skeleton className="h-5 w-40 mb-3" />
-            <div className="space-y-3">
-              <div className="flex items-center">
-                <Skeleton className="h-4 w-4 mr-3" />
-                <Skeleton className="h-4 flex-1" />
-              </div>
-              <div className="flex items-center">
-                <Skeleton className="h-4 w-4 mr-3" />
-                <Skeleton className="h-4 flex-1" />
-              </div>
-              <div className="flex items-center">
-                <Skeleton className="h-4 w-4 mr-3" />
-                <Skeleton className="h-4 flex-1" />
+    <div className="md:col-span-3">
+      <Card className="border-border/40 shadow-md">
+        <CardContent className="p-6">
+          <div className="flex flex-col items-center text-center">
+            <Skeleton className="h-24 w-24 rounded-full mb-4" />
+            <Skeleton className="h-6 w-40 mx-auto mb-2" />
+            <Skeleton className="h-4 w-60 mx-auto mb-3" />
+            <Skeleton className="h-6 w-20 mx-auto mb-6" />
+          </div>
+          <div className="space-y-4">
+            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
+              <Skeleton className="h-5 w-40 mb-3" />
+              <div className="space-y-3">
+                <div className="flex items-center">
+                  <Skeleton className="h-4 w-4 mr-3" />
+                  <Skeleton className="h-4 flex-1" />
+                </div>
+                <div className="flex items-center">
+                  <Skeleton className="h-4 w-4 mr-3" />
+                  <Skeleton className="h-4 flex-1" />
+                </div>
+                <div className="flex items-center">
+                  <Skeleton className="h-4 w-4 mr-3" />
+                  <Skeleton className="h-4 flex-1" />
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
 
     {/* Right column - Details content */}
-    <Card className="border border-gray-200 dark:border-gray-800 md:col-span-2">
-      <CardHeader>
-        <Skeleton className="h-6 w-40" />
-      </CardHeader>
-      <CardContent>
-        <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-40 w-full rounded-lg" />
-      </CardContent>
-    </Card>
+    <div className="md:col-span-9">
+      <Card className="border-border/40 shadow-md">
+        <CardHeader>
+          <Skeleton className="h-6 w-40 mb-2" />
+          <Skeleton className="h-4 w-60" />
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-10 w-full mb-4" />
+          <Skeleton className="h-40 w-full rounded-lg" />
+        </CardContent>
+      </Card>
+    </div>
   </div>
 );
 
 // Error State Component
 const ErrorState = ({ error, onBack }: { error: string; onBack: () => void }) => (
-  <Card className="border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 shadow-sm">
+  <Card className="border-red-200/40 dark:border-red-800/40 bg-red-50 dark:bg-red-900/20 shadow-sm max-w-2xl mx-auto">
     <CardHeader className="text-center pb-2">
       <CardTitle className="text-red-700 dark:text-red-400">Error Loading Profile</CardTitle>
       <CardDescription className="text-red-600 dark:text-red-500">{error}</CardDescription>

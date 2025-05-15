@@ -150,11 +150,13 @@ const RatingsTab: React.FC<RatingsTabProps> = ({ userId }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {/* Overall Rating Card */}
-      <Card className="border border-gray-200 dark:border-gray-700 shadow-sm bg-white dark:bg-gray-800/30 overflow-hidden">
-        <CardHeader className="pb-3 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800/50 dark:to-gray-800/30">
+      <Card className="border-0 shadow-sm bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-900/30 overflow-hidden">
+        <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center text-lg">
-              <Sparkles className="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400" />
+            <CardTitle className="flex items-center text-lg text-[#252A3A] dark:text-blue-300">
+              <div className="p-2 rounded-full bg-white/60 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 mr-2">
+                <Sparkles className="h-4 w-4" />
+              </div>
               Overall Rating
             </CardTitle>
             <TooltipProvider>
@@ -163,10 +165,10 @@ const RatingsTab: React.FC<RatingsTabProps> = ({ userId }) => {
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    className="h-7 w-7"
+                    className="h-7 w-7 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40"
                     onClick={() => setInfoDialogOpen(true)}
                   >
-                    <InfoIcon className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                    <InfoIcon className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -182,10 +184,10 @@ const RatingsTab: React.FC<RatingsTabProps> = ({ userId }) => {
             {/* Enhanced circular progress indicator */}
             <div className="relative w-44 h-44 mb-5">
               {/* Outer light ring for emphasis */}
-              <div className="absolute inset-[-4px] rounded-full bg-gradient-to-tr from-gray-100 to-gray-300 dark:from-gray-700 dark:to-gray-600 shadow-inner"></div>
+              <div className="absolute inset-[-4px] rounded-full bg-white/70 dark:bg-gray-800/50 shadow-inner"></div>
               
               {/* Background circle */}
-              <div className="absolute inset-0 rounded-full bg-gray-200 dark:bg-gray-700"></div>
+              <div className="absolute inset-0 rounded-full bg-white/60 dark:bg-gray-800/60"></div>
               
               {/* Progress circle */}
               <svg className="absolute inset-0 w-full h-full -rotate-90">
@@ -209,12 +211,12 @@ const RatingsTab: React.FC<RatingsTabProps> = ({ userId }) => {
               </svg>
               
               {/* Inner white circle with elevated appearance */}
-              <div className="absolute inset-[15%] bg-white dark:bg-gray-800 rounded-full flex items-center justify-center shadow-inner">
+              <div className="absolute inset-[15%] bg-white dark:bg-gray-800 rounded-full flex items-center justify-center shadow">
                 <div className={`text-center transform scale-110 transition-opacity duration-500 ${animated ? 'opacity-100' : 'opacity-0'}`}>
                   <div className={`text-5xl font-bold ${getScoreColor(metrics.averageScore)}`}>
-              {metrics.averageScore.toFixed(1)}
+                    {metrics.averageScore.toFixed(1)}
                   </div>
-                  <div className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                  <div className="text-xs font-medium text-[#667085] dark:text-gray-400">
                     out of 5.0
                   </div>
                 </div>
@@ -246,101 +248,149 @@ const RatingsTab: React.FC<RatingsTabProps> = ({ userId }) => {
             </div>
             
             {/* Percentage score with improved styling */}
-            <div className={`flex items-center justify-center text-sm text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700/50 px-4 py-1.5 rounded-md ${animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'} transition-all duration-500 ease-out delay-300`}>
+            <div className={`flex items-center justify-center text-sm text-[#667085] dark:text-gray-400 bg-white/80 dark:bg-gray-800/80 px-4 py-1.5 rounded-md border border-blue-100/50 dark:border-blue-900/30 ${animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'} transition-all duration-500 ease-out delay-300`}>
               <BarChart2 className="h-4 w-4 mr-2" />
-              <span className="font-medium">{Math.round((metrics.averageScore / 5) * 100)}% Overall Score</span>
+              <span className="font-medium">{(metrics.averageScore / 5 * 100).toFixed(0)}%</span> performance score
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Metrics Breakdown Card */}
-      <Card className="border border-gray-200 dark:border-gray-700 shadow-sm">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg">Metrics Breakdown</CardTitle>
-          <CardDescription>Individual performance categories</CardDescription>
+      <Card className="border-0 shadow-sm bg-gradient-to-r from-purple-50 to-fuchsia-100 dark:from-purple-900/20 dark:to-fuchsia-900/30 overflow-hidden">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center text-lg text-[#252A3A] dark:text-purple-300">
+            <div className="p-2 rounded-full bg-white/60 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 mr-2">
+              <CheckCircle className="h-4 w-4" />
+            </div>
+            Performance Breakdown
+          </CardTitle>
+          <CardDescription>
+            Detailed metrics by category
+          </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <MetricItem 
-              label="Coherence" 
-              value={metrics.coherence} 
-              icon={<MessageSquare className="h-4 w-4" />} 
-              color={getMetricColor("Coherence", metrics.coherence)}
-            />
-            <MetricItem 
-              label="Politeness" 
-              value={metrics.politeness} 
-              icon={<ThumbsUp className="h-4 w-4" />} 
-              color={getMetricColor("Politeness", metrics.politeness)}
-            />
-            <MetricItem 
-              label="Relevance" 
-              value={metrics.relevance} 
-              icon={<Star className="h-4 w-4" />} 
-              color={getMetricColor("Relevance", metrics.relevance)}
-            />
-            <MetricItem 
-              label="Resolution" 
-              value={metrics.resolution} 
-              icon={<CheckCircle className="h-4 w-4" />} 
-              color={getMetricColor("Resolution", metrics.resolution)}
-            />
+        <CardContent className="space-y-4">
+          {/* Coherence Metric */}
+          <div className={`p-4 bg-white/80 dark:bg-gray-900/60 rounded-lg border border-purple-200/50 dark:border-purple-800/30 ${animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'} transition-all duration-300 ease-out`} style={{ transitionDelay: '200ms' }}>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center">
+                <div className="p-1.5 rounded-full mr-2 bg-purple-100 dark:bg-purple-900/30">
+                  <MessageSquare className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />
+                </div>
+                <span className="font-medium text-[#252A3A] dark:text-white">Coherence</span>
+              </div>
+              <div className={`text-lg font-bold ${getScoreColor(metrics.coherence)}`}>
+                {metrics.coherence.toFixed(1)}
+              </div>
+            </div>
+            <div className="bg-secondary rounded-full h-2 overflow-hidden">
+              <div 
+                className={`h-full ${getProgressColor(metrics.coherence)} transition-all duration-1000 ease-out ${animated ? 'opacity-100' : 'opacity-0'}`}
+                style={{ width: `${metrics.coherence * 20}%` }}
+              ></div>
+            </div>
+            <p className="text-xs text-[#667085] dark:text-gray-400 mt-2">
+              Measures the logical flow and continuity of the conversation
+            </p>
+          </div>
+
+          {/* Politeness Metric */}
+          <div className={`p-4 bg-white/80 dark:bg-gray-900/60 rounded-lg border border-purple-200/50 dark:border-purple-800/30 ${animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'} transition-all duration-300 ease-out`} style={{ transitionDelay: '300ms' }}>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center">
+                <div className="p-1.5 rounded-full mr-2 bg-blue-100 dark:bg-blue-900/30">
+                  <ThumbsUp className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <span className="font-medium text-[#252A3A] dark:text-white">Politeness</span>
+              </div>
+              <div className={`text-lg font-bold ${getScoreColor(metrics.politeness)}`}>
+                {metrics.politeness.toFixed(1)}
+              </div>
+            </div>
+            <div className="bg-secondary rounded-full h-2 overflow-hidden">
+              <div 
+                className={`h-full ${getProgressColor(metrics.politeness)} transition-all duration-1000 ease-out ${animated ? 'opacity-100' : 'opacity-0'}`}
+                style={{ width: `${metrics.politeness * 20}%` }}
+              ></div>
+            </div>
+            <p className="text-xs text-[#667085] dark:text-gray-400 mt-2">
+              Evaluates tone, courtesy, and respectfulness to the customer
+            </p>
+          </div>
+
+          {/* Relevance Metric */}
+          <div className={`p-4 bg-white/80 dark:bg-gray-900/60 rounded-lg border border-purple-200/50 dark:border-purple-800/30 ${animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'} transition-all duration-300 ease-out`} style={{ transitionDelay: '400ms' }}>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center">
+                <div className="p-1.5 rounded-full mr-2 bg-amber-100 dark:bg-amber-900/30">
+                  <Star className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                </div>
+                <span className="font-medium text-[#252A3A] dark:text-white">Relevance</span>
+              </div>
+              <div className={`text-lg font-bold ${getScoreColor(metrics.relevance)}`}>
+                {metrics.relevance.toFixed(1)}
+              </div>
+            </div>
+            <div className="bg-secondary rounded-full h-2 overflow-hidden">
+              <div 
+                className={`h-full ${getProgressColor(metrics.relevance)} transition-all duration-1000 ease-out ${animated ? 'opacity-100' : 'opacity-0'}`}
+                style={{ width: `${metrics.relevance * 20}%` }}
+              ></div>
+            </div>
+            <p className="text-xs text-[#667085] dark:text-gray-400 mt-2">
+              Assesses if responses directly address customer queries
+            </p>
+          </div>
+
+          {/* Resolution Metric */}
+          <div className={`p-4 bg-white/80 dark:bg-gray-900/60 rounded-lg border border-purple-200/50 dark:border-purple-800/30 ${animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'} transition-all duration-300 ease-out`} style={{ transitionDelay: '500ms' }}>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center">
+                <div className="p-1.5 rounded-full mr-2 bg-green-100 dark:bg-green-900/30">
+                  <CheckCircle className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+                </div>
+                <span className="font-medium text-[#252A3A] dark:text-white">Resolution</span>
+              </div>
+              <div className={`text-lg font-bold ${getScoreColor(metrics.resolution * 5)}`}>
+                {(metrics.resolution * 100).toFixed(0)}%
+              </div>
+            </div>
+            <div className="bg-secondary rounded-full h-2 overflow-hidden">
+              <div 
+                className={`h-full ${getProgressColor(metrics.resolution * 5)} transition-all duration-1000 ease-out ${animated ? 'opacity-100' : 'opacity-0'}`}
+                style={{ width: `${metrics.resolution * 100}%` }}
+              ></div>
+            </div>
+            <p className="text-xs text-[#667085] dark:text-gray-400 mt-2">
+              Percentage of issues successfully resolved
+            </p>
           </div>
         </CardContent>
       </Card>
 
-      {/* Algorithm Explanation Dialog */}
+      {/* Info Dialog */}
       <AlertDialog open={infoDialogOpen} onOpenChange={setInfoDialogOpen}>
-        <AlertDialogContent className="max-w-md">
+        <AlertDialogContent className="bg-white dark:bg-gray-900 border-0 dark:border-gray-700 rounded-lg max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>How Ratings Are Calculated</AlertDialogTitle>
-            <AlertDialogDescription className="text-left">
-              <div className="space-y-4 py-2">
-                <p>Your overall score is a weighted average of four key metrics:</p>
-                
-                <div className="space-y-2 pl-4">
-                  <div>
-                    <Badge variant="outline" className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 font-normal">
-                      Coherence (25%)
-                    </Badge>
-                    <p className="text-sm mt-1">Measures how logical and consistent your responses are (0-100%).</p>
-                  </div>
-                  
-                  <div>
-                    <Badge variant="outline" className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 font-normal">
-                      Politeness (20%)
-                    </Badge>
-                    <p className="text-sm mt-1">Evaluates your professional courtesy and tone (0-100%).</p>
-                  </div>
-                  
-                  <div>
-                    <Badge variant="outline" className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 font-normal">
-                      Relevance (25%)
-                    </Badge>
-                    <p className="text-sm mt-1">Assesses how well you address the specific customer needs (0-100%).</p>
-                  </div>
-                  
-                  <div>
-                    <Badge variant="outline" className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 font-normal">
-                      Resolution (30%)
-                    </Badge>
-                    <p className="text-sm mt-1">Measures if you successfully resolved customer issues (shown as percentage).</p>
-                  </div>
-                </div>
-                
-                <p className="pt-2">
-                  Your overall score is calculated using the following weights: Coherence (25%), Politeness (20%), Relevance (25%), and Resolution (30%).
-                </p>
-                
-                <div className="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-md text-sm">
-                  <p>Your scores are based on {metrics.totalEvaluations} chat evaluations and shown as percentages for easier understanding.</p>
-                </div>
+            <AlertDialogTitle className="text-[#252A3A] dark:text-white flex items-center">
+              <InfoIcon className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-2" />
+              How Scores Are Calculated
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-[#667085] dark:text-gray-400">
+              <div className="space-y-3 text-left mt-2">
+                <p className="text-sm">The overall score is a weighted average of the individual metrics:</p>
+                <ul className="list-disc space-y-1 pl-5 text-sm">
+                  <li><span className="font-medium">Coherence (25%)</span>: How well the agent's responses flow logically</li>
+                  <li><span className="font-medium">Politeness (20%)</span>: The tone and courtesy level of responses</li>
+                  <li><span className="font-medium">Relevance (25%)</span>: If responses directly address the customer's questions</li>
+                  <li><span className="font-medium">Resolution (30%)</span>: Whether the customer's issue was successfully resolved</li>
+                </ul>
+                <p className="text-sm">All metrics except Resolution are scored on a scale of 0-5. Resolution is measured as a success rate (0-100%).</p>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogAction onClick={() => setInfoDialogOpen(false)}>Close</AlertDialogAction>
+            <AlertDialogAction className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-700 dark:hover:bg-blue-800">Got it</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
