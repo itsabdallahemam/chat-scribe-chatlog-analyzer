@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cache Cleaner</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.5;
+        }
+        .container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border-left: 4px solid #4CAF50;
+            background-color: #f9f9f9;
+        }
+        h2 {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Clear Browser Cache and Local Storage</h1>
+        <p>Use this page to clear any stored data related to the Chat Scribe application.</p>
+        
+        <h2>Clear Local Storage</h2>
+        <p>This will remove any authentication tokens and cached settings.</p>
+        <button id="clearLocalStorage">Clear Local Storage</button>
+        
+        <h2>Application URLs</h2>
+        <p>After clearing cache, access the application at:</p>
+        <ul>
+            <li><a href="http://localhost:8080">Frontend (Local): http://localhost:8080</a></li>
+            <li><a href="http://localhost:3000">Backend API (Local): http://localhost:3000/api</a></li>
+            <li><a href="https://3s058406-8080.euw.devtunnels.ms">Frontend (Dev Tunnel): https://3s058406-8080.euw.devtunnels.ms</a></li>
+            <li><a href="https://3s058406-3000.euw.devtunnels.ms">Backend API (Dev Tunnel): https://3s058406-3000.euw.devtunnels.ms/api</a></li>
+        </ul>
+        
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        document.getElementById('clearLocalStorage').addEventListener('click', function() {
+            try {
+                // Clear localStorage
+                localStorage.clear();
+                
+                // Clear sessionStorage
+                sessionStorage.clear();
+                
+                // Delete all cookies
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i];
+                    const eqPos = cookie.indexOf('=');
+                    const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+                    document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
+                }
+                
+                document.getElementById('result').innerHTML = `
+                    <h3>✅ Cleared successfully!</h3>
+                    <p>Local storage, session storage, and cookies have been cleared.</p>
+                    <p>Please close and reopen your browser, then try accessing the application again at <a href="http://localhost:8080">http://localhost:8080</a>.</p>
+                `;
+            } catch (e) {
+                document.getElementById('result').innerHTML = `
+                    <h3>❌ Error</h3>
+                    <p>Failed to clear data: ${e.message}</p>
+                `;
+            }
+        });
+    </script>
+</body>
+</html> 

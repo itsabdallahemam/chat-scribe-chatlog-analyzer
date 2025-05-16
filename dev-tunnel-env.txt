@@ -1,0 +1,11 @@
+# Database Configuration
+DATABASE_URL="sqlserver://localhost:1433;database=chatscribev3;user=prisma_user;password=Test123;trustServerCertificate=true"
+
+# Dev Tunnels configuration
+VITE_API_URL=https://3s058406-3000.euw.devtunnels.ms/api
+VITE_BACKEND_URL=https://3s058406-3000.euw.devtunnels.ms
+VITE_FRONTEND_URL=https://3s058406-8080.euw.devtunnels.ms
+VITE_LIVESHARE_MODE=true
+
+# For backend server
+CLIENT_URL=https://3s058406-8080.euw.devtunnels.ms 

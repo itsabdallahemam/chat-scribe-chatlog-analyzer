@@ -179,51 +179,74 @@ const RatingsTab: React.FC<RatingsTabProps> = ({ userId }) => {
           </div>
           <CardDescription>Based on {metrics.totalEvaluations} evaluations</CardDescription>
         </CardHeader>
-        <CardContent className="pb-6 pt-5">
+        <CardContent className="pb-6 pt-2">
           <div className="flex flex-col items-center">
-            {/* Enhanced circular progress indicator */}
-            <div className="relative w-44 h-44 mb-5">
-              {/* Outer light ring for emphasis */}
-              <div className="absolute inset-[-4px] rounded-full bg-white/70 dark:bg-gray-800/50 shadow-inner"></div>
-              
-              {/* Background circle */}
-              <div className="absolute inset-0 rounded-full bg-white/60 dark:bg-gray-800/60"></div>
-              
-              {/* Progress circle */}
-              <svg className="absolute inset-0 w-full h-full -rotate-90">
-                <defs>
-                  <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor={metrics.averageScore >= 4 ? '#22c55e' : metrics.averageScore >= 3 ? '#3b82f6' : metrics.averageScore >= 2 ? '#eab308' : '#ef4444'} />
-                    <stop offset="100%" stopColor={metrics.averageScore >= 4 ? '#16a34a' : metrics.averageScore >= 3 ? '#2563eb' : metrics.averageScore >= 2 ? '#ca8a04' : '#dc2626'} />
-                  </linearGradient>
-                </defs>
-                <circle 
-                  cx="50%" 
-                  cy="50%" 
-                  r="45%" 
-                  fill="none" 
-                  stroke="url(#scoreGradient)"
-                  strokeWidth="10"
-                  strokeLinecap="round"
-                  strokeDasharray={`${Math.PI * 90 * (animated ? metrics.averageScore / 5 : 0)}, ${Math.PI * 90}`}
-                  className="drop-shadow-md transition-all duration-1000 ease-out"
-                />
-              </svg>
-              
-              {/* Inner white circle with elevated appearance */}
-              <div className="absolute inset-[15%] bg-white dark:bg-gray-800 rounded-full flex items-center justify-center shadow">
-                <div className={`text-center transform scale-110 transition-opacity duration-500 ${animated ? 'opacity-100' : 'opacity-0'}`}>
-                  <div className={`text-5xl font-bold ${getScoreColor(metrics.averageScore)}`}>
-                    {metrics.averageScore.toFixed(1)}
+            {/* Star rating display */}
+            <div className={`flex items-center gap-1 mb-4 ${animated ? 'opacity-100 scale-100' : 'opacity-0 scale-95'} transition-all duration-500 ease-out`}>
+              {[1, 2, 3, 4, 5].map((starIndex) => {
+                // Calculate star fill percentage for fractional stars
+                const difference = metrics.averageScore - (starIndex - 1);
+                const fillPercentage = difference > 1 ? 100 : Math.max(0, Math.min(1, difference)) * 100;
+                const pulseScale = metrics.averageScore > 4 ? 1.15 : 1.05;
+                
+                return (
+                  <div 
+                    key={starIndex} 
+                    className="relative h-10 w-10 transition-transform hover:scale-110"
+                    style={{ 
+                      transformOrigin: 'center',
+                      transitionDelay: `${starIndex * 100}ms`,
+                      animation: animated ? `pulse-${starIndex} 2s ease-in-out ${starIndex * 0.2}s infinite alternate` : 'none'
+                    }}
+                  >
+                    {/* Define keyframes animation in styles for each star */}
+                    <style dangerouslySetInnerHTML={{ 
+                      __html: `
+                        @keyframes pulse-${starIndex} {
+                          0% { transform: scale(1); }
+                          100% { transform: scale(${pulseScale}); }
+                        }
+                      `
+                    }} />
+                    
+                    {/* Empty star (background) */}
+                    <Star 
+                      className="h-10 w-10 absolute inset-0 text-gray-300 dark:text-gray-600"
+                    />
+                    {/* Filled star (foreground with clip-path) */}
+                    {fillPercentage > 0 && (
+                      <div 
+                        className="h-10 w-10 absolute inset-0 overflow-hidden transition-all duration-1000 ease-out"
+                        style={{ 
+                          clipPath: `inset(0 ${100 - fillPercentage}% 0 0)`,
+                          opacity: animated ? 1 : 0
+                        }}
+                      >
+                        <Star 
+                          className="h-10 w-10 text-[#F5A623] fill-[#F5A623] drop-shadow-[0_0_3px_rgba(245,166,35,0.5)]"
+                        />
+                      </div>
+                    )}
                   </div>
-                  <div className="text-xs font-medium text-[#667085] dark:text-gray-400">
-                    out of 5.0
-                  </div>
+                );
+              })}
+            </div>
+            
+            {/* Score display */}
+            <div className={`text-center mb-4 ${animated ? 'opacity-100 scale-100' : 'opacity-0 scale-95'} transition-all duration-500 ease-out delay-500`}>
+              <div className="relative bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20 px-6 py-2 rounded-full shadow-sm inline-block">
+                <div className={`text-4xl font-bold ${getScoreColor(metrics.averageScore)} flex items-baseline`}>
+                  {metrics.averageScore.toFixed(1)}
+                  <span className="text-sm font-normal ml-1 opacity-70">/ 5.0</span>
+                </div>
+                <div className="absolute -top-1 -right-1">
+                  {metrics.averageScore >= 4 && (
+                    <div className="bg-blue-100 dark:bg-blue-800/40 p-1 rounded-full shadow-sm">
+                      <Sparkles className="h-3 w-3 text-blue-500 dark:text-blue-400" />
+                    </div>
+                  )}
                 </div>
               </div>
-
-              {/* Light effect */}
-              <div className="absolute inset-0 rounded-full bg-white dark:bg-gray-200 opacity-10 dark:opacity-5 blur-sm"></div>
             </div>
             
             {/* Score interpretation with enhanced styling */}
@@ -235,7 +258,7 @@ const RatingsTab: React.FC<RatingsTabProps> = ({ userId }) => {
                   : metrics.averageScore >= 2
                     ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800/30'
                     : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800/30'
-            } ${animated ? 'opacity-100 scale-100' : 'opacity-0 scale-95'} transition-all duration-500 ease-out delay-200`}>
+            } ${animated ? 'opacity-100 scale-100' : 'opacity-0 scale-95'} transition-all duration-500 ease-out delay-700`}>
               <span className="inline-block">
               {metrics.averageScore >= 4 
                 ? 'Excellent' 
@@ -248,7 +271,7 @@ const RatingsTab: React.FC<RatingsTabProps> = ({ userId }) => {
             </div>
             
             {/* Percentage score with improved styling */}
-            <div className={`flex items-center justify-center text-sm text-[#667085] dark:text-gray-400 bg-white/80 dark:bg-gray-800/80 px-4 py-1.5 rounded-md border border-blue-100/50 dark:border-blue-900/30 ${animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'} transition-all duration-500 ease-out delay-300`}>
+            <div className={`flex items-center justify-center text-sm text-[#667085] dark:text-gray-400 bg-white/80 dark:bg-gray-800/80 px-4 py-1.5 rounded-md border border-blue-100/50 dark:border-blue-900/30 ${animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'} transition-all duration-500 ease-out delay-800`}>
               <BarChart2 className="h-4 w-4 mr-2" />
               <span className="font-medium">{(metrics.averageScore / 5 * 100).toFixed(0)}%</span> performance score
             </div>
@@ -256,7 +279,7 @@ const RatingsTab: React.FC<RatingsTabProps> = ({ userId }) => {
         </CardContent>
       </Card>
 
-      {/* Metrics Breakdown Card */}
+      {/* Metrics Breakdown Card - Redesigned */}
       <Card className="border-0 shadow-sm bg-gradient-to-r from-purple-50 to-fuchsia-100 dark:from-purple-900/20 dark:to-fuchsia-900/30 overflow-hidden">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center text-lg text-[#252A3A] dark:text-purple-300">
@@ -269,101 +292,253 @@ const RatingsTab: React.FC<RatingsTabProps> = ({ userId }) => {
             Detailed metrics by category
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Coherence Metric */}
-          <div className={`p-4 bg-white/80 dark:bg-gray-900/60 rounded-lg border border-purple-200/50 dark:border-purple-800/30 ${animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'} transition-all duration-300 ease-out`} style={{ transitionDelay: '200ms' }}>
-            <div className="flex items-center justify-between mb-2">
+        <CardContent className="space-y-5">
+          {/* Coherence Metric - Redesigned */}
+          <div className={`p-4 bg-white/80 dark:bg-gray-900/60 rounded-lg border border-purple-200/50 dark:border-purple-800/30 transform transition-all duration-300 ease-out ${animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} 
+               style={{ transitionDelay: '200ms' }}>
+            <div className="flex items-center justify-between mb-3">
               <div className="flex items-center">
-                <div className="p-1.5 rounded-full mr-2 bg-purple-100 dark:bg-purple-900/30">
-                  <MessageSquare className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />
+                <div className="p-2 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 mr-3">
+                  <MessageSquare className="h-4 w-4" />
                 </div>
-                <span className="font-medium text-[#252A3A] dark:text-white">Coherence</span>
+                <div>
+                  <span className="font-medium text-[#252A3A] dark:text-white">Coherence</span>
+                  <p className="text-xs text-[#667085] dark:text-gray-400 mt-0.5">
+                    Logical flow of conversation
+                  </p>
+                </div>
               </div>
-              <div className={`text-lg font-bold ${getScoreColor(metrics.coherence)}`}>
-                {metrics.coherence.toFixed(1)}
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((starIndex) => {
+                  // Calculate star fill percentage for fractional stars
+                  const difference = metrics.coherence - (starIndex - 1);
+                  const fillPercentage = difference > 1 ? 100 : Math.max(0, Math.min(1, difference)) * 100;
+                  
+                  return (
+                    <div key={starIndex} className="relative h-4 w-4 transition-transform hover:scale-110">
+                      {/* Empty star (background) */}
+                      <Star 
+                        className="h-4 w-4 absolute inset-0 text-gray-300 dark:text-gray-600"
+                      />
+                      {/* Filled star (foreground with clip-path) */}
+                      {fillPercentage > 0 && (
+                        <div 
+                          className="h-4 w-4 absolute inset-0 overflow-hidden transition-all duration-700 ease-out"
+                          style={{ 
+                            clipPath: `inset(0 ${100 - fillPercentage}% 0 0)`,
+                            opacity: animated ? 1 : 0,
+                            transitionDelay: `${starIndex * 100}ms`
+                          }}
+                        >
+                          <Star 
+                            className="h-4 w-4 text-[#9F7AEA] fill-[#9F7AEA]"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
-            <div className="bg-secondary rounded-full h-2 overflow-hidden">
-              <div 
-                className={`h-full ${getProgressColor(metrics.coherence)} transition-all duration-1000 ease-out ${animated ? 'opacity-100' : 'opacity-0'}`}
-                style={{ width: `${metrics.coherence * 20}%` }}
-              ></div>
+            <div className="relative pt-1">
+              <div className="flex items-center justify-between mb-1">
+                <div className="text-xs text-[#667085] dark:text-gray-500">Needs Work</div>
+                <div className={`text-xs font-medium ${getScoreColor(metrics.coherence)}`}>{metrics.coherence.toFixed(1)}/5.0</div>
+                <div className="text-xs text-[#667085] dark:text-gray-500">Excellent</div>
+              </div>
+              <div className="overflow-hidden h-2 text-xs flex rounded-full bg-gray-200/70 dark:bg-gray-700/50">
+                <div 
+                  style={{ width: `${metrics.coherence * 20}%` }} 
+                  className={`${getProgressColor(metrics.coherence)} h-full rounded-full transition-all duration-1000 ease-out ${animated ? 'opacity-100' : 'opacity-0'} relative`}
+                >
+                  {/* Add glow effect */}
+                  <div className="absolute inset-0 bg-white opacity-20 rounded-full blur-[1px]"></div>
+                  {/* Add progress indicator */}
+                  <div className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-md border-2 border-purple-500"></div>
+                </div>
+              </div>
             </div>
-            <p className="text-xs text-[#667085] dark:text-gray-400 mt-2">
-              Measures the logical flow and continuity of the conversation
-            </p>
           </div>
 
-          {/* Politeness Metric */}
-          <div className={`p-4 bg-white/80 dark:bg-gray-900/60 rounded-lg border border-purple-200/50 dark:border-purple-800/30 ${animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'} transition-all duration-300 ease-out`} style={{ transitionDelay: '300ms' }}>
-            <div className="flex items-center justify-between mb-2">
+          {/* Politeness Metric - Redesigned */}
+          <div className={`p-4 bg-white/80 dark:bg-gray-900/60 rounded-lg border border-purple-200/50 dark:border-purple-800/30 transform transition-all duration-300 ease-out ${animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} 
+               style={{ transitionDelay: '300ms' }}>
+            <div className="flex items-center justify-between mb-3">
               <div className="flex items-center">
-                <div className="p-1.5 rounded-full mr-2 bg-blue-100 dark:bg-blue-900/30">
-                  <ThumbsUp className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                <div className="p-2 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 mr-3">
+                  <ThumbsUp className="h-4 w-4" />
                 </div>
-                <span className="font-medium text-[#252A3A] dark:text-white">Politeness</span>
+                <div>
+                  <span className="font-medium text-[#252A3A] dark:text-white">Politeness</span>
+                  <p className="text-xs text-[#667085] dark:text-gray-400 mt-0.5">
+                    Tone and courtesy level
+                  </p>
+                </div>
               </div>
-              <div className={`text-lg font-bold ${getScoreColor(metrics.politeness)}`}>
-                {metrics.politeness.toFixed(1)}
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((starIndex) => {
+                  // Calculate star fill percentage for fractional stars
+                  const difference = metrics.politeness - (starIndex - 1);
+                  const fillPercentage = difference > 1 ? 100 : Math.max(0, Math.min(1, difference)) * 100;
+                  
+                  return (
+                    <div key={starIndex} className="relative h-4 w-4 transition-transform hover:scale-110">
+                      {/* Empty star (background) */}
+                      <Star 
+                        className="h-4 w-4 absolute inset-0 text-gray-300 dark:text-gray-600"
+                      />
+                      {/* Filled star (foreground with clip-path) */}
+                      {fillPercentage > 0 && (
+                        <div 
+                          className="h-4 w-4 absolute inset-0 overflow-hidden transition-all duration-700 ease-out"
+                          style={{ 
+                            clipPath: `inset(0 ${100 - fillPercentage}% 0 0)`,
+                            opacity: animated ? 1 : 0,
+                            transitionDelay: `${starIndex * 100}ms`
+                          }}
+                        >
+                          <Star 
+                            className="h-4 w-4 text-[#3B82F6] fill-[#3B82F6]"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
-            <div className="bg-secondary rounded-full h-2 overflow-hidden">
-              <div 
-                className={`h-full ${getProgressColor(metrics.politeness)} transition-all duration-1000 ease-out ${animated ? 'opacity-100' : 'opacity-0'}`}
-                style={{ width: `${metrics.politeness * 20}%` }}
-              ></div>
+            <div className="relative pt-1">
+              <div className="flex items-center justify-between mb-1">
+                <div className="text-xs text-[#667085] dark:text-gray-500">Needs Work</div>
+                <div className={`text-xs font-medium ${getScoreColor(metrics.politeness)}`}>{metrics.politeness.toFixed(1)}/5.0</div>
+                <div className="text-xs text-[#667085] dark:text-gray-500">Excellent</div>
+              </div>
+              <div className="overflow-hidden h-2 text-xs flex rounded-full bg-gray-200/70 dark:bg-gray-700/50">
+                <div 
+                  style={{ width: `${metrics.politeness * 20}%` }} 
+                  className={`${getProgressColor(metrics.politeness)} h-full rounded-full transition-all duration-1000 ease-out ${animated ? 'opacity-100' : 'opacity-0'} relative`}
+                >
+                  {/* Add glow effect */}
+                  <div className="absolute inset-0 bg-white opacity-20 rounded-full blur-[1px]"></div>
+                  {/* Add progress indicator */}
+                  <div className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-md border-2 border-blue-500"></div>
+                </div>
+              </div>
             </div>
-            <p className="text-xs text-[#667085] dark:text-gray-400 mt-2">
-              Evaluates tone, courtesy, and respectfulness to the customer
-            </p>
           </div>
 
-          {/* Relevance Metric */}
-          <div className={`p-4 bg-white/80 dark:bg-gray-900/60 rounded-lg border border-purple-200/50 dark:border-purple-800/30 ${animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'} transition-all duration-300 ease-out`} style={{ transitionDelay: '400ms' }}>
-            <div className="flex items-center justify-between mb-2">
+          {/* Relevance Metric - Redesigned */}
+          <div className={`p-4 bg-white/80 dark:bg-gray-900/60 rounded-lg border border-purple-200/50 dark:border-purple-800/30 transform transition-all duration-300 ease-out ${animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} 
+               style={{ transitionDelay: '400ms' }}>
+            <div className="flex items-center justify-between mb-3">
               <div className="flex items-center">
-                <div className="p-1.5 rounded-full mr-2 bg-amber-100 dark:bg-amber-900/30">
-                  <Star className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                <div className="p-2 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 mr-3">
+                  <Star className="h-4 w-4" />
                 </div>
-                <span className="font-medium text-[#252A3A] dark:text-white">Relevance</span>
+                <div>
+                  <span className="font-medium text-[#252A3A] dark:text-white">Relevance</span>
+                  <p className="text-xs text-[#667085] dark:text-gray-400 mt-0.5">
+                    Response addresses queries
+                  </p>
+                </div>
               </div>
-              <div className={`text-lg font-bold ${getScoreColor(metrics.relevance)}`}>
-                {metrics.relevance.toFixed(1)}
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((starIndex) => {
+                  // Calculate star fill percentage for fractional stars
+                  const difference = metrics.relevance - (starIndex - 1);
+                  const fillPercentage = difference > 1 ? 100 : Math.max(0, Math.min(1, difference)) * 100;
+                  
+                  return (
+                    <div key={starIndex} className="relative h-4 w-4 transition-transform hover:scale-110">
+                      {/* Empty star (background) */}
+                      <Star 
+                        className="h-4 w-4 absolute inset-0 text-gray-300 dark:text-gray-600"
+                      />
+                      {/* Filled star (foreground with clip-path) */}
+                      {fillPercentage > 0 && (
+                        <div 
+                          className="h-4 w-4 absolute inset-0 overflow-hidden transition-all duration-700 ease-out"
+                          style={{ 
+                            clipPath: `inset(0 ${100 - fillPercentage}% 0 0)`,
+                            opacity: animated ? 1 : 0,
+                            transitionDelay: `${starIndex * 100}ms`
+                          }}
+                        >
+                          <Star 
+                            className="h-4 w-4 text-[#F59E0B] fill-[#F59E0B]"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
-            <div className="bg-secondary rounded-full h-2 overflow-hidden">
-              <div 
-                className={`h-full ${getProgressColor(metrics.relevance)} transition-all duration-1000 ease-out ${animated ? 'opacity-100' : 'opacity-0'}`}
-                style={{ width: `${metrics.relevance * 20}%` }}
-              ></div>
+            <div className="relative pt-1">
+              <div className="flex items-center justify-between mb-1">
+                <div className="text-xs text-[#667085] dark:text-gray-500">Needs Work</div>
+                <div className={`text-xs font-medium ${getScoreColor(metrics.relevance)}`}>{metrics.relevance.toFixed(1)}/5.0</div>
+                <div className="text-xs text-[#667085] dark:text-gray-500">Excellent</div>
+              </div>
+              <div className="overflow-hidden h-2 text-xs flex rounded-full bg-gray-200/70 dark:bg-gray-700/50">
+                <div 
+                  style={{ width: `${metrics.relevance * 20}%` }} 
+                  className={`${getProgressColor(metrics.relevance)} h-full rounded-full transition-all duration-1000 ease-out ${animated ? 'opacity-100' : 'opacity-0'} relative`}
+                >
+                  {/* Add glow effect */}
+                  <div className="absolute inset-0 bg-white opacity-20 rounded-full blur-[1px]"></div>
+                  {/* Add progress indicator */}
+                  <div className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-md border-2 border-amber-500"></div>
+                </div>
+              </div>
             </div>
-            <p className="text-xs text-[#667085] dark:text-gray-400 mt-2">
-              Assesses if responses directly address customer queries
-            </p>
           </div>
 
-          {/* Resolution Metric */}
-          <div className={`p-4 bg-white/80 dark:bg-gray-900/60 rounded-lg border border-purple-200/50 dark:border-purple-800/30 ${animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'} transition-all duration-300 ease-out`} style={{ transitionDelay: '500ms' }}>
-            <div className="flex items-center justify-between mb-2">
+          {/* Resolution Metric - Redesigned */}
+          <div className={`p-4 bg-white/80 dark:bg-gray-900/60 rounded-lg border border-purple-200/50 dark:border-purple-800/30 transform transition-all duration-300 ease-out ${animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} 
+               style={{ transitionDelay: '500ms' }}>
+            <div className="flex items-center justify-between mb-3">
               <div className="flex items-center">
-                <div className="p-1.5 rounded-full mr-2 bg-green-100 dark:bg-green-900/30">
-                  <CheckCircle className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+                <div className="p-2 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 mr-3">
+                  <CheckCircle className="h-4 w-4" />
                 </div>
-                <span className="font-medium text-[#252A3A] dark:text-white">Resolution</span>
+                <div>
+                  <span className="font-medium text-[#252A3A] dark:text-white">Resolution</span>
+                  <p className="text-xs text-[#667085] dark:text-gray-400 mt-0.5">
+                    Issues successfully resolved
+                  </p>
+                </div>
               </div>
-              <div className={`text-lg font-bold ${getScoreColor(metrics.resolution * 5)}`}>
+              <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+                metrics.resolution >= 0.8 
+                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
+                  : metrics.resolution >= 0.6
+                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                    : metrics.resolution >= 0.4
+                      ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                      : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+              }`}>
                 {(metrics.resolution * 100).toFixed(0)}%
               </div>
             </div>
-            <div className="bg-secondary rounded-full h-2 overflow-hidden">
-              <div 
-                className={`h-full ${getProgressColor(metrics.resolution * 5)} transition-all duration-1000 ease-out ${animated ? 'opacity-100' : 'opacity-0'}`}
-                style={{ width: `${metrics.resolution * 100}%` }}
-              ></div>
+            <div className="relative pt-1">
+              <div className="flex items-center justify-between mb-1">
+                <div className="text-xs text-[#667085] dark:text-gray-500">Low</div>
+                <div className="text-xs text-[#667085] dark:text-gray-500">Medium</div>
+                <div className="text-xs text-[#667085] dark:text-gray-500">High</div>
+              </div>
+              <div className="overflow-hidden h-2 text-xs flex rounded-full bg-gray-200/70 dark:bg-gray-700/50">
+                <div 
+                  style={{ width: `${metrics.resolution * 100}%` }} 
+                  className={`${getProgressColor(metrics.resolution * 5)} h-full rounded-full transition-all duration-1000 ease-out ${animated ? 'opacity-100' : 'opacity-0'} relative`}
+                >
+                  {/* Add glow effect */}
+                  <div className="absolute inset-0 bg-white opacity-20 rounded-full blur-[1px]"></div>
+                  {/* Add progress indicator */}
+                  <div className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-md border-2 border-green-500"></div>
+                </div>
+              </div>
             </div>
-            <p className="text-xs text-[#667085] dark:text-gray-400 mt-2">
-              Percentage of issues successfully resolved
-            </p>
           </div>
         </CardContent>
       </Card>
@@ -394,44 +569,6 @@ const RatingsTab: React.FC<RatingsTabProps> = ({ userId }) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
-  );
-};
-
-// Individual metric component
-interface MetricItemProps {
-  label: string;
-  value: number;
-  icon: React.ReactNode;
-  color: string;
-}
-
-const MetricItem: React.FC<MetricItemProps> = ({ label, value, icon, color }) => {
-  // Convert 0-5 scale to percentage (0-100%)
-  const percentValue = Math.round((value / 5) * 100);
-  
-  // Special case for Resolution which is 0-1 scale
-  const isResolution = label === "Resolution";
-  const displayValue = isResolution ? Math.round((value) * 100) : percentValue;
-  const barWidth = isResolution ? value * 100 : percentValue;
-
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-1">
-        <div className="flex items-center">
-          <div className="mr-2 text-gray-500 dark:text-gray-400">
-            {icon}
-          </div>
-          <span className="font-medium">{label}</span>
-        </div>
-        <div className="font-bold text-gray-900 dark:text-white">{displayValue}%</div>
-      </div>
-      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-1">
-        <div 
-          className={`${color} h-2 rounded-full`} 
-          style={{ width: `${barWidth}%` }}
-        />
-      </div>
     </div>
   );
 };

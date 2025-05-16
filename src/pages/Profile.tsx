@@ -21,7 +21,10 @@ import {
   Lightbulb,
   Bot,
   Users as UsersIcon,
-  BarChart2
+  BarChart2,
+  LockKeyhole,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { useChatlog } from '../contexts/ChatlogContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -46,6 +49,19 @@ import { Badge } from '../components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar';
 import { useNavigate } from 'react-router-dom';
 import RatingsTab from '../components/RatingsTab';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '../components/ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../components/ui/form';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 
 export const Profile: React.FC = () => {
   const { user, logout, updateUser } = useAuth();
@@ -272,6 +288,57 @@ const ProfileContent: React.FC<{
   handleUpdateProfile: (e: React.FormEvent) => Promise<void>;
   error: string | null;
 }> = ({ user, name, setName, isEditing, setIsEditing, handleUpdateProfile, error }) => {
+  const { toast } = useToast();
+  const { changePassword } = useAuth();
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+  
+  // Password change form schema
+  const passwordFormSchema = z.object({
+    currentPassword: z.string().min(1, "Current password is required"),
+    newPassword: z.string().min(8, "Password must be at least 8 characters"),
+    confirmPassword: z.string().min(1, "Please confirm your password"),
+  }).refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
+
+  type PasswordFormValues = z.infer<typeof passwordFormSchema>;
+
+  const passwordForm = useForm<PasswordFormValues>({
+    resolver: zodResolver(passwordFormSchema),
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
+
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const onPasswordSubmit = async (values: PasswordFormValues) => {
+    try {
+      setIsChangingPassword(true);
+      const message = await changePassword(values.currentPassword, values.newPassword);
+      toast({
+        title: "Success",
+        description: message || "Password changed successfully",
+      });
+      setIsPasswordDialogOpen(false);
+      passwordForm.reset();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to change password",
+        variant: "destructive",
+      });
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
   return (
     <div>
       <div className="flex items-center mb-6">
@@ -389,9 +456,14 @@ const ProfileContent: React.FC<{
             <div className="flex items-center justify-between p-3 bg-white/80 dark:bg-gray-900/60 rounded-md border border-amber-200/50 dark:border-amber-800/30">
               <div>
                 <h4 className="font-medium text-[#252A3A] dark:text-white">Password</h4>
-                <p className="text-sm text-[#667085] dark:text-gray-400">Last changed 3 months ago</p>
+                <p className="text-sm text-[#667085] dark:text-gray-400">Update your password regularly for security</p>
               </div>
-              <Button variant="outline" size="sm" className="border-amber-200 dark:border-amber-800/30 text-amber-700 dark:text-amber-400">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="border-amber-200 dark:border-amber-800/30 text-amber-700 dark:text-amber-400"
+                onClick={() => setIsPasswordDialogOpen(true)}
+              >
                 Change Password
               </Button>
             </div>
@@ -408,6 +480,150 @@ const ProfileContent: React.FC<{
           </div>
         </div>
       </div>
+
+      {/* Password Change Dialog */}
+      <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <LockKeyhole className="h-5 w-5 text-amber-500" />
+              Change Password
+            </DialogTitle>
+            <DialogDescription>
+              Update your password to keep your account secure.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...passwordForm}>
+            <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4 py-2">
+              <FormField
+                control={passwordForm.control}
+                name="currentPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Current Password</FormLabel>
+                    <div className="relative">
+                      <FormControl>
+                        <Input 
+                          type={showCurrentPassword ? "text" : "password"}
+                          placeholder="Enter your current password" 
+                          {...field} 
+                          className="pr-10"
+                        />
+                      </FormControl>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-0 top-0 h-full px-3 py-2 text-gray-400 hover:text-gray-600"
+                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                      >
+                        {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={passwordForm.control}
+                name="newPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>New Password</FormLabel>
+                    <div className="relative">
+                      <FormControl>
+                        <Input 
+                          type={showNewPassword ? "text" : "password"}
+                          placeholder="Enter your new password" 
+                          {...field} 
+                          className="pr-10"
+                        />
+                      </FormControl>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-0 top-0 h-full px-3 py-2 text-gray-400 hover:text-gray-600"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                      >
+                        {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={passwordForm.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirm New Password</FormLabel>
+                    <div className="relative">
+                      <FormControl>
+                        <Input 
+                          type={showConfirmPassword ? "text" : "password"}
+                          placeholder="Confirm your new password" 
+                          {...field} 
+                          className="pr-10"
+                        />
+                      </FormControl>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-0 top-0 h-full px-3 py-2 text-gray-400 hover:text-gray-600"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      >
+                        {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <Alert variant="default" className="bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-900/50 text-amber-800 dark:text-amber-300">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Password Requirements</AlertTitle>
+                <AlertDescription className="text-xs mt-1">
+                  Your password must be at least 8 characters long and should include a mix of letters, numbers, and special characters for security.
+                </AlertDescription>
+              </Alert>
+
+              <DialogFooter className="pt-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    passwordForm.reset();
+                    setIsPasswordDialogOpen(false);
+                  }}
+                  disabled={isChangingPassword}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit" 
+                  className="bg-amber-600 hover:bg-amber-700 text-white"
+                  disabled={isChangingPassword}
+                >
+                  {isChangingPassword ? (
+                    <>
+                      <LoadingSpinner size={16} className="mr-2" />
+                      Updating...
+                    </>
+                  ) : (
+                    'Update Password'
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

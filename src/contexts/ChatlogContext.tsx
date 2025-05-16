@@ -100,6 +100,39 @@ export const ChatlogProvider: React.FC<{ children: ReactNode }> = ({ children })
   const isSavingRef = useRef(false);
   const manuallySetRef = useRef(false);
 
+  // Load API key from session storage on mount
+  useEffect(() => {
+    try {
+      const storedApiKey = sessionStorage.getItem("googleApiKey");
+      console.log("[ChatlogContext] Attempting to load API key from session storage:", !!storedApiKey);
+      if (storedApiKey) {
+        setApiKey(storedApiKey);
+        console.log("[ChatlogContext] API key loaded from session storage, length:", storedApiKey.length);
+      } else {
+        console.log("[ChatlogContext] No API key found in session storage");
+      }
+    } catch (error) {
+      console.error("[ChatlogContext] Error loading API key from session storage:", error);
+    }
+  }, []);
+
+  // Custom setter for API key that also saves to session storage
+  const setApiKeyWithStorage = (key: string) => {
+    console.log("[ChatlogContext] Setting new API key, length:", key?.length || 0);
+    try {
+      setApiKey(key);
+      if (key) {
+        sessionStorage.setItem("googleApiKey", key);
+        console.log("[ChatlogContext] API key saved to session storage");
+      } else {
+        sessionStorage.removeItem("googleApiKey");
+        console.log("[ChatlogContext] API key removed from session storage");
+      }
+    } catch (error) {
+      console.error("[ChatlogContext] Error saving API key to session storage:", error);
+    }
+  };
+
   // Load saved chat logs from database on mount
   useEffect(() => {
     if (!isLoadingRef.current && !isSavingRef.current) {
@@ -226,7 +259,7 @@ export const ChatlogProvider: React.FC<{ children: ReactNode }> = ({ children })
     <ChatlogContext.Provider
       value={{
         apiKey,
-        setApiKey,
+        setApiKey: setApiKeyWithStorage,
         selectedModel,
         setSelectedModel,
         modelOptions,

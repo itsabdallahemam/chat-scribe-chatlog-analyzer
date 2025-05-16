@@ -7,6 +7,8 @@ export interface PerformanceMetrics {
   resolution: number;
   averageScore: number;
   totalEvaluations: number;
+  totalConversations: number;
+  averageResponseTime: number;
 }
 
 export const getUserPerformanceMetrics = async (userId?: string): Promise<PerformanceMetrics> => {
@@ -44,7 +46,9 @@ export const getUserPerformanceMetrics = async (userId?: string): Promise<Perfor
       relevance: 0,
       resolution: 0,
       averageScore: 0,
-      totalEvaluations: 0
+      totalEvaluations: 0,
+      totalConversations: 0,
+      averageResponseTime: 0
     };
   }
 };
@@ -57,6 +61,8 @@ export const getMockPerformanceMetrics = (): PerformanceMetrics => {
     relevance: 3.9,
     resolution: 4.5,
     averageScore: 4.325,
-    totalEvaluations: 42
+    totalEvaluations: 42,
+    totalConversations: 74,
+    averageResponseTime: 2.5
   };
 }; 

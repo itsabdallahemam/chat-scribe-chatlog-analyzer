@@ -97,88 +97,127 @@ const createGoogleAIClient = (apiKey: string) => {
       chatlogText: string
     ): Promise<{ original_chatlog: string; scores: any | null; error: string | null; raw_response: string | null }> => {
       let rawResponseText: string | null = null;
-      try {
-        if (!modelId || modelId.trim() === "") throw new Error("Model ID is required for evaluation");
-
-        const fullPrompt = promptTemplate
-          .replace("{chatlog_text}", chatlogText)
-          .replace("{rubric_text}", rubricText);
-
-        const formattedModelId = formatModelIdForApi(modelId);
-        console.log(`Evaluating LIVE chatlog with model: ${formattedModelId}`);
-
-        const response = await fetch(`${API_BASE_URL}/${formattedModelId}:generateContent?key=${apiKey}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
+      let retryCount = 0;
+      const MAX_RETRIES = 3;
+      
+      const attemptEvaluation = async (): Promise<{ original_chatlog: string; scores: any | null; error: string | null; raw_response: string | null }> => {
+        try {
+          if (!modelId || modelId.trim() === "") throw new Error("Model ID is required for evaluation");
+  
+          const fullPrompt = promptTemplate
+            .replace("{chatlog_text}", chatlogText)
+            .replace("{rubric_text}", rubricText);
+  
+          const formattedModelId = formatModelIdForApi(modelId);
+          console.log(`Evaluating LIVE chatlog with model: ${formattedModelId} (Attempt ${retryCount + 1}/${MAX_RETRIES})`);
+  
+          // Improve error handling and add additional logging
+          console.log(`Sending API request to: ${API_BASE_URL}/${formattedModelId}:generateContent`);
+          console.log(`API Key present: ${!!apiKey}, Key length: ${apiKey.length}, First/last chars: ${apiKey.substring(0, 3)}...${apiKey.substring(apiKey.length - 3)}`);
+          
+          const requestBody = {
             contents: [{ parts: [{ text: fullPrompt }] }],
             generationConfig: { // Config for evaluation - low temp for consistency
               temperature: 0.2,
               maxOutputTokens: 250 // Enough for a JSON object with 4 scores
             }
-          })
-        });
-
-        rawResponseText = await response.text(); // Get raw text for debugging in case of errors
-
-        if (!response.ok) {
-          throw new Error(`API error: ${response.status} ${response.statusText} - ${rawResponseText}`);
-        }
-        const data = JSON.parse(rawResponseText); // Parse after checking response.ok
-
-        if (!data.candidates || data.candidates.length === 0 || !data.candidates[0].content?.parts?.[0]?.text) {
-          console.error("Invalid response structure from evaluation API:", data);
-          throw new Error("Invalid response structure from evaluation API. Check console for details.");
-        }
-        const llmOutputText = data.candidates[0].content.parts[0].text;
-
-        // Parse the JSON response from the LLM's output text
-        try {
-          const jsonMatch = llmOutputText.match(/{[\s\S]*}/); // Try to find a JSON object
-          if (!jsonMatch) {
-            console.error("No JSON object found in LLM response:", llmOutputText);
-            throw new Error("No JSON object found in LLM response");
+          };
+          
+          console.log("Request body:", JSON.stringify(requestBody).substring(0, 200) + "...");
+  
+          const response = await fetch(`${API_BASE_URL}/${formattedModelId}:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+          });
+  
+          rawResponseText = await response.text(); // Get raw text for debugging in case of errors
+          console.log("Raw response status:", response.status);
+          console.log("Raw response text (first 200 chars):", rawResponseText.substring(0, 200) + "...");
+  
+          if (!response.ok) {
+            console.error(`API error: ${response.status} ${response.statusText}`);
+            console.error("Full error response:", rawResponseText);
+            throw new Error(`API error: ${response.status} ${response.statusText} - ${rawResponseText}`);
           }
-          const jsonStr = jsonMatch[0];
-          const result = JSON.parse(jsonStr);
-
-          // Validate that all required fields are present and have valid values
-          const coherence = parseInt(result.Coherence);
-          const politeness = parseInt(result.Politeness);
-          const relevance = parseInt(result.Relevance);
-          const resolution = parseInt(result.Resolution);
-
-          if (isNaN(coherence) || coherence < 1 || coherence > 5) throw new Error(`Invalid Coherence value: ${result.Coherence}`);
-          if (isNaN(politeness) || politeness < 1 || politeness > 5) throw new Error(`Invalid Politeness value: ${result.Politeness}`);
-          if (isNaN(relevance) || relevance < 1 || relevance > 5) throw new Error(`Invalid Relevance value: ${result.Relevance}`);
-          if (isNaN(resolution) || (resolution !== 0 && resolution !== 1)) throw new Error(`Invalid Resolution value: ${result.Resolution}`);
-
+          
+          try {
+            const data = JSON.parse(rawResponseText); // Parse after checking response.ok
+  
+            if (!data.candidates || data.candidates.length === 0 || !data.candidates[0].content?.parts?.[0]?.text) {
+              console.error("Invalid response structure from evaluation API:", data);
+              throw new Error("Invalid response structure from evaluation API. Check console for details.");
+            }
+            const llmOutputText = data.candidates[0].content.parts[0].text;
+            console.log("LLM output text:", llmOutputText);
+  
+            // Parse the JSON response from the LLM's output text
+            try {
+              const jsonMatch = llmOutputText.match(/{[\s\S]*}/); // Try to find a JSON object
+              if (!jsonMatch) {
+                console.error("No JSON object found in LLM response:", llmOutputText);
+                throw new Error("No JSON object found in LLM response");
+              }
+              const jsonStr = jsonMatch[0];
+              const result = JSON.parse(jsonStr);
+  
+              // Validate that all required fields are present and have valid values
+              const coherence = parseInt(result.Coherence);
+              const politeness = parseInt(result.Politeness);
+              const relevance = parseInt(result.Relevance);
+              const resolution = parseInt(result.Resolution);
+  
+              if (isNaN(coherence) || coherence < 1 || coherence > 5) throw new Error(`Invalid Coherence value: ${result.Coherence}`);
+              if (isNaN(politeness) || politeness < 1 || politeness > 5) throw new Error(`Invalid Politeness value: ${result.Politeness}`);
+              if (isNaN(relevance) || relevance < 1 || relevance > 5) throw new Error(`Invalid Relevance value: ${result.Relevance}`);
+              if (isNaN(resolution) || (resolution !== 0 && resolution !== 1)) throw new Error(`Invalid Resolution value: ${result.Resolution}`);
+  
+              return {
+                original_chatlog: chatlogText,
+                scores: { Coherence: coherence, Politeness: politeness, Relevance: relevance, Resolution: resolution },
+                error: null,
+                raw_response: llmOutputText
+              };
+            } catch (parseError: any) {
+              console.error("Failed to parse LLM response JSON:", parseError, "Raw LLM output:", llmOutputText);
+              return {
+                original_chatlog: chatlogText,
+                scores: null,
+                error: `Failed to parse LLM response JSON: ${parseError.message}`,
+                raw_response: llmOutputText
+              };
+            }
+          } catch (jsonParseError) {
+            console.error("Failed to parse API response as JSON:", jsonParseError);
+            throw new Error(`Failed to parse API response as JSON: ${jsonParseError}`);
+          }
+        } catch (error: any) {
+          console.error(`Error evaluating chatlog (Attempt ${retryCount + 1}/${MAX_RETRIES}):`, error);
+          
+          if (retryCount < MAX_RETRIES - 1) {
+            retryCount++;
+            console.log(`Retrying evaluation (Attempt ${retryCount + 1}/${MAX_RETRIES})...`);
+            
+            // Add exponential backoff
+            const delay = Math.pow(2, retryCount) * 1000;
+            console.log(`Waiting ${delay}ms before retrying...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            
+            return attemptEvaluation();
+          }
+          
           return {
-            original_chatlog: chatlogText,
-            scores: { Coherence: coherence, Politeness: politeness, Relevance: relevance, Resolution: resolution },
-            error: null,
-            raw_response: llmOutputText
-          };
-        } catch (parseError: any) {
-          console.error("Failed to parse LLM response JSON:", parseError, "Raw LLM output:", llmOutputText);
-          return {
-            original_chatlog: chatlogText,
-            scores: null,
-            error: `Failed to parse LLM response JSON: ${parseError.message}`,
-            raw_response: llmOutputText
-          };
-        }
-      } catch (error: any) {
-        console.error("Error evaluating chatlog:", error);
-        return {
             original_chatlog: chatlogText,
             scores: null,
             error: `Failed to evaluate chatlog: ${error.message}`,
             raw_response: rawResponseText // Include raw response if available even on API error
-        };
-      }
+          };
+        }
+      };
+      
+      return attemptEvaluation();
     },
   };
 

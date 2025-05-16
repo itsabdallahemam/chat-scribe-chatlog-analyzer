@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { User, Mail, Calendar, ArrowLeft, User as UserIcon, BarChart2, CheckCircle, Trash2, Shield, Bell, Flag } from 'lucide-react';
+import { User, Mail, Calendar, ArrowLeft, User as UserIcon, BarChart2, CheckCircle, Trash2, Shield, Bell, Flag, Star, MessageSquare, Sparkles } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import api from '@/lib/axios';
@@ -24,17 +24,41 @@ import {
 import { toast } from '@/components/ui/use-toast';
 import RatingsTab from '@/components/RatingsTab';
 import { useAuth } from '@/contexts/AuthContext';
+import EvaluationsTab from '@/components/EvaluationsTab';
+import { ChatLogEvaluation } from '@/services/chatLogEvaluationService';
+
+// Extend the UserType interface to include employeeId
+declare global {
+  interface User extends UserType {
+    employeeId?: string;
+  }
+}
+
+// Performance stats interface
+interface PerformanceStats {
+  averageScore: number;
+  completedChats: number;
+  resolutionRate: number;
+  responseTime: number;
+}
 
 const AgentProfilePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
-  const [agent, setAgent] = useState<UserType | null>(null);
+  const [agent, setAgent] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('performance');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [performanceStats, setPerformanceStats] = useState<PerformanceStats>({
+    averageScore: 0,
+    completedChats: 0,
+    resolutionRate: 0,
+    responseTime: 0
+  });
+  const [statsLoading, setStatsLoading] = useState(true);
   
   // Check if user is viewing their own profile
   const isSelfView = currentUser?.id === id;
@@ -45,7 +69,7 @@ const AgentProfilePage: React.FC = () => {
     const fetchAgentProfile = async () => {
       try {
         setLoading(true);
-        const response = await api.get<UserType>(`/auth/users/${id}`);
+        const response = await api.get<User>(`/auth/users/${id}`);
         setAgent(response.data);
         setError(null);
       } catch (err: any) {
@@ -59,6 +83,50 @@ const AgentProfilePage: React.FC = () => {
     if (id) {
       fetchAgentProfile();
     }
+  }, [id]);
+
+  useEffect(() => {
+    const fetchPerformanceStats = async () => {
+      if (!id) return;
+      
+      try {
+        setStatsLoading(true);
+        // Try to fetch evaluations to calculate metrics
+        const response = await api.get<ChatLogEvaluation[]>(`/chat-log-evaluations/user/${id}`);
+        const evaluations: ChatLogEvaluation[] = response.data || [];
+        
+        if (evaluations.length > 0) {
+          // Calculate average score
+          const totalScore = evaluations.reduce((sum: number, evaluation: ChatLogEvaluation) => 
+            sum + ((evaluation.coherence + evaluation.politeness + evaluation.relevance + evaluation.resolution) / 4), 0);
+          const avgScore = Number((totalScore / evaluations.length).toFixed(1));
+          
+          // Calculate resolution rate
+          const resolvedChats = evaluations.filter((evaluation: ChatLogEvaluation) => evaluation.resolution >= 4).length;
+          const resolutionRate = Math.round((resolvedChats / evaluations.length) * 100);
+          
+          // Get completed chats count (assuming all evaluations are from the last 30 days)
+          const completedChats = evaluations.length;
+          
+          // For response time, we'd normally calculate from actual data
+          // Using a placeholder value for now
+          const responseTime = 1.8;
+          
+          setPerformanceStats({
+            averageScore: avgScore,
+            completedChats,
+            resolutionRate,
+            responseTime
+          });
+        }
+      } catch (err) {
+        console.error('Error fetching performance stats:', err);
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+    
+    fetchPerformanceStats();
   }, [id]);
 
   const handleGoBack = () => {
@@ -177,7 +245,7 @@ const AgentProfilePage: React.FC = () => {
                       <div className="space-y-3">
                         <div className="flex items-center text-sm">
                           <div className="p-1.5 rounded-full bg-blue-100 dark:bg-blue-900/30 mr-3">
-                            <UserIcon className="h-3.5 w-3.5 text-blue-700 dark:text-blue-400" />
+                            <User className="h-3.5 w-3.5 text-blue-700 dark:text-blue-400" />
                           </div>
                           <span className="text-[#667085] dark:text-gray-300 flex-1">Full Name</span>
                           <span className="font-medium text-[#252A3A] dark:text-white">{agent.fullName || 'Not set'}</span>
@@ -282,61 +350,66 @@ const AgentProfilePage: React.FC = () => {
                   {/* Only render overview tab for Team Leaders */}
                   {(isTeamLeader || !isSelfView) && (
                     <TabsContent value="overview">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-6">
+                        {/* Agent Stats */}
                         <div className="rounded-xl bg-gradient-to-r from-blue-50 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-900/30 p-5 shadow-sm">
                           <div className="flex items-center mb-4">
                             <div className="p-2 rounded-full bg-white/60 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 mr-3">
                               <User className="h-5 w-5" />
                             </div>
-                            <h3 className="text-base font-medium text-[#252A3A] dark:text-blue-300">Agent Status</h3>
+                            <h3 className="text-base font-medium text-[#252A3A] dark:text-blue-300">Agent Profile</h3>
                           </div>
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between bg-white/80 dark:bg-gray-900/60 p-3 rounded-md border border-blue-200/50 dark:border-blue-800/30">
-                              <div className="text-sm text-[#667085] dark:text-gray-400">Status</div>
-                              <Badge variant="outline" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                                Active
-                              </Badge>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between bg-white/80 dark:bg-gray-900/60 p-3 rounded-md border border-blue-200/50 dark:border-blue-800/30">
+                                <div className="text-sm text-[#667085] dark:text-gray-400">Full Name</div>
+                                <span className="text-[#252A3A] dark:text-white font-medium">{agent.fullName}</span>
+                              </div>
+                              <div className="flex items-center justify-between bg-white/80 dark:bg-gray-900/60 p-3 rounded-md border border-blue-200/50 dark:border-blue-800/30">
+                                <div className="text-sm text-[#667085] dark:text-gray-400">Email</div>
+                                <span className="text-[#252A3A] dark:text-white font-medium">{agent.email}</span>
+                              </div>
+                              <div className="flex items-center justify-between bg-white/80 dark:bg-gray-900/60 p-3 rounded-md border border-blue-200/50 dark:border-blue-800/30">
+                                <div className="text-sm text-[#667085] dark:text-gray-400">Role</div>
+                                <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                                  {agent.role}
+                                </Badge>
+                              </div>
                             </div>
-                            <div className="flex items-center justify-between bg-white/80 dark:bg-gray-900/60 p-3 rounded-md border border-blue-200/50 dark:border-blue-800/30">
-                              <div className="text-sm text-[#667085] dark:text-gray-400">Role</div>
-                              <span className="text-[#252A3A] dark:text-white font-medium">{agent.role}</span>
-                            </div>
-                            <div className="flex items-center justify-between bg-white/80 dark:bg-gray-900/60 p-3 rounded-md border border-blue-200/50 dark:border-blue-800/30">
-                              <div className="text-sm text-[#667085] dark:text-gray-400">Last Active</div>
-                              <span className="text-[#252A3A] dark:text-white font-medium">Today</span>
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between bg-white/80 dark:bg-gray-900/60 p-3 rounded-md border border-blue-200/50 dark:border-blue-800/30">
+                                <div className="text-sm text-[#667085] dark:text-gray-400">Status</div>
+                                <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                  Active
+                                </Badge>
+                              </div>
+                              <div className="flex items-center justify-between bg-white/80 dark:bg-gray-900/60 p-3 rounded-md border border-blue-200/50 dark:border-blue-800/30">
+                                <div className="text-sm text-[#667085] dark:text-gray-400">Joined</div>
+                                <span className="text-[#252A3A] dark:text-white font-medium">
+                                  {agent.createdAt ? format(new Date(agent.createdAt), 'MMM d, yyyy') : 'Not available'}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between bg-white/80 dark:bg-gray-900/60 p-3 rounded-md border border-blue-200/50 dark:border-blue-800/30">
+                                <div className="text-sm text-[#667085] dark:text-gray-400">Employee ID</div>
+                                <span className="text-[#252A3A] dark:text-white font-medium">
+                                  {agent.employeeId || agent.id.substring(0, 8).toUpperCase()}
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </div>
-                        
-                        <div className="rounded-xl bg-gradient-to-r from-green-50 to-emerald-100 dark:from-green-900/20 dark:to-emerald-900/30 p-5 shadow-sm">
-                          <div className="flex items-center mb-4">
-                            <div className="p-2 rounded-full bg-white/60 dark:bg-green-900/40 text-green-600 dark:text-green-400 mr-3">
-                              <Shield className="h-5 w-5" />
-                            </div>
-                            <h3 className="text-base font-medium text-[#252A3A] dark:text-green-300">Permissions & Access</h3>
-                          </div>
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between bg-white/80 dark:bg-gray-900/60 p-3 rounded-md border border-green-200/50 dark:border-green-800/30">
-                              <div className="text-sm text-[#667085] dark:text-gray-400">Dashboard Access</div>
-                              <Badge variant="outline" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                                Granted
-                              </Badge>
-                            </div>
-                            <div className="flex items-center justify-between bg-white/80 dark:bg-gray-900/60 p-3 rounded-md border border-green-200/50 dark:border-green-800/30">
-                              <div className="text-sm text-[#667085] dark:text-gray-400">User Management</div>
-                              <Badge variant="outline" className={agent.role === 'Team Leader' ? 
-                                "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : 
-                                "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"}>
-                                {agent.role === 'Team Leader' ? 'Granted' : 'Restricted'}
-                              </Badge>
-                            </div>
-                            <div className="flex items-center justify-between bg-white/80 dark:bg-gray-900/60 p-3 rounded-md border border-green-200/50 dark:border-green-800/30">
-                              <div className="text-sm text-[#667085] dark:text-gray-400">API Access</div>
-                              <Badge variant="outline" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                                Granted
-                              </Badge>
-                            </div>
-                          </div>
+
+                        {/* Added button to view performance directly */}
+                        <div className="flex justify-center">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="text-xs transition-all hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 border-blue-200 dark:border-blue-800/30"
+                            onClick={() => setActiveTab('performance')}
+                          >
+                            <BarChart2 className="h-3.5 w-3.5 mr-1.5" />
+                            View Performance Metrics
+                          </Button>
                         </div>
                       </div>
                     </TabsContent>
@@ -359,24 +432,6 @@ const AgentProfilePage: React.FC = () => {
                           <RatingsTab userId={id} />
                         </div>
                       </div>
-                      
-                      <div className="bg-gradient-to-r from-purple-50 to-fuchsia-100 dark:from-purple-900/20 dark:to-fuchsia-900/30 rounded-xl p-5 shadow-sm">
-                        <div className="flex items-center mb-4">
-                          <div className="p-2 rounded-full bg-white/60 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 mr-3">
-                            <CheckCircle className="h-5 w-5" />
-                          </div>
-                          <h3 className="text-base font-medium text-[#252A3A] dark:text-purple-300">Recent Achievements</h3>
-                        </div>
-                        <div className="bg-white/80 dark:bg-gray-900/60 p-5 rounded-lg border border-purple-200/50 dark:border-purple-800/30">
-                          {/* Here we'd show recent achievements if there were any */}
-                          <div className="text-center py-4">
-                            <p className="text-[#667085] dark:text-gray-400 mb-2">No recent achievements available yet.</p>
-                            <p className="text-sm text-[#667085] dark:text-gray-500">
-                              Achievements will appear here as {agent.fullName || "this agent"} continues to get evaluated chats.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
                     </div>
                   </TabsContent>
                   
@@ -390,13 +445,8 @@ const AgentProfilePage: React.FC = () => {
                           </div>
                           <h3 className="text-base font-medium text-[#252A3A] dark:text-purple-300">Recent Evaluations</h3>
                         </div>
-                        <div className="bg-white/80 dark:bg-gray-900/60 rounded-lg p-5 text-center">
-                          <p className="text-[#667085] dark:text-gray-300">
-                            Chat log evaluations and feedback will be displayed here.
-                          </p>
-                          <p className="text-[#667085] dark:text-gray-400 text-sm mt-2">
-                            This feature is under development.
-                          </p>
+                        <div className="bg-white/80 dark:bg-gray-900/60 rounded-lg p-5">
+                          <EvaluationsTab userId={id} />
                         </div>
                       </div>
                     </TabsContent>

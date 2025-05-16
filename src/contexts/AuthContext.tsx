@@ -11,6 +11,7 @@ interface AuthContextType {
   error: string | null;
   updateUser: (user: User) => void;
   setTestUser: (role: string) => void; // For testing different user roles
+  changePassword: (currentPassword: string, newPassword: string) => Promise<string>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -107,6 +108,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(updatedUser);
   };
 
+  const changePassword = async (currentPassword: string, newPassword: string): Promise<string> => {
+    try {
+      console.log("Changing password for user");
+      setError(null);
+      const response = await api.put<{message: string}>('/auth/change-password', { currentPassword, newPassword });
+      console.log("Password changed successfully");
+      return response.data.message;
+    } catch (error: any) {
+      console.error("Password change error:", error);
+      const errorMsg = error.response?.data?.message || 'Password change failed';
+      setError(errorMsg);
+      throw new Error(errorMsg);
+    }
+  };
+
   // For testing different user roles without backend
   const setTestUser = (role: string) => {
     console.log(`Setting test user with role: ${role}`);
@@ -133,7 +149,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       logout, 
       error, 
       updateUser,
-      setTestUser 
+      setTestUser,
+      changePassword
     }}>
       {children}
     </AuthContext.Provider>

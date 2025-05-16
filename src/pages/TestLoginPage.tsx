@@ -10,7 +10,13 @@ const TestLoginPage: React.FC = () => {
 
   const handleSelectRole = (role: string) => {
     setTestUser(role);
-    navigate('/');
+    if (role === 'Agent') {
+      navigate('/homepage/agent');
+    } else if (role === 'Team Leader') {
+      navigate('/homepage/team-leader');
+    } else {
+      navigate('/');
+    }
   };
 
   return (
@@ -43,16 +49,20 @@ const TestLoginPage: React.FC = () => {
               className="bg-gradient-to-r from-purple-600 to-indigo-600 dark:from-purple-500 dark:to-indigo-500 text-white py-6 w-full"
               onClick={() => handleSelectRole('Agent')}
             >
-              Login as Agent
+              Login as Agent Demo
             </Button>
-            
             <Button 
               className="bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-500 dark:to-teal-500 text-white py-6 w-full"
               onClick={() => handleSelectRole('Team Leader')}
             >
-              Login as Team Leader
+              Login as Team Leader Demo
             </Button>
-            
+            <Button 
+              className="bg-gradient-to-r from-gray-400 to-gray-600 dark:from-gray-600 dark:to-gray-800 text-white py-6 w-full opacity-80 cursor-not-allowed"
+              disabled
+            >
+              Login as Manager Demo (coming soon)
+            </Button>
             <Button 
               variant="outline"
               className="py-6 w-full"
@@ -77,4 +87,4 @@ const TestLoginPage: React.FC = () => {
   );
 };
 
-export default TestLoginPage; 
+export default TestLoginPage;

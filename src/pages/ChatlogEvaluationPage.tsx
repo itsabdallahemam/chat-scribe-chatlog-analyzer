@@ -195,7 +195,13 @@ const ChatlogEvaluationPage: React.FC = () => {
   };
 
   const handleEvaluate = async () => {
+    console.log("=== EVALUATE BUTTON CLICKED ===");
+    console.log("API Key exists:", !!apiKey, "Length:", apiKey?.length);
+    console.log("Selected Model:", selectedModel);
+    console.log("File exists:", !!file, "File name:", file?.name);
+    
     if (!apiKey) {
+      console.error("API Key missing - showing toast");
       toast({ 
         title: "API Key Missing", 
         description: "Please add your Google API key in Settings before evaluating chatlogs.", 
@@ -204,6 +210,7 @@ const ChatlogEvaluationPage: React.FC = () => {
       return;
     }
     if (!selectedModel) {
+      console.error("Model not selected - showing toast");
       toast({ 
         title: "Model Not Selected", 
         description: "Please select an AI model in Settings before evaluating chatlogs.", 
@@ -212,6 +219,7 @@ const ChatlogEvaluationPage: React.FC = () => {
       return;
     }
     if (!file) {
+      console.error("No file selected - showing toast");
       toast({ 
         title: "No File Selected", 
         description: "Please upload a CSV file with chatlogs to evaluate.", 
@@ -220,6 +228,7 @@ const ChatlogEvaluationPage: React.FC = () => {
       return;
     }
 
+    console.log("All prerequisites passed, starting evaluation process");
     setGlobalIsLoading(true);
     setIsProcessing(true);
     setGlobalError(null);
@@ -237,10 +246,14 @@ const ChatlogEvaluationPage: React.FC = () => {
 
     try {
       // Read the file and parse CSV
+      console.log("Reading file content...");
       const fileContent = await file.text();
+      console.log("Parsing CSV data...");
       chatlogsToProcess = parseCSV(fileContent);
+      console.log(`Successfully parsed ${chatlogsToProcess.length} chatlog entries`);
 
       if (chatlogsToProcess.length === 0) {
+        console.error("No valid chatlogs found in CSV");
         throw new Error("No valid chatlogs found in the CSV file. Please check the format and try again.");
       }
 
@@ -265,6 +278,7 @@ const ChatlogEvaluationPage: React.FC = () => {
       
       setEstimatedTime(estimatedTimeText);
       setCurrentStatus(`Preparing to evaluate ${chatlogsToProcess.length} chatlogs...`);
+      console.log(`Estimated time: ${estimatedTimeText}`);
       
       // Set up API request queue to control rate limiting
       const startTime = Date.now();
@@ -399,6 +413,63 @@ const ChatlogEvaluationPage: React.FC = () => {
         }
         setWaitTimer(null);
       };
+
+      // Process the first chatlog for testing
+      try {
+        console.log("Attempting to evaluate the first chatlog to verify API connection...");
+        console.log("API Key (first/last 5 chars):", apiKey.substring(0, 5) + "..." + apiKey.substring(apiKey.length - 5));
+        console.log("Selected Model:", selectedModel);
+        
+        const testChatlog = chatlogsToProcess[0];
+        console.log("Test chatlog (first 50 chars):", testChatlog.chatlog.substring(0, 50) + "...");
+        
+        // First test direct Google API connectivity with a simple request
+        try {
+          const testResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+          const testStatus = testResponse.status;
+          console.log("API connectivity test status:", testStatus);
+          
+          if (!testResponse.ok) {
+            const errorText = await testResponse.text();
+            console.error("API connectivity test failed:", errorText);
+            throw new Error(`Google API connectivity test failed with status ${testStatus}: ${errorText}`);
+          }
+          
+          console.log("API connectivity test successful!");
+        } catch (connectError) {
+          console.error("API connectivity test error:", connectError);
+          throw new Error(`Google API connectivity test error: ${connectError instanceof Error ? connectError.message : String(connectError)}`);
+        }
+        
+        // Now test the actual evaluation
+        const apiResult = await evaluateSingleChatlog(
+          apiKey,
+          selectedModel,
+          promptTemplate,
+          rubricText,
+          testChatlog.chatlog
+        );
+        
+        console.log("API test result:", JSON.stringify(apiResult).substring(0, 200) + "...");
+        
+        if (apiResult.error) {
+          console.error("Error in first test evaluation:", apiResult.error);
+          throw new Error(`API test failed: ${apiResult.error}`);
+        }
+        
+        console.log("Test evaluation successful, proceeding with full evaluation");
+        // Continue with existing code...
+      } catch (testError) {
+        console.error("Test evaluation failed:", testError);
+        resetProcessState();
+        setCurrentStatus('');
+        toast({ 
+          title: "API Test Failed", 
+          description: testError instanceof Error ? testError.message : String(testError), 
+          variant: "destructive" 
+        });
+        return;
+      }
 
       for (let i = 0; i < chatlogsToProcess.length; i++) {
         if (cancelEvaluationRef.current) {
