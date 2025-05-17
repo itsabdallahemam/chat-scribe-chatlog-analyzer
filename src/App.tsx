@@ -94,17 +94,7 @@ function App() {
                         </RoleProtectedRoute>
                       </ProtectedRoute>
                     }
-                  />
-                  <Route
-                    path="/dashboard"
-                    element={
-                      <ProtectedRoute>
-                        <RoleProtectedRoute allowedRoles={["Agent", "Team Leader"]}>
-                          <DashboardPage />
-                        </RoleProtectedRoute>
-                      </ProtectedRoute>
-                    }
-                  />
+                  />                  {/* Dashboard route removed for Agent. Use AgentHomePage as dashboard for agents. */}
                   <Route
                     path="/satisfaction"
                     element={

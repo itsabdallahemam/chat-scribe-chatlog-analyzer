@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { format, getHours, getDay, isValid } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Import Recharts components
 import {
@@ -132,6 +133,7 @@ const CPRDetailsPage: React.FC = () => {
   const navigate = useNavigate();
   const { evaluationResults } = useChatlog();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'coherence' | 'politeness' | 'relevance'>('coherence');
   const [expandedChatlog, setExpandedChatlog] = useState<{ tab: string; originalIndex: number } | null>(null);
   const [scoreFilter, setScoreFilter] = useState<string>('');
@@ -1559,8 +1561,6 @@ const CPRDetailsPage: React.FC = () => {
                             <div className="flex justify-between items-center">
                               <div className="text-xs font-medium truncate max-w-[70%] text-[#252A3A] dark:text-white" title={scenario.name}>
                                 {scenario.name.length > 20 ? scenario.name.substring(0, 20) + '...' : scenario.name}
-                              </div>
-                              <div className="bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-300 px-2 py-0.5 rounded text-xs font-medium">
                                 {scenario[activeTab].toFixed(1)}
                               </div>
                             </div>

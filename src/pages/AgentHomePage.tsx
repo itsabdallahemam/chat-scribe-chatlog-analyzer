@@ -225,13 +225,6 @@ const AgentHomePage: React.FC = () => {
   // Updated quick actions
   const quickActions = [
     {
-      title: "My Dashboard",
-      description: "View your performance metrics and analytics",
-      icon: <BarChart2 className="h-5 w-5" />,
-      path: "/dashboard",
-      color: "text-blue-600 dark:text-blue-500"
-    },
-    {
       title: "Upload Chatlog",
       description: "Analyze customer conversations with AI",
       icon: <Upload className="h-5 w-5" />,
@@ -422,13 +415,6 @@ const AgentHomePage: React.FC = () => {
                   </div>
                 </div>
               </div>
-              
-              <div className="flex justify-center sm:justify-end">
-                <Button variant="default" size="sm" onClick={() => navigate('/dashboard')}>
-                  View Full Dashboard
-                  <ArrowRight className="ml-1.5 h-4 w-4" />
-                </Button>
-              </div>
             </CardContent>
           </Card>
         </div>
@@ -547,21 +533,7 @@ const AgentHomePage: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div 
-                  className="bg-gradient-to-r from-blue-50 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-900/30 rounded-xl p-4 shadow-sm hover:shadow-md transition-all cursor-pointer"
-                  onClick={() => navigate('/dashboard')}
-                >
-                  <div className="flex items-start space-x-4">
-                    <div className="p-3 rounded-lg bg-white/60 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
-                      <BarChart2 className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <h3 className="font-medium mb-1 text-blue-800 dark:text-blue-300">My Dashboard</h3>
-                      <p className="text-sm text-blue-600/80 dark:text-blue-400/80">View your performance metrics and analytics</p>
-                    </div>
-                  </div>
-                </div>
-                
+                {/* Upload Chatlog */}
                 <div 
                   className="bg-gradient-to-r from-purple-50 to-fuchsia-100 dark:from-purple-900/20 dark:to-fuchsia-900/30 rounded-xl p-4 shadow-sm hover:shadow-md transition-all cursor-pointer"
                   onClick={() => navigate('/evaluate')}
@@ -577,6 +549,7 @@ const AgentHomePage: React.FC = () => {
                   </div>
                 </div>
                 
+                {/* Resolution Analysis */}
                 <div 
                   className="bg-gradient-to-r from-green-50 to-emerald-100 dark:from-green-900/20 dark:to-emerald-900/30 rounded-xl p-4 shadow-sm hover:shadow-md transition-all cursor-pointer"
                   onClick={() => navigate('/resolution')}
@@ -592,6 +565,7 @@ const AgentHomePage: React.FC = () => {
                   </div>
                 </div>
                 
+                {/* Weekly Schedule */}
                 <div 
                   className="bg-gradient-to-r from-amber-50 to-orange-100 dark:from-amber-900/20 dark:to-orange-900/30 rounded-xl p-4 shadow-sm hover:shadow-md transition-all cursor-pointer"
                   onClick={() => navigate('/schedule')}
@@ -700,4 +674,4 @@ const AgentHomePage: React.FC = () => {
   );
 };
 
-export default AgentHomePage; 
+export default AgentHomePage;

@@ -558,21 +558,40 @@ const ResolutionPage: React.FC = () => {
                             outerRadius={80}
                             fill="#8884d8"
                             dataKey="value"
-                            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                            label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+                              const RADIAN = Math.PI / 180;
+                              const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                              const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                              const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                              return (
+                                <text
+                                  x={x}
+                                  y={y}
+                                  fill="#fff"
+                                  textAnchor="middle"
+                                  dominantBaseline="central"
+                                  fontSize={16}
+                                  fontWeight="bold"
+                                  style={{ pointerEvents: 'none' }}
+                                >
+                                  {`${(percent * 100).toFixed(0)}%`}
+                                </text>
+                              );
+                            }}
                           >
                             <Cell fill={COLOR_SCHEME.resolved} />
                             <Cell fill={COLOR_SCHEME.unresolved} />
                           </Pie>
                           <Tooltip
                             formatter={(value, name) => [value, name]}
-                            contentStyle={{ 
-                              background: 'white', 
-                              borderRadius: '8px', 
-                              border: '1px solid #e2e8f0', 
-                              boxShadow: '0 2px 8px rgba(0,0,0,0.1)' 
+                            contentStyle={{
+                              background: 'white',
+                              borderRadius: '8px',
+                              border: '1px solid #e2e8f0',
+                              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
                             }}
                           />
-                          <Legend />
+                          {/* Remove <Legend /> */}
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
