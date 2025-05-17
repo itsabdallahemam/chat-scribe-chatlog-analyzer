@@ -53,7 +53,7 @@ git clone <repository-url>
 cd chat-scribe-clarity-analyzer
 ```
 
-2. Run the setup script to resolve common setup issues:
+2. **Recommended: Run the setup script** to resolve common setup issues:
 ```bash
 npm run setup
 ```
@@ -61,17 +61,13 @@ npm run setup
 This script automatically:
 - Fixes React version compatibility issues
 - Ensures correct version of react-wordcloud
+- Creates and applies patches for React 18 compatibility
 - Cleans npm cache and reinstalls dependencies with the correct flags
 
 3. Alternatively, you can install dependencies manually:
 ```bash
 # Install frontend dependencies
-<<<<<<< HEAD
-npm install
-# This will automatically apply patches to fix compatibility issues
-=======
 npm install --legacy-peer-deps
->>>>>>> mock
 
 # Install backend dependencies
 cd server
@@ -94,33 +90,6 @@ npm run prisma:generate
 npm run prisma:migrate
 ```
 
-<<<<<<< HEAD
-## Troubleshooting Installation
-
-If you encounter any issues during installation:
-
-1. **React Version Conflicts**: This project uses React 18.2.0. If you have issues with React compatibility:
-   ```bash
-   npm install react@18.2.0 react-dom@18.2.0 --save
-   ```
-
-2. **WordCloud Component Issues**: If there are issues with the WordCloud component:
-   ```bash
-   npm install d3-cloud@1.2.5 d3-scale@3.3.0 --save
-   ```
-
-3. **Apply patches manually**:
-   ```bash
-   npx patch-package
-   ```
-   
-4. **Clear cache and reinstall**:
-   ```bash
-   npm cache clean --force
-   rm -rf node_modules
-   npm install
-   ```
-=======
 ## Troubleshooting Setup Issues
 
 If you encounter any issues during setup, try the following solutions:
@@ -133,18 +102,24 @@ node -v
 Update Node.js if necessary from [nodejs.org](https://nodejs.org/).
 
 ### Package Installation Issues
-If you encounter React or other library compatibility issues, try clearing your npm cache:
+If you encounter React or other library compatibility issues, try using the setup script:
+```bash
+npm run setup
+```
+
+Or manually fix issues:
 ```bash
 npm cache clean --force
 rm -rf node_modules
-npm install
+npm install --legacy-peer-deps
+npx patch-package
 ```
 
 ### react-wordcloud Dependency Issues
 The word cloud visualization requires specific peer dependencies:
 ```bash
-# If having issues with react-wordcloud
-npm install --legacy-peer-deps
+# Fix react-wordcloud issues
+npm install d3-cloud@1.2.5 d3-scale@3.3.0 --save
 ```
 
 ### TypeScript Type Issues
@@ -152,7 +127,6 @@ If encountering TypeScript errors, make sure you're using a compatible TypeScrip
 ```bash
 npm install typescript@5.5.3 --save-dev
 ```
->>>>>>> mock
 
 ## Development
 
