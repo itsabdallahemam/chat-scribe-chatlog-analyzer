@@ -1,0 +1,102 @@
+#!/usr/bin/env node
+
+/**
+ * Chat-Scribe Chatlog Analyzer Setup Script
+ * 
+ * This script helps resolve common setup issues when cloning the project.
+ * It focuses on fixing React version and react-wordcloud compatibility issues.
+ */
+
+const { execSync } = require('child_process');
+const fs = require('fs');
+const path = require('path');
+
+// ANSI color codes for terminal output
+const colors = {
+  reset: '\x1b[0m',
+  bright: '\x1b[1m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  blue: '\x1b[34m',
+  red: '\x1b[31m'
+};
+
+console.log(`${colors.bright}${colors.blue}=== Chat-Scribe Chatlog Analyzer Setup ====${colors.reset}\n`);
+
+// Check Node.js version
+try {
+  console.log(`${colors.yellow}Checking Node.js version...${colors.reset}`);
+  const nodeVersion = execSync('node -v').toString().trim();
+  const versionNumber = nodeVersion.replace('v', '').split('.');
+  const majorVersion = parseInt(versionNumber[0], 10);
+  
+  if (majorVersion < 18) {
+    console.log(`${colors.red}Warning: This project requires Node.js v18 or higher.${colors.reset}`);
+    console.log(`Current version: ${nodeVersion}`);
+    console.log(`Please update Node.js from https://nodejs.org/\n`);
+    process.exit(1);
+  } else {
+    console.log(`${colors.green}Node version ${nodeVersion} is compatible.${colors.reset}\n`);
+  }
+} catch (error) {
+  console.error(`${colors.red}Failed to check Node.js version: ${error.message}${colors.reset}\n`);
+  process.exit(1);
+}
+
+// Ensure fixed React version in package.json
+try {
+  console.log(`${colors.yellow}Updating package.json with fixed React version...${colors.reset}`);
+  const packageJsonPath = path.join(process.cwd(), 'package.json');
+  
+  if (fs.existsSync(packageJsonPath)) {
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+    
+    // Fix React versions
+    packageJson.dependencies.react = "18.2.0";
+    packageJson.dependencies['react-dom'] = "18.2.0";
+    
+    // Fix react-wordcloud version
+    packageJson.dependencies['react-wordcloud'] = "1.2.7";
+    
+    fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
+    console.log(`${colors.green}Updated package.json with fixed versions.${colors.reset}\n`);
+  } else {
+    console.log(`${colors.red}Could not find package.json in the current directory.${colors.reset}\n`);
+  }
+} catch (error) {
+  console.error(`${colors.red}Failed to update package.json: ${error.message}${colors.reset}\n`);
+}
+
+// Clean install dependencies
+try {
+  console.log(`${colors.yellow}Cleaning npm cache and node_modules...${colors.reset}`);
+  execSync('npm cache clean --force', { stdio: 'inherit' });
+  
+  if (fs.existsSync(path.join(process.cwd(), 'node_modules'))) {
+    console.log(`Removing old node_modules folder...`);
+    // Using platform-specific commands for removing node_modules
+    if (process.platform === 'win32') {
+      try {
+        execSync('rmdir /s /q node_modules', { stdio: 'inherit' });
+      } catch (e) {
+        console.log(`${colors.yellow}Could not remove node_modules folder automatically. You may need to delete it manually.${colors.reset}`);
+      }
+    } else {
+      execSync('rm -rf node_modules', { stdio: 'inherit' });
+    }
+  }
+  
+  console.log(`\n${colors.yellow}Installing dependencies with --legacy-peer-deps...${colors.reset}`);
+  execSync('npm install --legacy-peer-deps', { stdio: 'inherit' });
+  console.log(`\n${colors.green}Dependencies installed successfully!${colors.reset}\n`);
+} catch (error) {
+  console.error(`${colors.red}Failed during dependency installation: ${error.message}${colors.reset}\n`);
+  console.log(`${colors.yellow}You may need to run these commands manually:${colors.reset}`);
+  console.log(`npm cache clean --force`);
+  console.log(`npm install --legacy-peer-deps\n`);
+}
+
+console.log(`${colors.bright}${colors.green}===== Setup Complete =====\n${colors.reset}`);
+console.log(`${colors.blue}You can now run the project:${colors.reset}`);
+console.log(`npm run dev\n`);
+console.log(`${colors.blue}If you encounter any issues, refer to the Troubleshooting section in README.md${colors.reset}\n`); 

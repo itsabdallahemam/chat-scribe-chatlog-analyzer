@@ -4,24 +4,28 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { 
-  FileText, 
+  UploadCloud, 
   BarChart2, 
   CheckCircle, 
   ArrowRight, 
-  Sparkles, 
-  Shield, 
-  Zap, 
-  Users, 
-  Github, 
-  Twitter, 
-  Linkedin, 
+  MessageSquare, 
+  User,
   Gauge,
-  UserCircle,
+  FileText,
+  Users,
   LineChart,
+  Settings,
+  ChevronRight,
+  Sparkles,
+  Bot,
   PieChart,
-  Award,
-  MessageSquare
+  Activity,
+  Github,
+  Twitter,
+  Linkedin
 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -32,61 +36,121 @@ const HomePage: React.FC = () => {
     setAnimateHero(true);
   }, []);
 
-  // Key features of the product
-  const features = [
+  // Main product benefits
+  const benefits = [
     {
-      title: "AI-Powered Insights",
-      description: "Instantly see what matters most in every conversation. Our AI highlights strengths and areas to improve, so you can focus on what counts.",
-      icon: <Sparkles className="h-6 w-6" />, 
-      gradient: "from-purple-500 to-indigo-600 dark:from-purple-400 dark:to-indigo-500"
+      title: "AI-Powered Analysis",
+      description: "Our advanced AI evaluates conversations using the CPR methodology: Coherence, Politeness, and Relevance",
+      icon: <Sparkles className="h-6 w-6" />,
+      color: "bg-[#4582ff]/10 text-[#4582ff] dark:bg-[#4582ff]/20 dark:text-[#4582ff]"
     },
     {
-      title: "Live Performance Dashboards",
-      description: "Beautiful, real-time charts make it easy to track your progress and spot trends at a glance.",
-      icon: <BarChart2 className="h-6 w-6" />, 
-      gradient: "from-blue-500 to-cyan-500 dark:from-blue-400 dark:to-cyan-400"
+      title: "Actionable Insights",
+      description: "Get detailed metrics and practical suggestions to improve customer service quality",
+      icon: <Activity className="h-6 w-6" />,
+      color: "bg-[#22c55e]/10 text-[#22c55e] dark:bg-[#22c55e]/20 dark:text-[#22c55e]"
     },
     {
-      title: "Resolution Analytics",
-      description: "See what leads to happier customers and faster resolutions. Get clear, actionable feedback every time.",
-      icon: <CheckCircle className="h-6 w-6" />, 
-      gradient: "from-emerald-500 to-green-500 dark:from-emerald-400 dark:to-green-400"
-    },
-    {
-      title: "Personalized Experience",
-      description: "Whether you’re an agent or a team leader, get a tailored view with the insights you need to succeed.",
-      icon: <Users className="h-6 w-6" />, 
-      gradient: "from-amber-500 to-orange-500 dark:from-amber-400 dark:to-orange-400"
+      title: "Role-Based Analytics",
+      description: "Customized dashboards and reports for both agents and team leaders",
+      icon: <Users className="h-6 w-6" />,
+      color: "bg-purple-500/10 text-purple-500 dark:bg-purple-500/20 dark:text-purple-500"
     }
   ];
 
-  // Role-specific benefits
-  const roleBenefits = [
+  // Key features by user role
+  const roleFeatures = {
+    agent: [
     {
-      role: "Support Agents",
-      description: "Unlock your potential with a personal dashboard, clear feedback, and easy-to-follow improvement tips.",
-      features: [
-        "Personal dashboard with your stats", 
-        "Conversation quality breakdown", 
-        "Step-by-step improvement tips",
-        "Track your progress over time"
-      ],
-      icon: <UserCircle className="h-8 w-8" />, 
-      color: "bg-gradient-to-r from-purple-600 to-indigo-600 dark:from-purple-500 dark:to-indigo-500",
-      action: () => navigate('/test-login')
+        name: "Upload & Analyze",
+        description: "Upload customer conversations and get immediate feedback on your performance",
+        icon: <UploadCloud className="h-5 w-5" />,
+        action: () => navigate('/evaluate'),
+        color: "from-blue-100 to-green-100 dark:from-blue-900/30 dark:to-green-900/30"
+      },
+      {
+        name: "CPR Dashboard",
+        description: "Track your Coherence, Politeness, and Relevance scores over time",
+        icon: <Gauge className="h-5 w-5" />,
+        action: () => navigate('/cpr-details'),
+        color: "from-green-100 to-purple-100 dark:from-green-900/30 dark:to-purple-900/30"
+      },
+      {
+        name: "Resolution Tracking",
+        description: "See how often your conversations lead to successful resolutions",
+        icon: <CheckCircle className="h-5 w-5" />,
+        action: () => navigate('/resolution'),
+        color: "from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30"
+      },
+      {
+        name: "Performance Reports",
+        description: "Generate detailed reports on your communication strengths and areas for improvement",
+        icon: <FileText className="h-5 w-5" />,
+        action: () => navigate('/report'),
+        color: "from-purple-100 to-green-100 dark:from-purple-900/30 dark:to-green-900/30"
+      }
+    ],
+    leader: [
+      {
+        name: "Team Analytics",
+        description: "Get an overview of your entire team's performance metrics and trends",
+        icon: <BarChart2 className="h-5 w-5" />,
+        action: () => navigate('/agents-dashboard'),
+        color: "from-blue-100 to-green-100 dark:from-blue-900/30 dark:to-green-900/30"
     },
     {
-      role: "Team Leaders",
-      description: "See your team’s strengths, spot coaching opportunities, and celebrate wins—all in one place.",
-      features: [
-        "Team overview at a glance", 
-        "Compare agent performance", 
-        "Find coaching opportunities",
-        "Download reports and trends"
-      ],
-      icon: <Users className="h-8 w-8" />, 
-      color: "bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-500 dark:to-teal-500",
-      action: () => navigate('/test-login')
+        name: "Agent Comparison",
+        description: "Compare metrics across agents to identify top performers and coaching needs",
+        icon: <Users className="h-5 w-5" />,
+        action: () => navigate('/agents-dashboard'),
+        color: "from-green-100 to-purple-100 dark:from-green-900/30 dark:to-purple-900/30"
+      },
+      {
+        name: "Conversation Insights",
+        description: "Identify patterns in successful conversations to develop best practices",
+        icon: <MessageSquare className="h-5 w-5" />,
+        action: () => navigate('/evaluate'),
+        color: "from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30"
+      },
+      {
+        name: "Performance Reports",
+        description: "Generate team reports and share insights with your broader organization",
+        icon: <FileText className="h-5 w-5" />,
+        action: () => navigate('/report'),
+        color: "from-purple-100 to-green-100 dark:from-purple-900/30 dark:to-green-900/30"
+      }
+    ]
+  };
+
+  // How it works steps
+  const workflowSteps = [
+    {
+      step: 1,
+      title: "Upload Conversations",
+      description: "Upload your customer service chatlogs in CSV format",
+      icon: <UploadCloud className="h-6 w-6" />,
+      color: "bg-[#4582ff]"
+    },
+    {
+      step: 2,
+      title: "AI Analysis",
+      description: "Our AI evaluates conversations using the CPR methodology",
+      icon: <Bot className="h-6 w-6" />,
+      color: "bg-purple-500"
+    },
+    {
+      step: 3,
+      title: "View Insights",
+      description: "Access detailed metrics and actionable recommendations",
+      icon: <BarChart2 className="h-6 w-6" />,
+      color: "bg-[#22c55e]"
+    },
+    {
+      step: 4,
+      title: "Improve Performance",
+      description: "Implement feedback and track your progress over time",
+      icon: <Activity className="h-6 w-6" />,
+      color: "bg-amber-500"
     }
   ];
 
@@ -94,311 +158,340 @@ const HomePage: React.FC = () => {
   const cprMetrics = [
     {
       title: "Coherence",
-      description: "Is the conversation logical and easy to follow?",
-      icon: <LineChart className="h-5 w-5" />, 
-      color: "text-indigo-500 dark:text-indigo-400"
+      score: "93%",
+      description: "Measures logical flow and consistency throughout conversations",
+      icon: <LineChart className="h-6 w-6" />,
+      color: "text-[#4582ff] dark:text-[#4582ff]",
+      bg: "bg-[#4582ff]/10 dark:bg-[#4582ff]/20"
     },
     {
       title: "Politeness",
-      description: "Is the tone friendly, helpful, and professional?",
-      icon: <MessageSquare className="h-5 w-5" />, 
-      color: "text-purple-500 dark:text-purple-400"
+      score: "96%",
+      description: "Evaluates tone, courtesy, and professional language usage",
+      icon: <MessageSquare className="h-6 w-6" />,
+      color: "text-purple-500 dark:text-purple-500",
+      bg: "bg-purple-500/10 dark:bg-purple-500/20"
     },
     {
       title: "Relevance",
-      description: "Are responses on-topic and directly helpful?",
-      icon: <PieChart className="h-5 w-5" />, 
-      color: "text-emerald-500 dark:text-emerald-400"
+      score: "91%",
+      description: "Assesses how directly responses address customer needs",
+      icon: <PieChart className="h-6 w-6" />,
+      color: "text-[#22c55e] dark:text-[#22c55e]",
+      bg: "bg-[#22c55e]/10 dark:bg-[#22c55e]/20"
     }
   ];
+
+  // Sample conversation with metrics
+  const sampleConversation = {
+    messages: [
+      {
+        role: "customer",
+        text: "I've been charged twice for my last order (#12345). Can you help me get this resolved?",
+        time: "10:14"
+      },
+      {
+        role: "agent",
+        text: "I'm sorry to hear about the double charge. I'll look into this right away for you. Let me check your order #12345 in our system.",
+        time: "10:15"
+      },
+      {
+        role: "customer",
+        text: "Thank you. The duplicate charge is really causing me problems with my bank account.",
+        time: "10:16"
+      },
+      {
+        role: "agent",
+        text: "I understand how frustrating this must be. I can see the duplicate charge in our system. I'll process a refund for the extra charge right now, and it should be back in your account within 3-5 business days. Would you like me to send you a confirmation email once the refund is processed?",
+        time: "10:18"
+    }
+    ],
+    metrics: {
+      coherence: 94,
+      politeness: 96,
+      relevance: 92,
+      resolution: "Resolved"
+    }
+  };
   
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50 dark:from-gray-950 dark:to-gray-900 transition-colors duration-500">
-      {/* Hero Section */}
-      <div className="relative overflow-hidden transition-colors duration-500">
-        {/* Background Elements */}
-        <div className="absolute inset-0 -z-10 overflow-hidden transition-colors duration-500">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-500/5 via-transparent to-transparent dark:from-blue-400/10 transition-colors duration-500" />
-          {/* Animated gradient orbs */}
-          <div 
-            className={`absolute top-20 left-1/4 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] rounded-full bg-gradient-to-r from-purple-500/20 to-blue-500/20 dark:from-purple-400/30 dark:to-blue-400/30 blur-3xl opacity-0 transition-all duration-1000 ease-in-out ${animateHero ? 'opacity-100' : ''}`} 
-            style={{ transform: 'translate(-30%, -30%)', transition: 'background 0.5s, box-shadow 0.5s' }}
-          />
-          <div 
-            className={`absolute bottom-20 right-1/4 w-[250px] sm:w-[400px] h-[250px] sm:h-[400px] rounded-full bg-gradient-to-r from-cyan-500/20 to-emerald-500/20 dark:from-cyan-400/30 dark:to-emerald-400/30 blur-3xl opacity-0 transition-all duration-1000 delay-300 ease-in-out ${animateHero ? 'opacity-100' : ''}`} 
-            style={{ transform: 'translate(20%, 20%)', transition: 'background 0.5s, box-shadow 0.5s' }}
-          />
-          {/* Grid pattern */}
-          <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] bg-center opacity-5 dark:opacity-10 transition-opacity duration-500" />
+    <div className="min-h-screen bg-app-bg dark:bg-gray-900">
+      {/* Hero Section - Redesigned */}
+      <div className="relative overflow-hidden bg-white dark:bg-gray-950">
+        {/* Background gradient */}
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-50/80 to-purple-50/80 dark:from-blue-900/20 dark:to-purple-900/20"></div>
+          
+        {/* Grid pattern overlay */}
+        <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] bg-center opacity-10"></div>
+        
+        <div className="container mx-auto px-4 py-20 lg:py-28 relative">
+          <div className="max-w-7xl mx-auto">
+            {/* Top badge */}
+            <div className="flex justify-center mb-6">
+              <Badge className="bg-[#4582ff]/10 text-[#4582ff] hover:bg-[#4582ff]/20 border-0 py-1.5 px-3 rounded-full text-sm">
+                <Sparkles className="h-3.5 w-3.5 mr-1.5" /> 
+                AI-POWERED ANALYSIS
+              </Badge>
         </div>
-        <div className="container mx-auto px-4 py-16 sm:py-24 lg:py-32 relative z-10 transition-colors duration-500">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className={`transform transition-all duration-700 ease-out ${animateHero ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold mb-4 sm:mb-6 bg-gradient-to-r from-purple-600 via-blue-500 to-cyan-500 dark:from-purple-400 dark:via-blue-400 dark:to-cyan-400 bg-clip-text text-transparent">
-                Chat-Scribe Analyzer
+        
+            {/* Main headline */}
+            <div className="text-center mb-12">
+              <h1 className="text-7xl md:text-8xl lg:text-9xl font-extrabold tracking-tight text-gray-900 dark:text-white">
+                CHAT<span className="relative inline-block">
+                  <span className="relative z-10 bg-clip-text text-transparent bg-gradient-to-r from-[#4582ff] to-purple-500">SCRIBE</span>
+                  <span className="absolute bottom-0 left-0 right-0 h-3 bg-gradient-to-r from-[#4582ff]/20 to-purple-500/20 transform translate-y-2"></span>
+                </span>
               </h1>
             </div>
             
-            <div className={`transform transition-all duration-700 delay-200 ease-out ${animateHero ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-              <p className="text-lg sm:text-xl md:text-2xl text-gray-600 dark:text-gray-300 mb-6 sm:mb-8 md:mb-10 max-w-3xl mx-auto leading-relaxed">
-                Elevate your customer service with AI-powered conversation analysis that provides actionable insights for agents and team leaders.
+            {/* Subtitle */}
+            <div className="text-center mb-12">
+              <p className="text-xl md:text-2xl text-gray-700 dark:text-gray-300 max-w-3xl mx-auto">
+                CUSTOMER CONVERSATION ANALYSIS FOR SUPPORT TEAMS
               </p>
             </div>
             
-            <div className={`flex flex-col sm:flex-row gap-4 justify-center items-center transition-all duration-700 delay-400 ease-out ${animateHero ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
+            {/* Visual elements */}
+            {/* Removed visual elements from the hero section */}
+            
+            {/* CTA section */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-5 mb-8">
               <Button 
-                size="lg"
                 onClick={() => navigate('/signup')}
-                className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-full text-base sm:text-lg py-5 sm:py-6 px-6 sm:px-8"
+                className="bg-gray-900 hover:bg-gray-800 text-white dark:bg-gray-800 dark:hover:bg-gray-700 rounded-full px-8 py-6 text-lg font-medium"
+                size="lg"
               >
-                Get Started
-                <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5 group-hover:translate-x-1 transition-transform" />
+                LET'S START
+              </Button>
+              
+              <Button
+                onClick={() => navigate('/evaluate')}
+                variant="outline"
+                className="border-gray-900 text-gray-900 hover:bg-gray-100 dark:border-gray-300 dark:text-gray-300 dark:hover:bg-gray-800 rounded-full px-8 py-6 text-lg font-medium"
+                size="lg"
+              >
+                TRY DEMO
               </Button>
             </div>
             
-            {/* Key metrics */}
-            <div className={`mt-12 sm:mt-16 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 text-center transition-all duration-700 delay-600 ease-out ${animateHero ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-              <div className="bg-white/80 dark:bg-gray-800/50 rounded-xl p-4 sm:p-6 backdrop-blur-sm shadow-md border border-gray-200 dark:border-gray-700">
-                <div className="text-3xl sm:text-4xl font-bold text-blue-600 dark:text-blue-400 mb-1 sm:mb-2">95%</div>
-                <div className="text-sm sm:text-base text-gray-600 dark:text-gray-300">Evaluation Accuracy</div>
+            {/* Stats */}
+            <div className="flex justify-center gap-x-12 gap-y-4 flex-wrap text-center">
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">MORE THAN</p>
+                <p className="text-xl font-semibold text-gray-900 dark:text-white">1,000+</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">SUPPORT TEAMS</p>
               </div>
-              <div className="bg-white/80 dark:bg-gray-800/50 rounded-xl p-4 sm:p-6 backdrop-blur-sm shadow-md border border-gray-200 dark:border-gray-700">
-                <div className="text-3xl sm:text-4xl font-bold text-emerald-600 dark:text-emerald-400 mb-1 sm:mb-2">+42%</div>
-                <div className="text-sm sm:text-base text-gray-600 dark:text-gray-300">Customer Satisfaction</div>
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">UP TO</p>
+                <p className="text-xl font-semibold text-gray-900 dark:text-white">42%</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">EFFICIENCY GAIN</p>
               </div>
-              <div className="bg-white/80 dark:bg-gray-800/50 rounded-xl p-4 sm:p-6 backdrop-blur-sm shadow-md border border-gray-200 dark:border-gray-700">
-                <div className="text-3xl sm:text-4xl font-bold text-purple-600 dark:text-purple-400 mb-1 sm:mb-2">3.5x</div>
-                <div className="text-sm sm:text-base text-gray-600 dark:text-gray-300">Agent Efficiency</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* What is Chat-Scribe Section */}
-      <div className="container mx-auto px-4 py-16 sm:py-20 transition-colors duration-500">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-4">What is Chat-Scribe?</h2>
-              <p className="text-base sm:text-lg text-gray-600 dark:text-gray-300 mb-6">
-                Chat-Scribe is an advanced analytics platform that evaluates customer service conversations using our proprietary CPR methodology: Coherence, Politeness, and Relevance.
-              </p>
-              <p className="text-base sm:text-lg text-gray-600 dark:text-gray-300 mb-6">
-                Our AI-powered system provides actionable insights to customer support teams, helping agents improve their communication skills and enabling team leaders to identify coaching opportunities.
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
-                {cprMetrics.map((metric, index) => (
-                  <div key={index} className="flex flex-col items-center text-center p-4 rounded-xl bg-white/90 dark:bg-gray-800/50 shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-500">
-                    <div className={`${metric.color} mb-2`}>
-                      {metric.icon}
-                    </div>
-                    <h3 className="font-medium mb-1">{metric.title}</h3>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">{metric.description}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="relative">
-              <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 dark:from-blue-500/20 dark:to-purple-500/20 rounded-3xl p-4 sm:p-8 relative overflow-hidden">
-                <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] bg-center opacity-10"></div>
-                <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 z-10">
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="bg-blue-500/10 dark:bg-blue-500/20 p-3 rounded-full">
-                      <MessageSquare className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-medium">Conversation Analysis</h3>
-                      <p className="text-sm text-gray-500">Customer chat with Agent #1242</p>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-4 mb-6">
-                    <div className="p-3 bg-gray-100 dark:bg-gray-700/50 rounded-lg text-sm">
-                      <p className="text-gray-800 dark:text-gray-200">Hello, I'm having trouble resetting my password on your website. Can you help?</p>
-                      <p className="text-xs text-gray-500 mt-1">Customer - 10:15 AM</p>
-                    </div>
-                    <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm">
-                      <p className="text-gray-800 dark:text-gray-200">Hi there! I'd be happy to help you reset your password. Could you tell me which page you're having trouble with specifically?</p>
-                      <p className="text-xs text-gray-500 mt-1">Agent - 10:16 AM</p>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="text-center p-2 rounded-lg bg-indigo-50 dark:bg-indigo-900/20">
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Coherence</p>
-                      <p className="font-medium text-indigo-600 dark:text-indigo-400">92%</p>
-                    </div>
-                    <div className="text-center p-2 rounded-lg bg-purple-50 dark:bg-purple-900/20">
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Politeness</p>
-                      <p className="font-medium text-purple-600 dark:text-purple-400">95%</p>
-                    </div>
-                    <div className="text-center p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20">
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Relevance</p>
-                      <p className="font-medium text-emerald-600 dark:text-emerald-400">90%</p>
-                    </div>
-                  </div>
-                </div>
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">AVERAGE</p>
+                <p className="text-xl font-semibold text-gray-900 dark:text-white">94%</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">ACCURACY</p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Features Section */}
-      <div className="bg-gray-50 dark:bg-gray-900/70 py-16 sm:py-20 transition-colors duration-500">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12 sm:mb-16">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">Powerful Features</h2>
-            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-              Comprehensive tools to analyze, measure, and improve customer interactions
-            </p>
+      {/* How It Works Section */}
+      <section className="relative py-20 px-4 bg-white">
+        <div className="max-w-7xl mx-auto relative z-10">
+          <div className="text-center mb-14">
+            <span className="inline-block px-3 py-1 rounded-full bg-blue-50 text-blue-500 text-sm mb-3 font-medium">Simple Process</span>
+            <h2 className="text-4xl font-extrabold text-gray-900 mb-2">How ChatScribe Works</h2>
+            <p className="text-lg text-gray-600">A seamless workflow for actionable insights</p>
           </div>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 max-w-7xl mx-auto">
-            {features.map((feature, index) => (
-              <Card 
-                key={index} 
-                className="group overflow-hidden rounded-2xl border-0 shadow-lg hover:shadow-xl transition-all duration-300 dark:bg-gray-800/50 h-full flex flex-col transition-colors duration-500"
-              >
-                <div className={`h-2 w-full bg-gradient-to-r ${feature.gradient}`}></div>
-                <CardHeader className="pt-6">
-                  <div className={`mb-4 p-3 rounded-xl inline-flex bg-gradient-to-r ${feature.gradient} text-white`}>
-                    {feature.icon}
-                  </div>
-                  <CardTitle className="text-xl">{feature.title}</CardTitle>
-                  <CardDescription className="text-sm">{feature.description}</CardDescription>
-                </CardHeader>
-              </Card>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {workflowSteps.map((step, idx) => (
+              <div key={idx} className="bg-white/80 border border-gray-200 rounded-2xl shadow-md p-8 flex flex-col items-center text-center">
+                <div className={`mb-5 w-16 h-16 flex items-center justify-center rounded-full ${step.color} bg-opacity-10`}>{step.icon}</div>
+                <div className="text-xs text-gray-400 mb-1">Step {step.step}</div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">{step.title}</h3>
+                <p className="text-gray-600 text-sm">{step.description}</p>
+              </div>
             ))}
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Role-based Cards Section */}
-      <div className="container mx-auto px-4 py-16 sm:py-20 transition-colors duration-500">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">Tailored For Your Role</h2>
-          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-            Chat-Scribe provides role-specific experiences that deliver exactly what you need
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
-          {roleBenefits.map((roleBenefit, index) => (
-            <Card 
-              key={index} 
-              className="overflow-hidden rounded-2xl border-0 shadow-xl hover:shadow-2xl transition-all duration-300 dark:bg-gray-800/50 h-full flex flex-col relative transition-colors duration-500"
-            >
-              <div className={`${roleBenefit.color} text-white p-6`}>
-                <div className="flex items-center gap-3 mb-3">
-                  {roleBenefit.icon}
-                  <h3 className="text-2xl font-bold">{roleBenefit.role}</h3>
-                </div>
-                <p className="text-white/90 text-lg">{roleBenefit.description}</p>
+      {/* CPR Methodology & Demo Section */}
+      <section className="relative py-20 px-4 bg-white">
+        <div className="max-w-7xl mx-auto relative z-10">
+          <div className="text-center mb-14">
+            <Badge className="mb-3 bg-purple-500/10 text-purple-500 hover:bg-purple-500/20 border-0">See It In Action</Badge>
+            <h2 className="text-4xl font-extrabold text-gray-900 mb-2">Analyze Customer Conversations</h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">Our CPR methodology evaluates customer service conversations across three key dimensions</p>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+            {/* CPR Metrics Cards */}
+            <div className="flex flex-col gap-6">
+              <div className="flex flex-col gap-4">
+                {cprMetrics.map((metric, idx) => (
+                  <div key={idx} className={`flex items-center gap-4 p-5 bg-white/80 border border-gray-200 rounded-2xl shadow-md`}>
+                    <div className={`rounded-full p-3 bg-gradient-to-br from-blue-50 to-purple-50`}>{metric.icon}</div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-lg text-gray-900">{metric.title}</h3>
+                      <p className="text-sm text-gray-600">{metric.description}</p>
+                    </div>
+                    <div className="text-2xl font-bold text-gray-900">{metric.score}</div>
+                  </div>
+                ))}
               </div>
-              <CardContent className="pt-6 pb-4 flex-grow">
-                <ul className="space-y-3">
-                  {roleBenefit.features.map((feature, featureIndex) => (
-                    <li key={featureIndex} className="flex items-center gap-2">
-                      <CheckCircle className="h-5 w-5 text-green-500 dark:text-green-400 shrink-0" />
-                      <span className="text-gray-700 dark:text-gray-300">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-              <CardFooter className="px-6 pb-6">
-                {/* Removed Try Demo button */}
-              </CardFooter>
-            </Card>
-          ))}
+              <div className="flex justify-center mt-6">
+                <Button onClick={() => navigate('/cpr-details')} className="border-[#4582ff] text-[#4582ff] bg-[#4582ff]/5 hover:bg-[#4582ff]/10 rounded-full px-6 py-3 font-medium">Learn More About CPR Methodology <ChevronRight className="h-4 w-4" /></Button>
+              </div>
+            </div>
+            {/* Sample Conversation Card */}
+            <div className="bg-white/80 border border-gray-200 rounded-2xl shadow-md p-8">
+              <div className="flex items-center gap-3 mb-5 border-b border-gray-100 pb-4">
+                <MessageSquare className="h-5 w-5 text-[#4582ff]" />
+                <h3 className="text-lg font-semibold text-gray-900">Sample Conversation</h3>
+                    </div>
+              <div className="space-y-4 max-h-80 overflow-y-auto mb-6">
+                {sampleConversation.messages.map((message, idx) => (
+                  <div key={idx} className={`p-3 rounded-lg text-sm ${message.role === 'customer' ? 'bg-blue-50/60' : 'bg-purple-50/60'}`}> 
+                    <p className="text-gray-800">{message.text}</p>
+                    <p className="text-xs text-gray-400 mt-1">{message.role === 'customer' ? 'Customer' : 'Agent'} - {message.time}</p>
+                  </div>
+                ))}
+                    </div>
+              <div className="border-t border-gray-100 pt-4">
+                <div className="text-center mb-3">
+                  <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-200">{sampleConversation.metrics.resolution}</Badge>
+                    </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="text-center p-2 rounded-lg bg-blue-50/60">
+                    <p className="text-xs text-gray-500">Coherence</p>
+                    <p className="font-medium text-[#4582ff]">{sampleConversation.metrics.coherence}%</p>
+                  </div>
+                  <div className="text-center p-2 rounded-lg bg-purple-50/60">
+                    <p className="text-xs text-gray-500">Politeness</p>
+                    <p className="font-medium text-purple-500">{sampleConversation.metrics.politeness}%</p>
+                    </div>
+                  <div className="text-center p-2 rounded-lg bg-green-50/60">
+                    <p className="text-xs text-gray-500">Relevance</p>
+                    <p className="font-medium text-[#22c55e]">{sampleConversation.metrics.relevance}%</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+      </section>
+
+      {/* Role-Based Features */}
+      <section className="relative py-20 px-4 bg-white">
+        <div className="max-w-7xl mx-auto relative z-10">
+          <div className="text-center mb-14">
+            <span className="inline-block px-3 py-1 rounded-full bg-green-50 text-green-500 text-sm mb-3 font-medium">Role-Based Experience</span>
+            <h2 className="text-4xl font-extrabold text-gray-900 mb-2">Tools For Your Role</h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">Whether you're a customer service agent or team leader, ChatScribe offers features designed specifically for your needs</p>
+          </div>
+          <Tabs defaultValue="agent" className="w-full">
+            <TabsList className="flex justify-center space-x-4 mb-10 bg-transparent">
+              <TabsTrigger value="agent" className="rounded-full border border-gray-200 bg-white/80 px-6 py-2 text-gray-700 hover:bg-gray-50 data-[state=active]:bg-white data-[state=active]:border-gray-300 data-[state=active]:shadow-sm font-medium"> <User className="mr-2 h-4 w-4" /> Customer Service Agents </TabsTrigger>
+              <TabsTrigger value="leader" className="rounded-full border border-gray-200 bg-white/80 px-6 py-2 text-gray-700 hover:bg-gray-50 data-[state=active]:bg-white data-[state=active]:border-gray-300 data-[state=active]:shadow-sm font-medium"> <Users className="mr-2 h-4 w-4" /> Team Leaders </TabsTrigger>
+            </TabsList>
+            <TabsContent value="agent" className="mt-0">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                {roleFeatures.agent.map((feature, idx) => (
+                  <div key={idx} className="bg-white/80 border border-gray-200 rounded-2xl shadow-md p-7 flex flex-col h-full">
+                    <div className={`mb-6 h-[60px] w-full rounded-xl bg-gradient-to-r ${feature.color} flex items-center justify-start p-4`}>
+                      <div className="bg-white/80 p-2 rounded-lg">{feature.icon}</div>
+                    </div>
+                    <h3 className="text-lg font-semibold mb-2 text-gray-900">{feature.name}</h3>
+                    <p className="text-sm text-gray-600 mb-6 flex-1">{feature.description}</p>
+                    <button className="inline-flex items-center text-sm text-[#4582ff] hover:underline focus:outline-none font-medium" onClick={feature.action}>Explore Feature <ChevronRight className="h-4 w-4 ml-0.5" /></button>
+                  </div>
+            ))}
+          </div>
+            </TabsContent>
+            <TabsContent value="leader" className="mt-0">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                {roleFeatures.leader.map((feature, idx) => (
+                  <div key={idx} className="bg-white/80 border border-gray-200 rounded-2xl shadow-md p-7 flex flex-col h-full">
+                    <div className={`mb-6 h-[60px] w-full rounded-xl bg-gradient-to-r ${feature.color} flex items-center justify-start p-4`}>
+                      <div className="bg-white/80 p-2 rounded-lg">{feature.icon}</div>
+        </div>
+                    <h3 className="text-lg font-semibold mb-2 text-gray-900">{feature.name}</h3>
+                    <p className="text-sm text-gray-600 mb-6 flex-1">{feature.description}</p>
+                    <button className="inline-flex items-center text-sm text-[#4582ff] hover:underline focus:outline-none font-medium" onClick={feature.action}>Explore Feature <ChevronRight className="h-4 w-4 ml-0.5" /></button>
       </div>
+                ))}
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </section>
 
       {/* Call to Action */}
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-500 dark:to-purple-500 py-16 sm:py-20 transition-colors duration-500">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold text-white dark:text-white mb-6 transition-colors duration-500 drop-shadow-lg">
-            Ready to transform your customer service?
-          </h2>
-          <p className="text-lg max-w-2xl mx-auto mb-8 transition-colors duration-500 text-white/90 dark:text-white/80">
-            Join thousands of customer service teams using Chat-Scribe to improve conversation quality
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              size="lg"
-              onClick={() => navigate('/signup')}
-              className="bg-white text-indigo-700 dark:text-indigo-600 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full font-medium py-6 px-8 shadow-md border border-indigo-100 dark:border-indigo-700 transition-colors duration-500"
-            >
-              Get Started Today
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => navigate('/login')}
-              className="rounded-full font-medium py-6 px-8 mt-2 sm:mt-0 border-white dark:border-indigo-400 text-indigo-700 dark:text-indigo-100 hover:bg-white/10 dark:hover:bg-indigo-900/20 transition-colors duration-500"
-            >
-              Already have an account?
-            </Button>
+      <section className="relative py-20 px-4 bg-white">
+        <div className="max-w-2xl mx-auto relative z-10">
+          <div className="bg-white/80 border border-gray-200 rounded-2xl shadow-md p-12 text-center">
+            <h2 className="text-3xl font-extrabold text-gray-900 mb-6">Ready to improve your customer conversations?</h2>
+            <p className="text-lg text-gray-600 mb-8">Start analyzing your customer service conversations today and see the difference in customer satisfaction and resolution rates</p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-4">
+              <Button size="lg" onClick={() => navigate('/signup')} className="bg-[#4582ff] hover:bg-[#1e293b] text-white rounded-full font-medium py-6 px-8">Get Started Free</Button>
+              <Button size="lg" variant="outline" onClick={() => navigate('/test-login')} className="border-[#4582ff] text-[#4582ff] hover:bg-blue-50 rounded-full font-medium py-6 px-8">Try Demo</Button>
+            </div>
+            <p className="text-gray-400 text-sm mt-6">No credit card required. Free plan includes 100 conversation analyses per month.</p>
           </div>
         </div>
-      </div>
+      </section>
+      
       {/* Footer */}
-      <footer className="bg-gray-100 dark:bg-gray-900 py-12 transition-colors duration-500 border-t border-gray-200 dark:border-gray-800">
-        <div className="container mx-auto px-4">
+      <footer className="bg-white border-t border-gray-100 py-12 mt-10">
+        <div className="max-w-7xl mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-8 mb-8">
             <div className="text-center md:text-left">
-              <h3 className="text-xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent mb-2">Chat-Scribe</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 max-w-md">
-                Elevating customer service through AI-powered conversation analytics.
-              </p>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 text-center sm:text-left">
-              <div>
-                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Product</h4>
-                <ul className="space-y-2 text-sm">
-                  <li><Button variant="link" className="text-gray-500 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-white p-0 h-auto">Features</Button></li>
-                  <li><Button variant="link" className="text-gray-500 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-white p-0 h-auto">Pricing</Button></li>
-                  <li><Button variant="link" className="text-gray-500 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-white p-0 h-auto">Demo</Button></li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Company</h4>
-                <ul className="space-y-2 text-sm">
-                  <li><Button variant="link" className="text-gray-500 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-white p-0 h-auto">About</Button></li>
-                  <li><Button variant="link" className="text-gray-500 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-white p-0 h-auto">Blog</Button></li>
-                  <li><Button variant="link" className="text-gray-500 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-white p-0 h-auto">Careers</Button></li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Resources</h4>
-                <ul className="space-y-2 text-sm">
-                  <li><Button variant="link" className="text-gray-500 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-white p-0 h-auto">Documentation</Button></li>
-                  <li><Button variant="link" className="text-gray-500 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-white p-0 h-auto">Help Center</Button></li>
-                  <li><Button variant="link" className="text-gray-500 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-white p-0 h-auto">API</Button></li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Connect</h4>
-                <div className="flex gap-4 justify-center sm:justify-start">
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-white transition-colors duration-500">
-                    <Github className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-white transition-colors duration-500">
-                    <Twitter className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-white transition-colors duration-500">
-                    <Linkedin className="h-4 w-4" />
-                  </Button>
+              <div className="flex items-center justify-center md:justify-start gap-3 mb-3">
+                <div className="bg-gradient-to-r from-[#22c55e] to-[#4582ff] p-2 rounded-lg shadow-md">
+                  <CheckCircle className="h-4 w-4 text-white" />
                 </div>
+                <h3 className="text-xl font-bold text-gray-900">ChatScribe</h3>
+              </div>
+              <p className="text-sm text-gray-400 max-w-md">AI-powered conversation analysis for better customer service</p>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 text-center sm:text-left">
+              <div>
+                <h4 className="text-sm font-semibold text-gray-900 mb-3">Product</h4>
+                <ul className="space-y-2 text-sm">
+                  <li><Button variant="link" className="text-gray-400 hover:text-[#4582ff] p-0 h-auto">Features</Button></li>
+                  <li><Button variant="link" className="text-gray-400 hover:text-[#4582ff] p-0 h-auto">Pricing</Button></li>
+                  <li><Button variant="link" className="text-gray-400 hover:text-[#4582ff] p-0 h-auto">Demo</Button></li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-gray-900 mb-3">Resources</h4>
+                <ul className="space-y-2 text-sm">
+                  <li><Button variant="link" className="text-gray-400 hover:text-[#4582ff] p-0 h-auto">Documentation</Button></li>
+                  <li><Button variant="link" className="text-gray-400 hover:text-[#4582ff] p-0 h-auto">API</Button></li>
+                  <li><Button variant="link" className="text-gray-400 hover:text-[#4582ff] p-0 h-auto">Help Center</Button></li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-gray-900 mb-3">Company</h4>
+                <ul className="space-y-2 text-sm">
+                  <li><Button variant="link" className="text-gray-400 hover:text-[#4582ff] p-0 h-auto">About</Button></li>
+                  <li><Button variant="link" className="text-gray-400 hover:text-[#4582ff] p-0 h-auto">Contact</Button></li>
+                  <li><Button variant="link" className="text-gray-400 hover:text-[#4582ff] p-0 h-auto">Blog</Button></li>
+                </ul>
               </div>
             </div>
           </div>
-          <div className="border-t border-gray-200 dark:border-gray-800 pt-8 flex flex-col sm:flex-row justify-between items-center">
-            <p className="text-xs text-gray-500 dark:text-gray-400">© 2025 Chat-Scribe. All rights reserved.</p>
-            <div className="flex gap-6 mt-4 sm:mt-0">
-              <Button variant="link" className="text-xs text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-white p-0 h-auto">Privacy Policy</Button>
-              <Button variant="link" className="text-xs text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-white p-0 h-auto">Terms of Service</Button>
+          <div className="border-t border-gray-100 pt-8 flex flex-col sm:flex-row justify-between items-center">
+            <p className="text-xs text-gray-400">© 2025 ChatScribe. All rights reserved.</p>
+            <div className="flex items-center gap-6 mt-4 sm:mt-0">
+              <Button variant="link" className="text-xs text-gray-400 hover:text-[#4582ff] p-0 h-auto">Privacy Policy</Button>
+              <Button variant="link" className="text-xs text-gray-400 hover:text-[#4582ff] p-0 h-auto">Terms of Service</Button>
+              <div className="flex gap-3">
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-[#4582ff] rounded-full p-0"><Github className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-[#4582ff] rounded-full p-0"><Twitter className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-[#4582ff] rounded-full p-0"><Linkedin className="h-4 w-4" /></Button>
+              </div>
             </div>
           </div>
         </div>
