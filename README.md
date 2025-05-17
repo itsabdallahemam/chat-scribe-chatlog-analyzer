@@ -53,9 +53,14 @@ git clone <repository-url>
 cd chat-scribe-clarity-analyzer
 ```
 
-2. **Recommended: Run the setup script** to resolve common setup issues:
+2. **Recommended: Run the setup script** directly:
 ```bash
-npm run setup
+# On Windows:
+node setup-project.js
+
+# On Linux/Mac:
+chmod +x setup-project.js
+./setup-project.js
 ```
 
 This script automatically:
@@ -66,7 +71,7 @@ This script automatically:
 
 3. Alternatively, you can install dependencies manually:
 ```bash
-# Install frontend dependencies
+# Install frontend dependencies with required flag to bypass peer dependency errors
 npm install --legacy-peer-deps
 
 # Install backend dependencies
@@ -92,7 +97,15 @@ npm run prisma:migrate
 
 ## Troubleshooting Setup Issues
 
-If you encounter any issues during setup, try the following solutions:
+### "require is not defined in ES module scope" Error
+This happens because the project uses ES modules. If you see this error when running the setup script, try one of:
+```bash
+# Option 1: Use the npm script (recommended)
+npm run setup
+
+# Option 2: Run with explicit type flag
+node --input-type=commonjs setup-project.js
+```
 
 ### Node Version Mismatch
 This project requires Node.js v18 or higher. Check your Node.js version with:
@@ -102,9 +115,9 @@ node -v
 Update Node.js if necessary from [nodejs.org](https://nodejs.org/).
 
 ### Package Installation Issues
-If you encounter React or other library compatibility issues, try using the setup script:
+If you encounter React or other library compatibility issues, try running the setup script directly:
 ```bash
-npm run setup
+node setup-project.js
 ```
 
 Or manually fix issues:
@@ -115,17 +128,23 @@ npm install --legacy-peer-deps
 npx patch-package
 ```
 
+### "ERESOLVE unable to resolve dependency tree" Error
+This is a common error when npm tries to enforce peer dependencies. Always use the `--legacy-peer-deps` flag:
+```bash
+npm install --legacy-peer-deps
+```
+
 ### react-wordcloud Dependency Issues
 The word cloud visualization requires specific peer dependencies:
 ```bash
 # Fix react-wordcloud issues
-npm install d3-cloud@1.2.5 d3-scale@3.3.0 --save
+npm install d3-cloud@1.2.5 d3-scale@3.3.0 --save --legacy-peer-deps
 ```
 
 ### TypeScript Type Issues
 If encountering TypeScript errors, make sure you're using a compatible TypeScript version (5.x):
 ```bash
-npm install typescript@5.5.3 --save-dev
+npm install typescript@5.5.3 --save-dev --legacy-peer-deps
 ```
 
 ## Development
