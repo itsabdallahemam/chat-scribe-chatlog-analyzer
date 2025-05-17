@@ -15,7 +15,7 @@ A powerful AI-driven tool for analyzing and improving customer service chat inte
 
 ### Technical Features
 - **Secure Authentication**: JWT-based user authentication
-- **Database Integration**: MSSQL with Prisma ORM
+- **Database Integration**: PostgreSQL with Prisma ORM
 - **Real-time Processing**: Instant feedback and analysis
 - **Responsive Design**: Works seamlessly on all devices
 - **Dark/Light Mode**: User-friendly theme switching
@@ -36,7 +36,7 @@ A powerful AI-driven tool for analyzing and improving customer service chat inte
 - Express
 - TypeScript
 - Prisma ORM
-- MSSQL Database
+- PostgreSQL Database
 - JWT Authentication
 
 ## Prerequisites
@@ -66,7 +66,7 @@ npm install
 3. Set up environment variables:
 Create a `.env` file in the server directory with the following variables:
 ```env
-DATABASE_URL="sqlserver://localhost:1433;database=chatscribe;user=your_username;password=your_password;trustServerCertificate=true"
+DATABASE_URL="postgresql://your_username:your_password@localhost:5432/chatscribe"
 JWT_SECRET="your_jwt_secret"
 CLIENT_URL="http://localhost:5173"
 PORT=3000
@@ -153,13 +153,10 @@ chat-scribe-clarity-analyzer/
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-<<<<<<< HEAD
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-=======
->>>>>>> d7541db9b0a722be0d4fc031c5be96d31482c326
 ## Support
 
 For support, please open an issue in the GitHub repository or contact the development team.
