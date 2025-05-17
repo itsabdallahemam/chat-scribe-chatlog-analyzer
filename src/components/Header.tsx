@@ -74,9 +74,10 @@ const Header: React.FC = () => {
   };
 
   const navItems: NavItem[] = [
+    // Show 'Home' (or 'Dashboard' as Home) for everyone
     { 
       path: '/', 
-      label: 'Home', 
+      label: user ? 'Dashboard' : 'Home',
       icon: <Home className="w-4 h-4" />, 
       allowedRoles: [],
       description: "Upload and analyze chatlogs"
@@ -87,13 +88,6 @@ const Header: React.FC = () => {
       icon: <UploadCloud className="w-4 h-4" />, 
       allowedRoles: ['Agent'],
       description: "Upload and evaluate new chatlogs"
-    },
-    { 
-      path: '/dashboard', 
-      label: 'Dashboard', 
-      icon: <LayoutDashboard className="w-4 h-4" />, 
-      allowedRoles: ['Agent'],
-      description: "View performance metrics"
     },
     { 
       path: '/agents-dashboard', 
@@ -340,4 +334,4 @@ const Header: React.FC = () => {
   );
 };
 
-export default Header; 
+export default Header;

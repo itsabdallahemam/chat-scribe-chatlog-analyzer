@@ -1,4 +1,4 @@
-// src/pages/HomePage.tsx
+// src/pages/DashboardPage.tsx
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -27,7 +27,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const HomePage: React.FC = () => {
+const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const [animateHero, setAnimateHero] = useState(false);
   
@@ -484,4 +484,4 @@ const HomePage: React.FC = () => {
   );
 };
 
-export default HomePage;
+export default DashboardPage;

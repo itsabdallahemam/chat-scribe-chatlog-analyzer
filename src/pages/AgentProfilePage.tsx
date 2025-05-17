@@ -271,14 +271,15 @@ const AgentProfilePage: React.FC = () => {
                     <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
                       <h3 className="text-sm font-medium mb-3 text-[#252A3A] dark:text-blue-300">Quick Actions</h3>
                       <div className="space-y-2">
+                        {/* Removed 'View Dashboard' button for agents, replaced with 'View Performance' button */}
                         <Button 
                           variant="outline" 
                           className="w-full flex items-center justify-start border-blue-200 dark:border-blue-800/30 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800/20"
                           size="sm"
-                          onClick={() => navigate('/dashboard')}
+                          onClick={() => setActiveTab && setActiveTab('performance')}
                         >
                           <BarChart2 className="h-3.5 w-3.5 mr-2" />
-                          View Dashboard
+                          View Performance
                         </Button>
                         {isTeamLeader && (
                           <Button 
@@ -570,4 +571,4 @@ const ErrorState = ({ error, onBack }: { error: string; onBack: () => void }) =>
   </Card>
 );
 
-export default AgentProfilePage; 
+export default AgentProfilePage;

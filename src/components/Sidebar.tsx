@@ -61,13 +61,10 @@ export const Sidebar = () => {
 
       <nav className="flex-1 space-y-2">
         <NavItem to="/" icon={Home} collapsed={collapsed}>
-          Home
+          Dashboard
         </NavItem>
         <NavItem to="/settings" icon={Settings} collapsed={collapsed}>
           Settings
-        </NavItem>
-        <NavItem to="/dashboard" icon={BarChart2} collapsed={collapsed}>
-          Dashboard
         </NavItem>
         <NavItem to="/satisfaction" icon={Users} collapsed={collapsed}>
           Satisfaction
