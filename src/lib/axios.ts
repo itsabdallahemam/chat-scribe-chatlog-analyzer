@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// DEV_TUNNELS MODE - DEV TUNNELS
-const API_URL = 'https://3s058406-3000.euw.devtunnels.ms/api';
+// LOCAL MODE - LOCALHOST ONLY
+const API_URL = 'http://localhost:3000/api';
 
 console.log('Using API URL:', API_URL);
 
@@ -10,8 +10,6 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  // Add withCredentials for CORS when using different domains
-  withCredentials: true,
 });
 
 // Add a request interceptor to add the auth token to requests

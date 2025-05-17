@@ -39,13 +39,15 @@ app.use((req, res, next) => {
   const allowedOrigins = [
     'http://localhost:8080',
     'http://localhost:5173',
-    'http://localhost:3000'
+    'http://localhost:3000',
+    'https://3s058406-8080.euw.devtunnels.ms',
+    'https://3s058406-3000.euw.devtunnels.ms'
   ];
   
   if (origin && allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
-  } else if (origin && origin.includes('localhost')) {
-    // Also allow any localhost origin
+  } else if (origin && (origin.includes('localhost') || origin.includes('devtunnels.ms'))) {
+    // Also allow any localhost or dev tunnel origin
     res.setHeader('Access-Control-Allow-Origin', origin);
   }
   

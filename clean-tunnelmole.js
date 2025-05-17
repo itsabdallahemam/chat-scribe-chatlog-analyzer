@@ -126,7 +126,7 @@ try {
 // Create proper .env files
 try {
   const envContent = `# Database Configuration
-DATABASE_URL="sqlserver://localhost:1433;database=chatscribev3;user=prisma_user;password=Test123;trustServerCertificate=true"
+DATABASE_URL="postgresql://prisma_user:Test123@localhost:5432/chatscribev3"
 
 # API Configuration for local development
 VITE_API_URL=http://localhost:3000/api
@@ -140,7 +140,7 @@ VITE_FRONTEND_URL=http://localhost:8080
   const serverDir = path.join(__dirname, 'server');
   if (fs.existsSync(serverDir)) {
     const serverEnvContent = `# Database Configuration
-DATABASE_URL="sqlserver://localhost:1433;database=chatscribev3;user=prisma_user;password=Test123;trustServerCertificate=true"
+DATABASE_URL="postgresql://prisma_user:Test123@localhost:5432/chatscribev3"
 
 # Client URL for CORS
 CLIENT_URL=http://localhost:8080

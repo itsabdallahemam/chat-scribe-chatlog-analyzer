@@ -11,7 +11,7 @@ const FRONTEND_URL = 'https://3s058406-8080.euw.devtunnels.ms';
 
 // Environment variables content
 const envContent = `# Database Configuration
-DATABASE_URL="sqlserver://localhost:1433;database=chatscribev3;user=prisma_user;password=Test123;trustServerCertificate=true"
+DATABASE_URL="postgresql://prisma_user:Test123@localhost:5432/chatscribev3"
 
 # Dev Tunnels configuration
 VITE_API_URL=${BACKEND_URL}/api
@@ -73,7 +73,7 @@ try {
   const serverDir = path.join(__dirname, 'server');
   if (fs.existsSync(serverDir)) {
     const serverEnvContent = `# Database Configuration
-DATABASE_URL="sqlserver://localhost:1433;database=chatscribev3;user=prisma_user;password=Test123;trustServerCertificate=true"
+DATABASE_URL="postgresql://prisma_user:Test123@localhost:5432/chatscribev3"
 
 # Client URL for CORS
 CLIENT_URL=${FRONTEND_URL}

@@ -5,17 +5,18 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-console.log('🔄 Resetting application to use localhost APIs...');
+console.log('🔄 Resetting application to LOCAL mode...');
 
 // Create fresh .env file with localhost settings
 try {
   const envContent = `# Database Configuration
 DATABASE_URL="postgresql://prisma_user:Test123@localhost:5432/chatscribev3"
 
-# API Configuration - LOCALHOST ONLY
+# API Configuration - LOCAL MODE
 VITE_API_URL=http://localhost:3000/api
 VITE_BACKEND_URL=http://localhost:3000
 VITE_FRONTEND_URL=http://localhost:8080
+VITE_MODE=LOCAL
 `;
   
   fs.writeFileSync(path.join(__dirname, '.env'), envContent);
@@ -30,10 +31,10 @@ try {
   if (fs.existsSync(axiosPath)) {
     const axiosContent = `import axios from 'axios';
 
-// HARDCODED API URL - USE LOCALHOST ONLY
+// LOCAL MODE - LOCALHOST ONLY
 const API_URL = 'http://localhost:3000/api';
 
-console.log('Using HARDCODED API URL:', API_URL);
+console.log('Using API URL:', API_URL);
 
 const api = axios.create({
   baseURL: API_URL,
@@ -74,29 +75,26 @@ export default api;`;
   console.error('❌ Error updating axios.ts:', error.message);
 }
 
-// Clean server CORS configuration
+// Create server/.env file
 try {
-  const serverIndexPath = path.join(__dirname, 'server', 'src', 'index.ts');
-  if (fs.existsSync(serverIndexPath)) {
-    const content = fs.readFileSync(serverIndexPath, 'utf-8');
+  const serverDir = path.join(__dirname, 'server');
+  if (fs.existsSync(serverDir)) {
+    const serverEnvContent = `# Database Configuration
+DATABASE_URL="postgresql://prisma_user:Test123@localhost:5432/chatscribev3"
+
+# Client URL for CORS
+CLIENT_URL="http://localhost:8080"
+`;
     
-    // Update CORS origins to include only localhost
-    const updatedContent = content.replace(/origin:\s*\[[^\]]+\]/s, `origin: [
-    'http://localhost:8080',
-    'http://localhost:5173',
-    'http://localhost:3000'
-  ]`);
-    
-    fs.writeFileSync(serverIndexPath, updatedContent);
-    console.log('✅ Updated server CORS configuration to use localhost only');
+    fs.writeFileSync(path.join(serverDir, '.env'), serverEnvContent);
+    console.log('✅ Created server/.env file for local development');
   }
 } catch (error) {
-  console.error('❌ Error updating server CORS:', error.message);
+  console.error('❌ Error creating server/.env file:', error.message);
 }
 
-console.log('\n🚀 Reset complete!');
-console.log('\nImportant next steps:');
-console.log('1. Close ALL browser windows currently using the application');
-console.log('2. Open a new browser window or use incognito mode');
-console.log('3. Restart both frontend and backend servers');
-console.log('4. Access your application at http://localhost:8080'); 
+console.log('\n🚀 Local mode setup complete!');
+console.log('\nNext steps:');
+console.log('1. Restart both frontend and backend servers');
+console.log('2. Access your application at http://localhost:8080');
+console.log('3. Backend API will be available at http://localhost:3000/api'); 
