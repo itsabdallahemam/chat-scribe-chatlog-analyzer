@@ -42,7 +42,7 @@ A powerful AI-driven tool for analyzing and improving customer service chat inte
 ## Prerequisites
 
 - Node.js (v18 or higher)
-- Microsoft SQL Server
+- PostgreSQL
 - npm or yarn package manager
 
 ## Installation
