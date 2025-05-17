@@ -66,7 +66,7 @@ chmod +x setup-project.js
 This script automatically:
 - Fixes React version compatibility issues
 - Ensures correct version of react-wordcloud
-- Creates and applies patches for React 18 compatibility
+- Directly patches react-wordcloud for React 18 compatibility
 - Cleans npm cache and reinstalls dependencies with the correct flags
 
 3. Alternatively, you can install dependencies manually:
@@ -125,7 +125,6 @@ Or manually fix issues:
 npm cache clean --force
 rm -rf node_modules
 npm install --legacy-peer-deps
-npx patch-package
 ```
 
 ### "ERESOLVE unable to resolve dependency tree" Error
@@ -135,10 +134,14 @@ npm install --legacy-peer-deps
 ```
 
 ### react-wordcloud Dependency Issues
-The word cloud visualization requires specific peer dependencies:
+If you encounter issues with the word cloud component, you may need to manually patch the file:
 ```bash
-# Fix react-wordcloud issues
+# Install dependencies
 npm install d3-cloud@1.2.5 d3-scale@3.3.0 --save --legacy-peer-deps
+
+# Edit the file node_modules/react-wordcloud/dist/index.js
+# Replace callbacks.onInitialize(); with callbacks.onInitialize && callbacks.onInitialize();
+# Replace callbacks.onRenderComplete with callbacks.onRenderComplete || (() => {})
 ```
 
 ### TypeScript Type Issues
