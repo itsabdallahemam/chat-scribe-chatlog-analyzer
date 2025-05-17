@@ -53,19 +53,14 @@ git clone <repository-url>
 cd chat-scribe-clarity-analyzer
 ```
 
-2. **Recommended: Run the setup script** to resolve common setup issues:
+2. **Recommended: Run the setup script** directly:
 ```bash
-# First, install only the setup dependencies
-npm install --no-package-lock --ignore-scripts
-
-# Then run the setup script
-npm run setup
-```
-
-If you're on Linux/Mac and the script isn't executable:
-```bash
-chmod +x setup-project.js
+# On Windows:
 node setup-project.js
+
+# On Linux/Mac:
+chmod +x setup-project.js
+./setup-project.js
 ```
 
 This script automatically:
@@ -76,7 +71,7 @@ This script automatically:
 
 3. Alternatively, you can install dependencies manually:
 ```bash
-# Install frontend dependencies
+# Install frontend dependencies with required flag to bypass peer dependency errors
 npm install --legacy-peer-deps
 
 # Install backend dependencies
@@ -112,9 +107,9 @@ node -v
 Update Node.js if necessary from [nodejs.org](https://nodejs.org/).
 
 ### Package Installation Issues
-If you encounter React or other library compatibility issues, try using the setup script:
+If you encounter React or other library compatibility issues, try running the setup script directly:
 ```bash
-npm run setup
+node setup-project.js
 ```
 
 Or manually fix issues:
@@ -125,17 +120,23 @@ npm install --legacy-peer-deps
 npx patch-package
 ```
 
+### "ERESOLVE unable to resolve dependency tree" Error
+This is a common error when npm tries to enforce peer dependencies. Always use the `--legacy-peer-deps` flag:
+```bash
+npm install --legacy-peer-deps
+```
+
 ### react-wordcloud Dependency Issues
 The word cloud visualization requires specific peer dependencies:
 ```bash
 # Fix react-wordcloud issues
-npm install d3-cloud@1.2.5 d3-scale@3.3.0 --save
+npm install d3-cloud@1.2.5 d3-scale@3.3.0 --save --legacy-peer-deps
 ```
 
 ### TypeScript Type Issues
 If encountering TypeScript errors, make sure you're using a compatible TypeScript version (5.x):
 ```bash
-npm install typescript@5.5.3 --save-dev
+npm install typescript@5.5.3 --save-dev --legacy-peer-deps
 ```
 
 ## Development
