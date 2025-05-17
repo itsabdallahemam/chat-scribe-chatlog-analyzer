@@ -55,7 +55,17 @@ cd chat-scribe-clarity-analyzer
 
 2. **Recommended: Run the setup script** to resolve common setup issues:
 ```bash
+# First, install only the setup dependencies
+npm install --no-package-lock --ignore-scripts
+
+# Then run the setup script
 npm run setup
+```
+
+If you're on Linux/Mac and the script isn't executable:
+```bash
+chmod +x setup-project.js
+node setup-project.js
 ```
 
 This script automatically:
