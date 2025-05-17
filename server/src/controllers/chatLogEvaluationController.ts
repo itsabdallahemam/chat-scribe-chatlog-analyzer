@@ -47,6 +47,8 @@ export const saveChatLogEvaluations = async (req: Request, res: Response) => {
             politeness: evaluation.politeness,
             relevance: evaluation.relevance,
             resolution: evaluation.resolution,
+            shift: evaluation.shift || null,
+            dateTime: evaluation.dateTime ? new Date(evaluation.dateTime) : null,
           },
         });
       })
@@ -105,6 +107,44 @@ export const deleteAllChatLogEvaluations = async (req: Request, res: Response) =
     res.json({ message: 'All evaluations deleted successfully' });
   } catch (error) {
     console.error('Delete all chat log evaluations error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+// Get all chat log evaluations for a specific user (for team leaders)
+export const getAgentChatLogEvaluations = async (req: Request, res: Response) => {
+  try {
+    const currentUserId = (req as any).user.userId;
+    const targetUserId = req.params.userId;
+    
+    // Check if the current user is a team leader
+    const currentUser = await prisma.agent.findUnique({
+      where: { id: currentUserId },
+    });
+    
+    if (!currentUser || currentUser.role !== 'Team Leader') {
+      return res.status(403).json({ message: 'Only team leaders can access other users\' evaluations' });
+    }
+    
+    // Check if target user exists
+    const targetUser = await prisma.agent.findUnique({
+      where: { id: targetUserId },
+    });
+    
+    if (!targetUser) {
+      return res.status(404).json({ message: 'Target user not found' });
+    }
+    
+    // Get the evaluations for the target user
+    const evaluations = await prisma.chatLogEvaluation.findMany({
+      where: { userId: targetUserId },
+      orderBy: { createdAt: 'desc' },
+    });
+    
+    // If no evaluations found, return an empty array (not an error)
+    res.json(evaluations);
+  } catch (error) {
+    console.error('Get agent chat log evaluations error:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 }; 

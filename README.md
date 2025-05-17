@@ -23,7 +23,7 @@ A powerful AI-driven tool for analyzing and improving customer service chat inte
 ## Tech Stack
 
 ### Frontend
-- React 18
+- React 18.2
 - TypeScript
 - Tailwind CSS
 - shadcn/ui components
@@ -53,18 +53,32 @@ git clone <repository-url>
 cd chat-scribe-clarity-analyzer
 ```
 
-2. Install dependencies:
+2. Run the setup script to resolve common setup issues:
+```bash
+npm run setup
+```
+
+This script automatically:
+- Fixes React version compatibility issues
+- Ensures correct version of react-wordcloud
+- Cleans npm cache and reinstalls dependencies with the correct flags
+
+3. Alternatively, you can install dependencies manually:
 ```bash
 # Install frontend dependencies
+<<<<<<< HEAD
 npm install
 # This will automatically apply patches to fix compatibility issues
+=======
+npm install --legacy-peer-deps
+>>>>>>> mock
 
 # Install backend dependencies
 cd server
 npm install
 ```
 
-3. Set up environment variables:
+4. Set up environment variables:
 Create a `.env` file in the server directory with the following variables:
 ```env
 DATABASE_URL="postgresql://your_username:your_password@localhost:5432/chatscribe"
@@ -73,13 +87,14 @@ CLIENT_URL="http://localhost:5173"
 PORT=3000
 ```
 
-4. Set up the database:
+5. Set up the database:
 ```bash
 cd server
 npm run prisma:generate
 npm run prisma:migrate
 ```
 
+<<<<<<< HEAD
 ## Troubleshooting Installation
 
 If you encounter any issues during installation:
@@ -105,6 +120,39 @@ If you encounter any issues during installation:
    rm -rf node_modules
    npm install
    ```
+=======
+## Troubleshooting Setup Issues
+
+If you encounter any issues during setup, try the following solutions:
+
+### Node Version Mismatch
+This project requires Node.js v18 or higher. Check your Node.js version with:
+```bash
+node -v
+```
+Update Node.js if necessary from [nodejs.org](https://nodejs.org/).
+
+### Package Installation Issues
+If you encounter React or other library compatibility issues, try clearing your npm cache:
+```bash
+npm cache clean --force
+rm -rf node_modules
+npm install
+```
+
+### react-wordcloud Dependency Issues
+The word cloud visualization requires specific peer dependencies:
+```bash
+# If having issues with react-wordcloud
+npm install --legacy-peer-deps
+```
+
+### TypeScript Type Issues
+If encountering TypeScript errors, make sure you're using a compatible TypeScript version (5.x):
+```bash
+npm install typescript@5.5.3 --save-dev
+```
+>>>>>>> mock
 
 ## Development
 

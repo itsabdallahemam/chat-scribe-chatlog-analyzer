@@ -1,14 +1,42 @@
 // Update this page (the content is just a fallback if you fail to update the page)
 
-const Index = () => {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
-      </div>
-    </div>
-  );
+import React, { useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import HomePage from './HomePage';
+import AgentHomePage from './AgentHomePage';
+import TeamLeaderHomePage from './TeamLeaderHomePage';
+
+const Index: React.FC = () => {
+  const { user, loading } = useAuth();
+
+  useEffect(() => {
+    console.log('Auth state:', { user, loading });
+    console.log('User role:', user?.role);
+  }, [user, loading]);
+
+  // Show a loading state while checking authentication
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+
+  // If not logged in, show the public homepage
+  if (!user) {
+    console.log('Rendering public homepage for non-authenticated user');
+    return <HomePage />;
+  }
+
+  // Otherwise, render homepage based on user role
+  console.log(`Rendering homepage for role: ${user.role}`);
+  
+  switch (user.role) {
+    case 'Agent':
+      return <AgentHomePage />;
+    case 'Team Leader':
+      return <TeamLeaderHomePage />;
+    default:
+      console.log('Unknown role, falling back to public homepage');
+      return <HomePage />;
+  }
 };
 
 export default Index;

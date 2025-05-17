@@ -9,8 +9,13 @@ export interface ChatLogEvaluation {
   politeness: number;
   relevance: number;
   resolution: number;
+  shift?: string;
+  dateTime?: string;
   createdAt?: string;
   updatedAt?: string;
+  model?: string;
+  status?: 'Completed' | 'In Progress' | 'Failed';
+  feedback?: string;
 }
 
 /**
@@ -22,6 +27,20 @@ export const getUserChatLogEvaluations = async (): Promise<ChatLogEvaluation[]> 
     return response.data;
   } catch (error) {
     console.error('Error fetching chat log evaluations:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get all chat log evaluations for a specific user by user ID
+ * This is used by team leaders to view agent evaluations
+ */
+export const getAgentChatLogEvaluations = async (userId: string): Promise<ChatLogEvaluation[]> => {
+  try {
+    const response = await api.get<ChatLogEvaluation[]>(`/chat-log-evaluations/user/${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching chat log evaluations for user ${userId}:`, error);
     throw error;
   }
 };

@@ -17,6 +17,17 @@ export const exportToCSV = (data: ExportableData[], filename: string) => {
         if (header === 'resolution') {
           return value === 1 ? 'Resolved' : 'Unresolved';
         }
+        if (header === 'dateTime' && value) {
+          // Format the date if it exists
+          try {
+            const date = new Date(value);
+            if (!isNaN(date.getTime())) {
+              return `"${date.toISOString().substring(0, 16).replace('T', ' ')}"`;
+            }
+          } catch (e) {
+            // If date parsing fails, return the original value
+          }
+        }
         // Wrap strings in quotes and escape any existing quotes
         return typeof value === 'string' ? `"${value.replace(/"/g, '""')}"` : value;
       }).join(',')

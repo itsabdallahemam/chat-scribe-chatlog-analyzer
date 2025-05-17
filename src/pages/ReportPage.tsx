@@ -1,4 +1,4 @@
-import React, { useRef, useMemo, useState } from 'react';
+import React, { useRef, useMemo, useState, useEffect } from 'react';
 import { useChatlog } from '@/contexts/ChatlogContext';
 import { 
   Card, 
@@ -27,7 +27,11 @@ import {
   Eye, 
   Calendar,
   Filter,
-  Search
+  Search,
+  FileText,
+  TrendingUp,
+  Users,
+  Activity
 } from 'lucide-react';
 import { 
   Tabs, 
@@ -60,16 +64,16 @@ import html2pdf from 'html2pdf.js';
 // Utility function for score background colors
 const getScoreColor = (score: number, type: 'bg' | 'text' | 'border') => {
   if (score <= 2) {
-    return type === 'bg' ? 'bg-red-50 dark:bg-red-950' : 
-           type === 'text' ? 'text-red-700 dark:text-red-300' : 
+    return type === 'bg' ? 'bg-[#FFECEB] dark:bg-rose-900/30' : 
+           type === 'text' ? 'text-[#FF80B5] dark:text-rose-400' : 
            'border-red-200 dark:border-red-800';
   } else if (score === 3) {
-    return type === 'bg' ? 'bg-yellow-50 dark:bg-yellow-950' : 
-           type === 'text' ? 'text-yellow-700 dark:text-yellow-300' : 
-           'border-yellow-200 dark:border-yellow-800';
+    return type === 'bg' ? 'bg-[#FFF6E9] dark:bg-amber-900/30' : 
+           type === 'text' ? 'text-[#D4A000] dark:text-amber-400' : 
+           'border-amber-200 dark:border-amber-800';
   } else {
-    return type === 'bg' ? 'bg-green-50 dark:bg-green-950' : 
-           type === 'text' ? 'text-green-700 dark:text-green-300' : 
+    return type === 'bg' ? 'bg-[#ECFDF3] dark:bg-green-900/30' : 
+           type === 'text' ? 'text-[#22c55e] dark:text-green-400' : 
            'border-green-200 dark:border-green-800';
   }
 };
@@ -90,6 +94,31 @@ const ReportPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [scenarioFilter, setScenarioFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("date-desc");
+
+  // New state for shift analysis
+  const [selectedTimeRange, setSelectedTimeRange] = useState("all");
+  const [shiftData, setShiftData] = useState<{
+    morning: {count: number, resolution: number, avgCPR: number},
+    afternoon: {count: number, resolution: number, avgCPR: number},
+    evening: {count: number, resolution: number, avgCPR: number},
+    night: {count: number, resolution: number, avgCPR: number}
+  }>({
+    morning: {count: 0, resolution: 0, avgCPR: 0},
+    afternoon: {count: 0, resolution: 0, avgCPR: 0},
+    evening: {count: 0, resolution: 0, avgCPR: 0},
+    night: {count: 0, resolution: 0, avgCPR: 0}
+  });
+  
+  // New state for time trend analysis
+  const [timeChartData, setTimeChartData] = useState<{
+    labels: string[],
+    resolutionData: number[],
+    cprData: number[]
+  }>({
+    labels: [],
+    resolutionData: [],
+    cprData: []
+  });
 
   // Calculate averages
   const calculateAverage = (scores: number[]) => {
@@ -241,7 +270,7 @@ const ReportPage: React.FC = () => {
         body {
           font-family: 'Inter', sans-serif;
           line-height: 1.6;
-          color: #1a202c;
+          color: #252A3A;
           background: #fff;
           margin: 0;
           padding: 0;
@@ -256,45 +285,62 @@ const ReportPage: React.FC = () => {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 20px;
+          margin-bottom: 30px;
           padding-bottom: 20px;
-          border-bottom: 1px solid #e2e8f0;
+          border-bottom: 1px solid #E5E7EB;
         }
         .pdf-title {
           font-size: 28px;
           font-weight: 700;
-          color: #2563eb;
+          color: #252A3A;
           margin: 0;
         }
         .pdf-subtitle {
           font-size: 14px;
-          color: #64748b;
+          color: #667085;
           margin: 5px 0 0 0;
         }
         .pdf-logo {
           font-size: 18px;
           font-weight: 700;
-          color: #2563eb;
+          color: #4582ff;
         }
         .pdf-badge {
-          background: #f1f5f9;
-          color: #475569;
+          background: #EEF4FF;
+          color: #4582ff;
           font-size: 12px;
           padding: 4px 8px;
           border-radius: 4px;
           margin-top: 5px;
           display: inline-block;
         }
+        .pdf-date {
+          font-size: 14px;
+          color: #667085;
+          margin-top: 8px;
+        }
         .pdf-section {
-          margin-bottom: 24px;
+          margin-bottom: 30px;
         }
         .pdf-section-title {
-          font-size: 18px;
+          font-size: 20px;
           font-weight: 600;
-          color: #334155;
+          color: #252A3A;
           margin-bottom: 16px;
           padding-bottom: 8px;
-          border-bottom: 1px solid #e2e8f0;
+          border-bottom: 1px solid #E5E7EB;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .pdf-section-icon {
+          width: 24px;
+          height: 24px;
+          background: #EEF4FF;
+          border-radius: 6px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
         .pdf-summary-grid {
           display: grid;
@@ -303,51 +349,55 @@ const ReportPage: React.FC = () => {
           margin-bottom: 24px;
         }
         .pdf-card {
-          background: #f8fafc;
+          background: #F9FAFB;
           border-radius: 8px;
           padding: 16px;
-          border: 1px solid #e2e8f0;
+          border: 1px solid #E5E7EB;
         }
         .pdf-card-title {
           font-size: 14px;
           font-weight: 600;
-          color: #475569;
+          color: #667085;
           margin-bottom: 8px;
         }
         .pdf-stats-row {
-          display: flex;
-          justify-content: space-between;
-          margin-bottom: 24px;
+          display: grid;
+          grid-template-columns: repeat(5, 1fr);
+          gap: 16px;
+          margin-bottom: 30px;
         }
         .pdf-stat {
-          flex: 1;
           padding: 16px;
-          background: #f8fafc;
+          background: #F9FAFB;
           border-radius: 8px;
           text-align: center;
-          margin: 0 8px;
-          border: 1px solid #e2e8f0;
-        }
-        .pdf-stat:first-child {
-          margin-left: 0;
-        }
-        .pdf-stat:last-child {
-          margin-right: 0;
+          border: 1px solid #E5E7EB;
         }
         .pdf-stat-value {
           font-size: 24px;
           font-weight: 700;
-          color: #2563eb;
           margin-bottom: 4px;
+        }
+        .pdf-stat-value.blue {
+          color: #4582ff;
+        }
+        .pdf-stat-value.green {
+          color: #22c55e;
+        }
+        .pdf-stat-value.amber {
+          color: #D4A000;
         }
         .pdf-stat-label {
           font-size: 14px;
-          color: #64748b;
+          color: #667085;
         }
         .pdf-table {
           width: 100%;
           border-collapse: collapse;
           margin-bottom: 24px;
+          border-radius: 8px;
+          overflow: hidden;
+          border: 1px solid #E5E7EB;
         }
         .pdf-table th, .pdf-table td {
           text-align: left;
@@ -606,17 +656,191 @@ const ReportPage: React.FC = () => {
     }
   };
 
+  // Calculate shift-based metrics
+  useEffect(() => {
+    if (evaluationResults.length === 0) return;
+    
+    const shiftResults = {
+      morning: {count: 0, resolution: 0, totalCPR: 0, avgCPR: 0},
+      afternoon: {count: 0, resolution: 0, totalCPR: 0, avgCPR: 0},
+      night: {count: 0, resolution: 0, totalCPR: 0, avgCPR: 0}
+    };
+    
+    // Group chats by time of day
+    evaluationResults.forEach(chat => {
+      if (!(chat as any).timestamp) return;
+      
+      const date = new Date((chat as any).timestamp);
+      const hour = date.getHours();
+      
+      let shift = 'morning';
+      if (hour >= 6 && hour < 14) shift = 'morning';
+      else if (hour >= 14 && hour < 22) shift = 'afternoon';
+      else shift = 'night';
+      
+      shiftResults[shift].count++;
+      if (chat.resolution === 1) shiftResults[shift].resolution++;
+      
+      const cprScore = (chat.coherence + chat.politeness + chat.relevance) / 3;
+      shiftResults[shift].totalCPR += cprScore;
+    });
+    
+    // Calculate averages
+    for (const shift in shiftResults) {
+      if (shiftResults[shift].count > 0) {
+        shiftResults[shift].avgCPR = shiftResults[shift].totalCPR / shiftResults[shift].count;
+      }
+    }
+    
+    setShiftData({
+      morning: {
+        count: shiftResults.morning.count,
+        resolution: shiftResults.morning.count > 0 ? (shiftResults.morning.resolution / shiftResults.morning.count) * 100 : 0,
+        avgCPR: shiftResults.morning.avgCPR
+      },
+      afternoon: {
+        count: shiftResults.afternoon.count,
+        resolution: shiftResults.afternoon.count > 0 ? (shiftResults.afternoon.resolution / shiftResults.afternoon.count) * 100 : 0,
+        avgCPR: shiftResults.afternoon.avgCPR
+      },
+      evening: {count: 0, resolution: 0, avgCPR: 0},
+      night: {
+        count: shiftResults.night.count,
+        resolution: shiftResults.night.count > 0 ? (shiftResults.night.resolution / shiftResults.night.count) * 100 : 0,
+        avgCPR: shiftResults.night.avgCPR
+      }
+    });
+    
+    // Generate time-based trend data
+    const timeData = evaluationResults
+      .filter(chat => (chat as any).timestamp)
+      .sort((a, b) => new Date((a as any).timestamp).getTime() - new Date((b as any).timestamp).getTime());
+    
+    if (timeData.length > 0) {
+      // Group by day for the chart
+      const dayGroups: Record<string, {count: number, resolution: number, totalCPR: number}> = {};
+      
+      timeData.forEach(chat => {
+        const date = new Date((chat as any).timestamp);
+        const dayKey = format(date, 'yyyy-MM-dd');
+        
+        if (!dayGroups[dayKey]) {
+          dayGroups[dayKey] = {count: 0, resolution: 0, totalCPR: 0};
+        }
+        
+        dayGroups[dayKey].count++;
+        if (chat.resolution === 1) dayGroups[dayKey].resolution++;
+        
+        const cprScore = (chat.coherence + chat.politeness + chat.relevance) / 3;
+        dayGroups[dayKey].totalCPR += cprScore;
+      });
+      
+      // Convert to chart data format
+      const labels = Object.keys(dayGroups).map(day => format(new Date(day), 'MMM d'));
+      const resolutionData = Object.values(dayGroups).map(group => 
+        group.count > 0 ? (group.resolution / group.count) * 100 : 0
+      );
+      const cprData = Object.values(dayGroups).map(group => 
+        group.count > 0 ? (group.totalCPR / group.count) * 5 : 0
+      );
+      
+      setTimeChartData({
+        labels,
+        resolutionData,
+        cprData
+      });
+    }
+  }, [evaluationResults]);
+
+  // Format chatlog text into bubble format
+  const formatChatlogBubbles = (chatlog: string) => {
+    if (!chatlog) return <div className="text-gray-500">No chatlog content available</div>;
+    
+    // Split by common message patterns
+    const lines = chatlog.split(/\n(?=User:|Customer:|Agent:|Bot:|AI:|Human:|Assistant:|System:)/g);
+    
+    return (
+      <div className="space-y-3">
+        {lines.map((line, index) => {
+          // Determine if this is a user or assistant message
+          const isUser = /^(User|Customer|Human):/i.test(line);
+          const isAssistant = /^(Agent|Bot|AI|Assistant):/i.test(line);
+          const isSystem = /^System:/i.test(line);
+          
+          // Extract the role and content
+          const parts = line.split(':', 2);
+          const role = parts[0].trim();
+          const content = parts.length > 1 ? parts.slice(1).join(':').trim() : line;
+          
+          if (isUser) {
+            return (
+              <div key={index} className="flex justify-end">
+                <div className="bg-[#EEF4FF] dark:bg-blue-900/30 text-[#252A3A] dark:text-white rounded-2xl rounded-tr-none px-4 py-2 max-w-[80%]">
+                  <div className="text-xs text-[#4582ff] dark:text-blue-400 font-medium mb-1">{role}</div>
+                  <div className="text-sm whitespace-pre-wrap">{content}</div>
+                </div>
+              </div>
+            );
+          } else if (isAssistant) {
+            return (
+              <div key={index} className="flex justify-start">
+                <div className="bg-[#F9FAFB] dark:bg-gray-800/60 text-[#252A3A] dark:text-white rounded-2xl rounded-tl-none px-4 py-2 max-w-[80%] border border-gray-100 dark:border-gray-800/60">
+                  <div className="text-xs text-[#667085] dark:text-gray-400 font-medium mb-1">{role}</div>
+                  <div className="text-sm whitespace-pre-wrap">{content}</div>
+                </div>
+              </div>
+            );
+          } else if (isSystem) {
+            return (
+              <div key={index} className="flex justify-center">
+                <div className="bg-[#FFF6E9] dark:bg-amber-900/30 text-[#252A3A] dark:text-white rounded-xl px-4 py-2 max-w-[90%] text-center">
+                  <div className="text-xs text-[#D4A000] dark:text-amber-400 font-medium mb-1">{role}</div>
+                  <div className="text-sm whitespace-pre-wrap">{content}</div>
+                </div>
+              </div>
+            );
+          } else {
+            // For any other text that doesn't match patterns
+            return (
+              <div key={index} className="text-sm text-[#667085] dark:text-gray-400 whitespace-pre-wrap px-2">
+                {line}
+              </div>
+            );
+          }
+        })}
+      </div>
+    );
+  };
+
+  // Fix date display issue for chatlogs
+  const formatTimestamp = (timestamp: any) => {
+    if (!timestamp) return 'Date not available';
+    
+    try {
+      const date = new Date(timestamp);
+      // Check if date is valid
+      if (isNaN(date.getTime())) return 'Invalid date';
+      return format(date, 'MMM d, yyyy • h:mm a');
+    } catch (error) {
+      console.error('Error formatting timestamp:', error);
+      return 'Date format error';
+    }
+  };
+
   if (evaluationResults.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto bg-white dark:bg-gray-900/60 shadow-lg rounded-2xl p-8 text-center">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-4">
+      <div className="min-h-screen bg-[#f5f7fa] dark:bg-[#161925] py-8 px-4 md:px-8">
+        <div className="max-w-4xl mx-auto bg-white dark:bg-[#232534] shadow-lg rounded-xl p-8 text-center">
+          <h1 className="text-3xl font-bold text-[#252A3A] dark:text-white mb-4">
             Evaluation Report
           </h1>
-          <p className="text-gray-600 dark:text-gray-300 mb-6">
+          <p className="text-[#667085] dark:text-gray-300 mb-6">
             No evaluation results available. Please analyze some chatlogs first.
           </p>
-          <Button variant="default" onClick={() => window.location.href = '/evaluate'}>
+          <Button 
+            onClick={() => window.location.href = '/evaluate'}
+            className="bg-gradient-to-r from-[#22c55e] to-[#4582ff] hover:opacity-90 text-white"
+          >
             Go to Evaluation Page
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
@@ -626,53 +850,55 @@ const ReportPage: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-[#f5f7fa] dark:bg-[#161925] py-8 px-4 md:px-8">
+      <div className="max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div className="flex items-center gap-4 mb-2">
+            <div className="flex items-center justify-center w-12 h-12 bg-[#4582ff] rounded-full text-white shadow-md">
+              <FileText className="h-6 w-6" />
+            </div>
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
-            Evaluation Report
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 text-sm">
+              <h1 className="text-2xl font-bold text-[#252A3A] dark:text-white">Evaluation Report</h1>
+              <p className="mt-1 text-[#667085] dark:text-gray-300">
             Generated on {format(new Date(), 'MMMM d, yyyy')} • {evaluationResults.length} chatlogs analyzed 
           </p>
+            </div>
         </div>
         <Button 
-          variant="default" 
-          size="lg"
           onClick={handleExportPDF}
-          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all"
+            className="bg-gradient-to-r from-[#22c55e] to-[#4582ff] hover:opacity-90 text-white shadow-sm"
         >
           <Download className="mr-2 h-4 w-4" /> Export PDF
         </Button>
       </div>
 
-      <div className="bg-white dark:bg-gray-900/60 shadow-xl rounded-2xl overflow-hidden" ref={reportRef}>
+        <div className="bg-white dark:bg-[#232534] shadow-sm rounded-xl overflow-hidden" ref={reportRef}>
         <Tabs defaultValue="summary" value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 rounded-none border-b border-border dark:border-gray-800 bg-muted/50 dark:bg-gray-900/80 p-0">
+            <TabsList className="grid w-full grid-cols-4 rounded-none border-b border-gray-200 dark:border-gray-800 bg-gray-50/80 dark:bg-gray-900/20 p-0">
             <TabsTrigger 
               value="summary" 
-              className="rounded-none border-r border-border dark:border-gray-800 py-3 data-[state=active]:bg-background dark:data-[state=active]:bg-gray-900"
+                className="rounded-none border-r border-gray-200 dark:border-gray-800 py-3 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800/40 data-[state=active]:text-[#252A3A] dark:data-[state=active]:text-white"
             >
               <BarChart className="h-4 w-4 mr-2" />
               Summary
             </TabsTrigger>
             <TabsTrigger 
               value="scenarios" 
-              className="rounded-none border-r border-border dark:border-gray-800 py-3 data-[state=active]:bg-background dark:data-[state=active]:bg-gray-900"
+                className="rounded-none border-r border-gray-200 dark:border-gray-800 py-3 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800/40 data-[state=active]:text-[#252A3A] dark:data-[state=active]:text-white"
             >
               <PieChart className="h-4 w-4 mr-2" />
               Scenarios
             </TabsTrigger>
             <TabsTrigger 
               value="chatlogs" 
-              className="rounded-none border-r border-border dark:border-gray-800 py-3 data-[state=active]:bg-background dark:data-[state=active]:bg-gray-900"
+                className="rounded-none border-r border-gray-200 dark:border-gray-800 py-3 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800/40 data-[state=active]:text-[#252A3A] dark:data-[state=active]:text-white"
             >
               <MessageSquare className="h-4 w-4 mr-2" />
               Chatlogs
             </TabsTrigger>
             <TabsTrigger 
               value="configuration" 
-              className="rounded-none py-3 data-[state=active]:bg-background dark:data-[state=active]:bg-gray-900"
+                className="rounded-none py-3 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800/40 data-[state=active]:text-[#252A3A] dark:data-[state=active]:text-white"
             >
               <Gauge className="h-4 w-4 mr-2" />
               Configuration
@@ -682,51 +908,258 @@ const ReportPage: React.FC = () => {
           {/* Summary Tab */}
           <TabsContent value="summary" className="p-6 focus:outline-none">
             <div className="space-y-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="flex items-center justify-center w-10 h-10 bg-[#4582ff]/10 dark:bg-blue-900/20 rounded-lg text-[#4582ff] dark:text-blue-400">
+                    <BarChart className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-[#252A3A] dark:text-white">Performance Summary</h2>
+                    <p className="text-sm text-[#667085] dark:text-gray-400">
+                      Overview of {evaluationResults.length} conversation evaluations
+                    </p>
+                  </div>
+                </div>
+
               {/* Key Statistics */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                <Card className="bg-white/60 dark:bg-gray-900/80 shadow-md border border-border/40 dark:border-gray-800">
+                  <Card className="bg-white dark:bg-gray-800/40 shadow-sm border border-gray-200/40 dark:border-gray-800/40">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">Overall CPR Score</CardTitle>
+                      <CardTitle className="text-sm font-medium text-[#667085] dark:text-gray-400">Overall CPR Score</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">{overallCPRScore}</div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">out of 5</p>
+                      <div className="text-3xl font-bold text-[#4582ff] dark:text-blue-400">
+                        {(Number(overallCPRScore) * 20).toFixed(1)}%
+                      </div>
+                      <p className="text-sm text-[#667085] dark:text-gray-400">{overallCPRScore} out of 5</p>
                   </CardContent>
                 </Card>
-                <Card className="bg-white/60 dark:bg-gray-900/80 shadow-md border border-border/40 dark:border-gray-800">
+                  <Card className="bg-white dark:bg-gray-800/40 shadow-sm border border-gray-200/40 dark:border-gray-800/40">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">Coherence</CardTitle>
+                      <CardTitle className="text-sm font-medium text-[#667085] dark:text-gray-400">Coherence</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{averageCoherence}</div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">out of 5</p>
+                      <div className="text-3xl font-bold text-[#4582ff] dark:text-blue-400">
+                        {(Number(averageCoherence) * 20).toFixed(1)}%
+                      </div>
+                      <p className="text-sm text-[#667085] dark:text-gray-400">{averageCoherence} out of 5</p>
                   </CardContent>
             </Card>
-                <Card className="bg-white/60 dark:bg-gray-900/80 shadow-md border border-border/40 dark:border-gray-800">
+                  <Card className="bg-white dark:bg-gray-800/40 shadow-sm border border-gray-200/40 dark:border-gray-800/40">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">Politeness</CardTitle>
+                      <CardTitle className="text-sm font-medium text-[#667085] dark:text-gray-400">Politeness</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">{averagePoliteness}</div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">out of 5</p>
+                      <div className="text-3xl font-bold text-[#D4A000] dark:text-amber-400">
+                        {(Number(averagePoliteness) * 20).toFixed(1)}%
+                      </div>
+                      <p className="text-sm text-[#667085] dark:text-gray-400">{averagePoliteness} out of 5</p>
                   </CardContent>
             </Card>
-                <Card className="bg-white/60 dark:bg-gray-900/80 shadow-md border border-border/40 dark:border-gray-800">
+                  <Card className="bg-white dark:bg-gray-800/40 shadow-sm border border-gray-200/40 dark:border-gray-800/40">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">Relevance</CardTitle>
+                      <CardTitle className="text-sm font-medium text-[#667085] dark:text-gray-400">Relevance</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">{averageRelevance}</div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">out of 5</p>
+                      <div className="text-3xl font-bold text-[#4582ff] dark:text-blue-400">
+                        {(Number(averageRelevance) * 20).toFixed(1)}%
+                      </div>
+                      <p className="text-sm text-[#667085] dark:text-gray-400">{averageRelevance} out of 5</p>
                   </CardContent>
             </Card>
-                <Card className="bg-white/60 dark:bg-gray-900/80 shadow-md border border-border/40 dark:border-gray-800">
+                  <Card className="bg-white dark:bg-gray-800/40 shadow-sm border border-gray-200/40 dark:border-gray-800/40">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">Resolution Rate</CardTitle>
+                      <CardTitle className="text-sm font-medium text-[#667085] dark:text-gray-400">Resolution Rate</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-3xl font-bold text-green-600 dark:text-green-400">{resolutionRate}%</div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{resolvedCount} of {evaluationResults.length}</p>
+                      <div className="text-3xl font-bold text-[#22c55e] dark:text-green-400">{resolutionRate}%</div>
+                      <p className="text-sm text-[#667085] dark:text-gray-400">{resolvedCount} of {evaluationResults.length}</p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Time-based Analysis */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Shift Performance */}
+                  <Card className="bg-white dark:bg-gray-800/40 shadow-sm border border-gray-200/40 dark:border-gray-800/40">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-[#4582ff] dark:text-blue-400" />
+                        Shift Performance
+                      </CardTitle>
+                      <CardDescription>Analysis by time of day</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-3 gap-2 text-xs text-center font-medium text-[#667085] dark:text-gray-400">
+                          <div>Morning<br/>(6am-2pm)</div>
+                          <div>Afternoon<br/>(2pm-10pm)</div>
+                          <div>Night<br/>(10pm-6am)</div>
+                        </div>
+                        
+                        <div className="grid grid-cols-3 gap-2 text-center">
+                          <div className="bg-[#F9FAFB] dark:bg-gray-800/60 p-3 rounded-lg border border-gray-100 dark:border-gray-800/60">
+                            <div className="text-sm text-[#667085] dark:text-gray-400">Count</div>
+                            <div className="text-lg font-bold text-[#252A3A] dark:text-white">{shiftData.morning.count}</div>
+                          </div>
+                          <div className="bg-[#F9FAFB] dark:bg-gray-800/60 p-3 rounded-lg border border-gray-100 dark:border-gray-800/60">
+                            <div className="text-sm text-[#667085] dark:text-gray-400">Count</div>
+                            <div className="text-lg font-bold text-[#252A3A] dark:text-white">{shiftData.afternoon.count}</div>
+                          </div>
+                          <div className="bg-[#F9FAFB] dark:bg-gray-800/60 p-3 rounded-lg border border-gray-100 dark:border-gray-800/60">
+                            <div className="text-sm text-[#667085] dark:text-gray-400">Count</div>
+                            <div className="text-lg font-bold text-[#252A3A] dark:text-white">{shiftData.night.count}</div>
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-3 gap-2 text-center">
+                          <div className="bg-[#F9FAFB] dark:bg-gray-800/60 p-3 rounded-lg border border-gray-100 dark:border-gray-800/60">
+                            <div className="text-sm text-[#667085] dark:text-gray-400">Resolution</div>
+                            <div className={`text-lg font-bold ${
+                              shiftData.morning.resolution >= 80 
+                                ? 'text-[#22c55e] dark:text-green-400' 
+                                : shiftData.morning.resolution >= 50 
+                                ? 'text-[#D4A000] dark:text-amber-400' 
+                                : 'text-[#FF80B5] dark:text-rose-400'
+                            }`}>
+                              {shiftData.morning.resolution.toFixed(1)}%
+                            </div>
+                          </div>
+                          <div className="bg-[#F9FAFB] dark:bg-gray-800/60 p-3 rounded-lg border border-gray-100 dark:border-gray-800/60">
+                            <div className="text-sm text-[#667085] dark:text-gray-400">Resolution</div>
+                            <div className={`text-lg font-bold ${
+                              shiftData.afternoon.resolution >= 80 
+                                ? 'text-[#22c55e] dark:text-green-400' 
+                                : shiftData.afternoon.resolution >= 50 
+                                ? 'text-[#D4A000] dark:text-amber-400' 
+                                : 'text-[#FF80B5] dark:text-rose-400'
+                            }`}>
+                              {shiftData.afternoon.resolution.toFixed(1)}%
+                            </div>
+                          </div>
+                          <div className="bg-[#F9FAFB] dark:bg-gray-800/60 p-3 rounded-lg border border-gray-100 dark:border-gray-800/60">
+                            <div className="text-sm text-[#667085] dark:text-gray-400">Resolution</div>
+                            <div className={`text-lg font-bold ${
+                              shiftData.night.resolution >= 80 
+                                ? 'text-[#22c55e] dark:text-green-400' 
+                                : shiftData.night.resolution >= 50 
+                                ? 'text-[#D4A000] dark:text-amber-400' 
+                                : 'text-[#FF80B5] dark:text-rose-400'
+                            }`}>
+                              {shiftData.night.resolution.toFixed(1)}%
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-3 gap-2 text-center">
+                          <div className="bg-[#F9FAFB] dark:bg-gray-800/60 p-3 rounded-lg border border-gray-100 dark:border-gray-800/60">
+                            <div className="text-sm text-[#667085] dark:text-gray-400">CPR Score</div>
+                            <div className="text-lg font-bold text-[#4582ff] dark:text-blue-400">
+                              {shiftData.morning.avgCPR.toFixed(2)}/5
+                            </div>
+                          </div>
+                          <div className="bg-[#F9FAFB] dark:bg-gray-800/60 p-3 rounded-lg border border-gray-100 dark:border-gray-800/60">
+                            <div className="text-sm text-[#667085] dark:text-gray-400">CPR Score</div>
+                            <div className="text-lg font-bold text-[#4582ff] dark:text-blue-400">
+                              {shiftData.afternoon.avgCPR.toFixed(2)}/5
+                            </div>
+                          </div>
+                          <div className="bg-[#F9FAFB] dark:bg-gray-800/60 p-3 rounded-lg border border-gray-100 dark:border-gray-800/60">
+                            <div className="text-sm text-[#667085] dark:text-gray-400">CPR Score</div>
+                            <div className="text-lg font-bold text-[#4582ff] dark:text-blue-400">
+                              {shiftData.night.avgCPR.toFixed(2)}/5
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  {/* Time Trend */}
+                  <Card className="bg-white dark:bg-gray-800/40 shadow-sm border border-gray-200/40 dark:border-gray-800/40">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="flex items-center gap-2">
+                        <LineChart className="h-4 w-4 text-[#4582ff] dark:text-blue-400" />
+                        Performance Trend
+                      </CardTitle>
+                      <CardDescription>Daily performance metrics</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {timeChartData.labels.length > 0 ? (
+                        <div className="h-[300px] w-full">
+                          <div className="text-xs text-[#667085] dark:text-gray-400 mb-4 text-center">
+                            Showing data for {timeChartData.labels.length} days
+                          </div>
+                          <div className="space-y-6">
+                            <div>
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="text-sm font-medium text-[#252A3A] dark:text-white flex items-center gap-1">
+                                  <div className="w-3 h-3 rounded-full bg-[#22c55e]"></div>
+                                  Resolution Rate
+                                </div>
+                                <div className="text-sm font-medium text-[#22c55e]">
+                                  {timeChartData.resolutionData.length > 0 
+                                    ? `${timeChartData.resolutionData[timeChartData.resolutionData.length - 1].toFixed(1)}%` 
+                                    : '0%'}
+                                </div>
+                              </div>
+                              <div className="h-10 bg-[#F9FAFB] dark:bg-gray-800/60 rounded-lg border border-gray-100 dark:border-gray-800/60 overflow-hidden flex items-end">
+                                {timeChartData.resolutionData.map((value, index) => (
+                                  <div 
+                                    key={index} 
+                                    className="h-full bg-[#ECFDF3] dark:bg-green-900/30 border-r border-white dark:border-gray-800 flex-1 relative group"
+                                    style={{ height: `${Math.max(10, value)}%` }}
+                                  >
+                                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 bg-[#252A3A] dark:bg-white text-white dark:text-[#252A3A] text-xs px-1 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none mb-1">
+                                      {value.toFixed(1)}%
+                                    </div>
+                                    <div className="w-full h-1 absolute bottom-0 bg-[#22c55e] dark:bg-green-400"></div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="text-sm font-medium text-[#252A3A] dark:text-white flex items-center gap-1">
+                                  <div className="w-3 h-3 rounded-full bg-[#4582ff]"></div>
+                                  CPR Score
+                                </div>
+                                <div className="text-sm font-medium text-[#4582ff]">
+                                  {timeChartData.cprData.length > 0 
+                                    ? `${timeChartData.cprData[timeChartData.cprData.length - 1].toFixed(2)}/5` 
+                                    : '0/5'}
+                                </div>
+                              </div>
+                              <div className="h-10 bg-[#F9FAFB] dark:bg-gray-800/60 rounded-lg border border-gray-100 dark:border-gray-800/60 overflow-hidden flex items-end">
+                                {timeChartData.cprData.map((value, index) => (
+                                  <div 
+                                    key={index} 
+                                    className="h-full bg-[#EEF4FF] dark:bg-blue-900/30 border-r border-white dark:border-gray-800 flex-1 relative group"
+                                    style={{ height: `${Math.max(10, (value / 5) * 100)}%` }}
+                                  >
+                                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 bg-[#252A3A] dark:bg-white text-white dark:text-[#252A3A] text-xs px-1 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none mb-1">
+                                      {value.toFixed(2)}/5
+                                    </div>
+                                    <div className="w-full h-1 absolute bottom-0 bg-[#4582ff] dark:bg-blue-400"></div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                            
+                            <div className="flex justify-between text-xs text-[#667085] dark:text-gray-400 pt-2 px-1">
+                              {timeChartData.labels.map((label, index) => (
+                                <div key={index} className="text-center">
+                                  {index % Math.max(1, Math.floor(timeChartData.labels.length / 5)) === 0 ? label : ''}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="h-[300px] w-full flex items-center justify-center text-[#667085] dark:text-gray-400">
+                          No time-based data available
+                        </div>
+                      )}
                   </CardContent>
             </Card>
           </div>
@@ -734,44 +1167,50 @@ const ReportPage: React.FC = () => {
               {/* Distribution cards */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {[
-                  { title: 'Coherence Distribution', dist: coherenceDist, color: 'indigo' },
-                  { title: 'Politeness Distribution', dist: politenessDist, color: 'purple' },
-                  { title: 'Relevance Distribution', dist: relevanceDist, color: 'yellow' }
+                    { title: 'Coherence Distribution', dist: coherenceDist, color: 'blue' },
+                    { title: 'Politeness Distribution', dist: politenessDist, color: 'amber' },
+                    { title: 'Relevance Distribution', dist: relevanceDist, color: 'blue' }
                 ].map(({ title, dist, color }) => (
-                  <Card key={title} className="bg-white/60 dark:bg-gray-900/80 shadow-md border border-border/40 dark:border-gray-800">
+                    <Card key={title} className="bg-white dark:bg-gray-800/40 shadow-sm border border-gray-200/40 dark:border-gray-800/40">
                     <CardHeader>
-                      <CardTitle className="text-base">{title}</CardTitle>
+                        <CardTitle className="text-base text-[#252A3A] dark:text-white">{title}</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
                         <div>
                           <div className="flex justify-between mb-1">
-                            <span className="text-sm font-medium">High (4-5)</span>
-                            <span className="text-sm font-medium">{((dist.high / evaluationResults.length) * 100).toFixed(1)}%</span>
+                              <span className="text-sm font-medium text-[#667085] dark:text-gray-400">High (4-5)</span>
+                              <span className="text-sm font-medium text-[#22c55e] dark:text-green-400">
+                                {((dist.high / evaluationResults.length) * 100).toFixed(1)}%
+                              </span>
                           </div>
                           <Progress 
                             value={(dist.high / evaluationResults.length) * 100} 
-                            className={`h-2 ${color === 'indigo' ? 'bg-indigo-100 dark:bg-indigo-950' : color === 'purple' ? 'bg-purple-100 dark:bg-purple-950' : 'bg-yellow-100 dark:bg-yellow-950'}`}
+                              className="h-2 bg-gray-100 dark:bg-gray-700 [&>div]:bg-[#22c55e] dark:[&>div]:bg-green-500" 
                           />
                         </div>
                         <div>
                           <div className="flex justify-between mb-1">
-                            <span className="text-sm font-medium">Medium (3)</span>
-                            <span className="text-sm font-medium">{((dist.medium / evaluationResults.length) * 100).toFixed(1)}%</span>
+                              <span className="text-sm font-medium text-[#667085] dark:text-gray-400">Medium (3)</span>
+                              <span className="text-sm font-medium text-[#D4A000] dark:text-amber-400">
+                                {((dist.medium / evaluationResults.length) * 100).toFixed(1)}%
+                              </span>
                           </div>
                           <Progress 
                             value={(dist.medium / evaluationResults.length) * 100} 
-                            className={`h-2 ${color === 'indigo' ? 'bg-indigo-100 dark:bg-indigo-950' : color === 'purple' ? 'bg-purple-100 dark:bg-purple-950' : 'bg-yellow-100 dark:bg-yellow-950'}`}
+                              className="h-2 bg-gray-100 dark:bg-gray-700 [&>div]:bg-[#D4A000] dark:[&>div]:bg-amber-500" 
                           />
                   </div>
                         <div>
                           <div className="flex justify-between mb-1">
-                            <span className="text-sm font-medium">Low (1-2)</span>
-                            <span className="text-sm font-medium">{((dist.low / evaluationResults.length) * 100).toFixed(1)}%</span>
+                              <span className="text-sm font-medium text-[#667085] dark:text-gray-400">Low (1-2)</span>
+                              <span className="text-sm font-medium text-[#FF80B5] dark:text-rose-400">
+                                {((dist.low / evaluationResults.length) * 100).toFixed(1)}%
+                              </span>
                   </div>
                           <Progress 
                             value={(dist.low / evaluationResults.length) * 100} 
-                            className={`h-2 ${color === 'indigo' ? 'bg-indigo-100 dark:bg-indigo-950' : color === 'purple' ? 'bg-purple-100 dark:bg-purple-950' : 'bg-yellow-100 dark:bg-yellow-950'}`}
+                              className="h-2 bg-gray-100 dark:bg-gray-700 [&>div]:bg-[#FF80B5] dark:[&>div]:bg-rose-500" 
                           />
                   </div>
                 </div>
@@ -780,37 +1219,92 @@ const ReportPage: React.FC = () => {
             ))}
           </div>
 
-              {/* Top and bottom performers */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Chatlogs requiring attention */}
-                <Card className="bg-white/60 dark:bg-gray-900/80 shadow-md border border-border/40 dark:border-gray-800">
+                {/* Scenario Summary */}
+                <Card className="bg-white dark:bg-gray-800/40 shadow-sm border border-gray-200/40 dark:border-gray-800/40">
                   <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <AlertCircle className="text-red-500 mr-2 h-5 w-5" />
-                      Chatlogs Requiring Attention
+                    <CardTitle className="flex items-center text-[#252A3A] dark:text-white">
+                      <PieChart className="h-5 w-5 mr-2 text-[#4582ff] dark:text-blue-400" />
+                      Scenario Overview
                     </CardTitle>
                     <CardDescription>
-                      Lowest performing conversations that need review
+                      Performance metrics across different conversation scenarios
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="hover:bg-gray-50 dark:hover:bg-gray-800/60">
+                          <TableHead>Scenario</TableHead>
+                          <TableHead className="text-right">Count</TableHead>
+                          <TableHead className="text-right">Resolution</TableHead>
+                          <TableHead className="text-right">CPR Score</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {scenarioMetrics.slice(0, 5).map((scenario) => (
+                          <TableRow key={scenario.name} className="hover:bg-gray-50 dark:hover:bg-gray-800/60">
+                            <TableCell className="font-medium">{scenario.name}</TableCell>
+                            <TableCell className="text-right">{scenario.count}</TableCell>
+                            <TableCell className="text-right">
+                              <Badge className={`${
+                                Number(scenario.resolutionRate) >= 80 
+                                  ? 'bg-[#ECFDF3] text-[#22c55e] dark:bg-green-900/30 dark:text-green-400' 
+                                  : Number(scenario.resolutionRate) >= 50 
+                                  ? 'bg-[#FFF6E9] text-[#D4A000] dark:bg-amber-900/30 dark:text-amber-400' 
+                                  : 'bg-[#FFECEB] text-[#FF80B5] dark:bg-rose-900/30 dark:text-rose-400'
+                              }`}>
+                                {scenario.resolutionRate}%
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Badge variant="outline" className="font-medium">
+                                {scenario.avgCPR}/5
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                  <CardFooter className="flex justify-center border-t border-gray-100 dark:border-gray-800 pt-4">
+                    <Button variant="outline" size="sm" onClick={() => setActiveTab("scenarios")}>
+                      View All Scenarios
+                      <ArrowRight className="ml-1 h-4 w-4" />
+                    </Button>
+                  </CardFooter>
+                </Card>
+
+                {/* Chatlogs for review and top performers */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Chatlogs for review */}
+                  <Card className="bg-white dark:bg-gray-800/40 shadow-sm border border-gray-200/40 dark:border-gray-800/40">
+                  <CardHeader>
+                      <CardTitle className="flex items-center text-[#252A3A] dark:text-white">
+                        <AlertCircle className="text-[#FF80B5] dark:text-rose-400 mr-2 h-5 w-5" />
+                        Chatlogs for Review
+                    </CardTitle>
+                    <CardDescription>
+                        Low-scoring conversations that need attention
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="max-h-80 overflow-y-auto">
                     <div className="space-y-4">
                       {chatlogsForReview.map((chat, index) => (
-                        <div key={index} className="p-3 bg-red-50/50 dark:bg-red-950/30 rounded-lg border border-red-100 dark:border-red-900/50">
-                          <p className="text-sm line-clamp-2 mb-2 text-gray-700 dark:text-gray-300">
+                          <div key={index} className="p-3 bg-[#FFECEB]/30 dark:bg-rose-900/10 rounded-lg border border-red-100 dark:border-red-900/30">
+                            <p className="text-sm line-clamp-2 mb-2 text-[#252A3A] dark:text-gray-300">
                             {truncateText(chat.chatlog, 150)}
                           </p>
                           <div className="grid grid-cols-4 gap-2">
-                            <Badge variant="outline" className="justify-center text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-800/50">
+                              <Badge variant="outline" className="justify-center text-[#FF80B5] dark:text-rose-400 bg-[#FFECEB]/50 dark:bg-rose-900/20 border-red-200 dark:border-red-800/30">
                               C: {chat.coherence}/5
                             </Badge>
-                            <Badge variant="outline" className="justify-center text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-800/50">
+                              <Badge variant="outline" className="justify-center text-[#FF80B5] dark:text-rose-400 bg-[#FFECEB]/50 dark:bg-rose-900/20 border-red-200 dark:border-red-800/30">
                               P: {chat.politeness}/5
                             </Badge>
-                            <Badge variant="outline" className="justify-center text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-800/50">
+                              <Badge variant="outline" className="justify-center text-[#FF80B5] dark:text-rose-400 bg-[#FFECEB]/50 dark:bg-rose-900/20 border-red-200 dark:border-red-800/30">
                               R: {chat.relevance}/5
                             </Badge>
-                            <Badge variant="outline" className="justify-center text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-800/50">
+                              <Badge variant="outline" className="justify-center text-[#FF80B5] dark:text-rose-400 bg-[#FFECEB]/50 dark:bg-rose-900/20 border-red-200 dark:border-red-800/30">
                               {chat.resolution === 1 ? 'Resolved' : 'Unresolved'}
                             </Badge>
                           </div>
@@ -821,10 +1315,10 @@ const ReportPage: React.FC = () => {
                 </Card>
 
                 {/* Top performers */}
-                <Card className="bg-white/60 dark:bg-gray-900/80 shadow-md border border-border/40 dark:border-gray-800">
+                  <Card className="bg-white dark:bg-gray-800/40 shadow-sm border border-gray-200/40 dark:border-gray-800/40">
                   <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <CheckCircle className="text-green-500 mr-2 h-5 w-5" />
+                      <CardTitle className="flex items-center text-[#252A3A] dark:text-white">
+                        <CheckCircle className="text-[#22c55e] dark:text-green-400 mr-2 h-5 w-5" />
                       Top Performing Chatlogs
                     </CardTitle>
                     <CardDescription>
@@ -834,21 +1328,21 @@ const ReportPage: React.FC = () => {
                   <CardContent className="max-h-80 overflow-y-auto">
                     <div className="space-y-4">
                       {topPerformingChatlogs.map((chat, index) => (
-                        <div key={index} className="p-3 bg-green-50/50 dark:bg-green-950/30 rounded-lg border border-green-100 dark:border-green-900/50">
-                          <p className="text-sm line-clamp-2 mb-2 text-gray-700 dark:text-gray-300">
+                          <div key={index} className="p-3 bg-[#ECFDF3]/30 dark:bg-green-900/10 rounded-lg border border-green-100 dark:border-green-900/30">
+                            <p className="text-sm line-clamp-2 mb-2 text-[#252A3A] dark:text-gray-300">
                             {truncateText(chat.chatlog, 150)}
                           </p>
                           <div className="grid grid-cols-4 gap-2">
-                            <Badge variant="outline" className="justify-center text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/50 border-green-200 dark:border-green-800/50">
+                              <Badge variant="outline" className="justify-center text-[#22c55e] dark:text-green-400 bg-[#ECFDF3]/50 dark:bg-green-900/20 border-green-200 dark:border-green-800/30">
                               C: {chat.coherence}/5
                             </Badge>
-                            <Badge variant="outline" className="justify-center text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/50 border-green-200 dark:border-green-800/50">
+                              <Badge variant="outline" className="justify-center text-[#22c55e] dark:text-green-400 bg-[#ECFDF3]/50 dark:bg-green-900/20 border-green-200 dark:border-green-800/30">
                               P: {chat.politeness}/5
                             </Badge>
-                            <Badge variant="outline" className="justify-center text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/50 border-green-200 dark:border-green-800/50">
+                              <Badge variant="outline" className="justify-center text-[#22c55e] dark:text-green-400 bg-[#ECFDF3]/50 dark:bg-green-900/20 border-green-200 dark:border-green-800/30">
                               R: {chat.relevance}/5
                             </Badge>
-                            <Badge variant="outline" className="justify-center text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/50 border-green-200 dark:border-green-800/50">
+                              <Badge variant="outline" className="justify-center text-[#22c55e] dark:text-green-400 bg-[#ECFDF3]/50 dark:bg-green-900/20 border-green-200 dark:border-green-800/30">
                               {chat.resolution === 1 ? 'Resolved' : 'Unresolved'}
                             </Badge>
                           </div>
@@ -864,72 +1358,225 @@ const ReportPage: React.FC = () => {
           {/* Scenarios Tab */}
           <TabsContent value="scenarios" className="p-6 focus:outline-none">
             <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold">Scenario Analysis</h2>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-center w-10 h-10 bg-[#4582ff]/10 dark:bg-blue-900/20 rounded-lg text-[#4582ff] dark:text-blue-400">
+                      <PieChart className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold text-[#252A3A] dark:text-white">Scenario Analysis</h2>
+                      <p className="text-sm text-[#667085] dark:text-gray-400">
                   {scenarioMetrics.length} unique scenarios detected
+                      </p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-4">
-                {scenarioMetrics.map((scenario) => (
-                  <Card key={scenario.name} className="bg-white/60 dark:bg-gray-900/80 shadow-md border border-border/40 dark:border-gray-800">
+                  <div className="flex items-center gap-2">
+                    <Select defaultValue="count" onValueChange={(value) => {}}>
+                      <SelectTrigger className="w-[180px] bg-white dark:bg-gray-800/40 border-gray-200/60 dark:border-gray-800/60">
+                        <SelectValue placeholder="Sort by" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="count">Sort by Count</SelectItem>
+                        <SelectItem value="resolution">Sort by Resolution</SelectItem>
+                        <SelectItem value="cpr">Sort by CPR Score</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Scenario Overview Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <Card className="bg-white dark:bg-gray-800/40 shadow-sm border border-gray-200/40 dark:border-gray-800/40">
                     <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium text-[#667085] dark:text-gray-400 flex items-center">
+                        <Users className="h-4 w-4 mr-2 text-[#4582ff] dark:text-blue-400" />
+                        Top Scenario
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-lg font-bold text-[#252A3A] dark:text-white">
+                        {scenarioMetrics[0]?.name || "None"}
+                      </div>
+                      <p className="text-sm text-[#667085] dark:text-gray-400 mt-1">
+                        {scenarioMetrics[0]?.count || 0} chatlogs • {scenarioMetrics[0]?.resolutionRate || 0}% resolution
+                      </p>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-white dark:bg-gray-800/40 shadow-sm border border-gray-200/40 dark:border-gray-800/40">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium text-[#667085] dark:text-gray-400 flex items-center">
+                        <TrendingUp className="h-4 w-4 mr-2 text-[#22c55e] dark:text-green-400" />
+                        Best Performing
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {scenarioMetrics.length > 0 ? (
+                        <>
+                          <div className="text-lg font-bold text-[#252A3A] dark:text-white">
+                            {[...scenarioMetrics].sort((a, b) => Number(b.avgCPR) - Number(a.avgCPR))[0]?.name}
+                          </div>
+                          <p className="text-sm text-[#667085] dark:text-gray-400 mt-1">
+                            CPR: {[...scenarioMetrics].sort((a, b) => Number(b.avgCPR) - Number(a.avgCPR))[0]?.avgCPR}/5
+                          </p>
+                        </>
+                      ) : (
+                        <div className="text-sm text-[#667085] dark:text-gray-400">No data available</div>
+                      )}
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-white dark:bg-gray-800/40 shadow-sm border border-gray-200/40 dark:border-gray-800/40">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium text-[#667085] dark:text-gray-400 flex items-center">
+                        <Activity className="h-4 w-4 mr-2 text-[#D4A000] dark:text-amber-400" />
+                        Average Resolution
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-lg font-bold text-[#252A3A] dark:text-white">
+                        {scenarioMetrics.length > 0 
+                          ? (scenarioMetrics.reduce((acc, scenario) => acc + Number(scenario.resolutionRate), 0) / scenarioMetrics.length).toFixed(1) 
+                          : "0.0"}%
+                      </div>
+                      <p className="text-sm text-[#667085] dark:text-gray-400 mt-1">
+                        Across all scenarios
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <div className="space-y-4">
+                  {scenarioMetrics.map((scenario) => (
+                    <Card key={scenario.name} className="bg-white dark:bg-[#232534] shadow-sm border border-gray-200/40 dark:border-gray-800/40 overflow-hidden">
+                      <CardHeader className="pb-2 px-5 pt-4">
                       <CardTitle className="flex justify-between items-center cursor-pointer" onClick={() => toggleScenarioExpansion(scenario.name)}>
                         <div className="flex items-center">
-                          <Badge className="mr-2 px-2 py-1 text-xs">{scenario.count}</Badge>
+                            <div className="flex items-center justify-center w-8 h-8 bg-[#4582ff]/10 dark:bg-blue-900/20 rounded-md text-[#4582ff] dark:text-blue-400 mr-3">
+                              <span className="text-sm font-bold">{scenario.count}</span>
+                            </div>
+                            <span className="text-[#252A3A] dark:text-white text-sm font-medium max-w-[400px] truncate">
                           {scenario.name}
+                            </span>
                         </div>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <div className="flex items-center gap-4">
+                            <div className="hidden md:flex items-center gap-6">
+                              <div className="text-right">
+                                <div className="text-xs text-[#667085] dark:text-gray-400">Resolution</div>
+                                <div className={`text-sm font-medium ${
+                                  Number(scenario.resolutionRate) >= 80 
+                                    ? 'text-[#22c55e] dark:text-green-400' 
+                                    : Number(scenario.resolutionRate) >= 50 
+                                    ? 'text-[#D4A000] dark:text-amber-400' 
+                                    : 'text-[#FF80B5] dark:text-rose-400'
+                                }`}>
+                                  {scenario.resolutionRate}%
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-xs text-[#667085] dark:text-gray-400">CPR Score</div>
+                                <div className="text-sm font-medium text-[#4582ff] dark:text-blue-400">{scenario.avgCPR}/5</div>
+                              </div>
+                            </div>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-8 w-8 p-0 text-[#667085] hover:text-[#252A3A] dark:text-gray-400 dark:hover:text-white"
+                            >
                           {expandedScenarios.includes(scenario.name) ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                         </Button>
+                          </div>
                       </CardTitle>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        <Badge variant="outline" className={`bg-opacity-10 ${Number(scenario.resolutionRate) >= 80 ? 'bg-green-100 text-green-700 dark:text-green-400 border-green-200' : Number(scenario.resolutionRate) >= 50 ? 'bg-yellow-100 text-yellow-700 dark:text-yellow-400 border-yellow-200' : 'bg-red-100 text-red-700 dark:text-red-400 border-red-200'}`}>
+                        <div className="flex md:hidden flex-wrap gap-3 mt-2">
+                          <Badge className={`${
+                            Number(scenario.resolutionRate) >= 80 
+                              ? 'bg-[#ECFDF3] text-[#22c55e] dark:bg-green-900/30 dark:text-green-400' 
+                              : Number(scenario.resolutionRate) >= 50 
+                              ? 'bg-[#FFF6E9] text-[#D4A000] dark:bg-amber-900/30 dark:text-amber-400' 
+                              : 'bg-[#FFECEB] text-[#FF80B5] dark:bg-rose-900/30 dark:text-rose-400'
+                          }`}>
                           Resolution: {scenario.resolutionRate}%
                         </Badge>
-                        <Badge variant="outline" className={`bg-opacity-10 ${Number(scenario.avgCPR) >= 4 ? 'bg-green-100 text-green-700 dark:text-green-400 border-green-200' : Number(scenario.avgCPR) >= 3 ? 'bg-yellow-100 text-yellow-700 dark:text-yellow-400 border-yellow-200' : 'bg-red-100 text-red-700 dark:text-red-400 border-red-200'}`}>
+                          <Badge variant="outline" className="font-normal">
                           CPR: {scenario.avgCPR}/5
                         </Badge>
                       </div>
                     </CardHeader>
+                      
                     {expandedScenarios.includes(scenario.name) && (
-                      <CardContent className="pt-4">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                          <div className="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg">
-                            <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Coherence</div>
-                            <div className="text-xl font-semibold">{scenario.avgCoherence}</div>
-                            <Progress value={Number(scenario.avgCoherence) * 20} className="h-1 mt-2 bg-indigo-100 dark:bg-indigo-950" />
+                        <>
+                          <Separator className="my-0" />
+                          <CardContent className="pt-4 px-5 pb-5">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                              <div className="bg-[#F9FAFB] dark:bg-gray-800/40 p-4 rounded-lg border border-gray-100 dark:border-gray-800/60">
+                                <div className="flex justify-between items-center mb-2">
+                                  <div className="text-sm font-medium text-[#252A3A] dark:text-white">Coherence</div>
+                                  <div className="text-sm font-bold text-[#4582ff] dark:text-blue-400">{scenario.avgCoherence}/5</div>
                           </div>
-                          <div className="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg">
-                            <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Politeness</div>
-                            <div className="text-xl font-semibold">{scenario.avgPoliteness}</div>
-                            <Progress value={Number(scenario.avgPoliteness) * 20} className="h-1 mt-2 bg-purple-100 dark:bg-purple-950" />
+                                <Progress 
+                                  value={Number(scenario.avgCoherence) * 20} 
+                                  className="h-2 bg-[#EEF4FF] dark:bg-gray-700 [&>div]:bg-[#4582ff] dark:[&>div]:bg-blue-500" 
+                                />
                           </div>
-                          <div className="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg">
-                            <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Relevance</div>
-                            <div className="text-xl font-semibold">{scenario.avgRelevance}</div>
-                            <Progress value={Number(scenario.avgRelevance) * 20} className="h-1 mt-2 bg-yellow-100 dark:bg-yellow-950" />
+                              <div className="bg-[#F9FAFB] dark:bg-gray-800/40 p-4 rounded-lg border border-gray-100 dark:border-gray-800/60">
+                                <div className="flex justify-between items-center mb-2">
+                                  <div className="text-sm font-medium text-[#252A3A] dark:text-white">Politeness</div>
+                                  <div className="text-sm font-bold text-[#D4A000] dark:text-amber-400">{scenario.avgPoliteness}/5</div>
+                                </div>
+                                <Progress 
+                                  value={Number(scenario.avgPoliteness) * 20} 
+                                  className="h-2 bg-[#FFF6E9] dark:bg-gray-700 [&>div]:bg-[#D4A000] dark:[&>div]:bg-amber-500" 
+                                />
+                              </div>
+                              <div className="bg-[#F9FAFB] dark:bg-gray-800/40 p-4 rounded-lg border border-gray-100 dark:border-gray-800/60">
+                                <div className="flex justify-between items-center mb-2">
+                                  <div className="text-sm font-medium text-[#252A3A] dark:text-white">Relevance</div>
+                                  <div className="text-sm font-bold text-[#4582ff] dark:text-blue-400">{scenario.avgRelevance}/5</div>
+                                </div>
+                                <Progress 
+                                  value={Number(scenario.avgRelevance) * 20} 
+                                  className="h-2 bg-[#EEF4FF] dark:bg-gray-700 [&>div]:bg-[#4582ff] dark:[&>div]:bg-blue-500" 
+                                />
                           </div>
                         </div>
                         
-                        <h3 className="text-sm font-semibold mb-2">Sample Chatlogs</h3>
-                        <div className="space-y-2 max-h-72 overflow-y-auto">
+                            <div>
+                              <div className="flex items-center justify-between mb-3">
+                                <h3 className="text-sm font-medium text-[#252A3A] dark:text-white">Sample Chatlogs</h3>
+                                <Badge variant="outline" className="text-xs font-normal">
+                                  Showing {Math.min(3, evaluationResults.filter(item => item.scenario === scenario.name).length)} of {evaluationResults.filter(item => item.scenario === scenario.name).length}
+                                </Badge>
+                              </div>
+                              
+                              <div className="space-y-3 max-h-none overflow-y-visible">
                           {evaluationResults
                             .filter(item => item.scenario === scenario.name)
-                            .slice(0, 3)
                             .map((chat, idx) => (
-                              <div key={idx} className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg text-sm">
-                                <p className="line-clamp-2">{truncateText(chat.chatlog, 150)}</p>
-                                <div className="flex gap-2 mt-2">
-                                  <Badge variant="outline" className="text-xs">C: {chat.coherence}</Badge>
-                                  <Badge variant="outline" className="text-xs">P: {chat.politeness}</Badge>
-                                  <Badge variant="outline" className="text-xs">R: {chat.relevance}</Badge>
+                                    <div key={idx} className="p-3 bg-[#F9FAFB] dark:bg-gray-800/40 rounded-lg border border-gray-100 dark:border-gray-800/60">
+                                      <p className="text-sm text-[#252A3A] dark:text-gray-300 mb-2">
+                                        {chat.chatlog}
+                                      </p>
+                                      <div className="flex flex-wrap gap-2">
+                                        <Badge className={`${getScoreColor(chat.coherence, 'bg')} ${getScoreColor(chat.coherence, 'text')} text-xs font-normal`}>
+                                          C: {chat.coherence}
+                                        </Badge>
+                                        <Badge className={`${getScoreColor(chat.politeness, 'bg')} ${getScoreColor(chat.politeness, 'text')} text-xs font-normal`}>
+                                          P: {chat.politeness}
+                                        </Badge>
+                                        <Badge className={`${getScoreColor(chat.relevance, 'bg')} ${getScoreColor(chat.relevance, 'text')} text-xs font-normal`}>
+                                          R: {chat.relevance}
+                                        </Badge>
+                                        <Badge className={`${chat.resolution === 1 ? 'bg-[#ECFDF3] text-[#22c55e] dark:bg-green-900/30 dark:text-green-400' : 'bg-[#FFECEB] text-[#FF80B5] dark:bg-rose-900/30 dark:text-rose-400'} text-xs font-normal`}>
+                                          {chat.resolution === 1 ? 'Resolved' : 'Unresolved'}
+                                        </Badge>
                                 </div>
                     </div>
                             ))}
+                              </div>
                     </div>
                       </CardContent>
+                        </>
                     )}
                   </Card>
                 ))}
@@ -940,21 +1587,32 @@ const ReportPage: React.FC = () => {
           {/* Chatlogs Tab */}
           <TabsContent value="chatlogs" className="p-6 focus:outline-none">
             <div className="space-y-6">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <h2 className="text-xl font-semibold">All Chatlogs</h2>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-center w-10 h-10 bg-[#4582ff]/10 dark:bg-blue-900/20 rounded-lg text-[#4582ff] dark:text-blue-400">
+                      <MessageSquare className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold text-[#252A3A] dark:text-white">All Chatlogs</h2>
+                      <p className="text-sm text-[#667085] dark:text-gray-400">
+                        {evaluationResults.length} conversations analyzed
+                      </p>
+                    </div>
+                  </div>
+                  
                 <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                   <div className="relative w-full sm:w-64">
                     <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
                     <Input
                       placeholder="Search chatlogs..."
-                      className="pl-8 w-full"
+                        className="pl-8 w-full bg-white dark:bg-gray-800/40 border-gray-200/60 dark:border-gray-800/60"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
                   </div>
                   <div className="flex gap-2 w-full sm:w-auto">
                     <Select value={scenarioFilter} onValueChange={setScenarioFilter}>
-                      <SelectTrigger className="w-full sm:w-40">
+                        <SelectTrigger className="w-full sm:w-40 bg-white dark:bg-gray-800/40 border-gray-200/60 dark:border-gray-800/60">
                         <SelectValue placeholder="All Scenarios" />
                       </SelectTrigger>
                       <SelectContent>
@@ -967,7 +1625,7 @@ const ReportPage: React.FC = () => {
                       </SelectContent>
                     </Select>
                     <Select value={sortBy} onValueChange={setSortBy}>
-                      <SelectTrigger className="w-full sm:w-44">
+                        <SelectTrigger className="w-full sm:w-44 bg-white dark:bg-gray-800/40 border-gray-200/60 dark:border-gray-800/60">
                         <SelectValue placeholder="Sort by" />
                       </SelectTrigger>
                       <SelectContent>
@@ -980,32 +1638,100 @@ const ReportPage: React.FC = () => {
                   </div>
                 </div>
               </div>
+
+                {/* Chatlog Stats */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                  <Card className="bg-white dark:bg-gray-800/40 shadow-sm border border-gray-200/40 dark:border-gray-800/40">
+                    <CardContent className="p-4 flex items-center gap-3">
+                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-[#EEF4FF] dark:bg-blue-900/20">
+                        <MessageSquare className="h-5 w-5 text-[#4582ff] dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-[#667085] dark:text-gray-400">Total</p>
+                        <p className="text-xl font-bold text-[#252A3A] dark:text-white">{filteredEvaluations.length}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-white dark:bg-gray-800/40 shadow-sm border border-gray-200/40 dark:border-gray-800/40">
+                    <CardContent className="p-4 flex items-center gap-3">
+                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-[#ECFDF3] dark:bg-green-900/20">
+                        <CheckCircle className="h-5 w-5 text-[#22c55e] dark:text-green-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-[#667085] dark:text-gray-400">Resolved</p>
+                        <p className="text-xl font-bold text-[#252A3A] dark:text-white">
+                          {filteredEvaluations.filter(item => item.resolution === 1).length}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-white dark:bg-gray-800/40 shadow-sm border border-gray-200/40 dark:border-gray-800/40">
+                    <CardContent className="p-4 flex items-center gap-3">
+                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-[#FFECEB] dark:bg-rose-900/20">
+                        <XCircle className="h-5 w-5 text-[#FF80B5] dark:text-rose-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-[#667085] dark:text-gray-400">Unresolved</p>
+                        <p className="text-xl font-bold text-[#252A3A] dark:text-white">
+                          {filteredEvaluations.filter(item => item.resolution !== 1).length}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-white dark:bg-gray-800/40 shadow-sm border border-gray-200/40 dark:border-gray-800/40">
+                    <CardContent className="p-4 flex items-center gap-3">
+                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-[#FFF6E9] dark:bg-amber-900/20">
+                        <Gauge className="h-5 w-5 text-[#D4A000] dark:text-amber-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-[#667085] dark:text-gray-400">Avg CPR</p>
+                        <p className="text-xl font-bold text-[#252A3A] dark:text-white">
+                          {filteredEvaluations.length > 0 
+                            ? (filteredEvaluations.reduce((acc, item) => acc + ((item.coherence + item.politeness + item.relevance) / 3), 0) / filteredEvaluations.length).toFixed(2) 
+                            : "0.00"}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               
               <div className="space-y-4">
                 {filteredEvaluations.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-gray-500 dark:text-gray-400">No chatlogs match your search criteria.</p>
+                    <div className="text-center py-12 bg-white dark:bg-gray-800/40 shadow-sm border border-gray-200/40 dark:border-gray-800/40 rounded-lg">
+                      <div className="flex justify-center mb-4">
+                        <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-full">
+                          <Search className="h-6 w-6 text-gray-400" />
+                        </div>
+                      </div>
+                      <h3 className="text-lg font-medium text-[#252A3A] dark:text-white mb-1">No chatlogs found</h3>
+                      <p className="text-[#667085] dark:text-gray-400 max-w-md mx-auto">
+                        No chatlogs match your search criteria. Try adjusting your filters or search term.
+                      </p>
                   </div>
                 ) : (
                   filteredEvaluations.map((chatlog, index) => (
-                    <Card key={index} className="bg-white/60 dark:bg-gray-900/80 shadow-md border border-border/40 dark:border-gray-800">
-                      <CardHeader className="pb-2">
+                      <Card key={index} className="bg-white dark:bg-[#232534] shadow-sm border border-gray-200/40 dark:border-gray-800/40 overflow-hidden">
+                        <CardHeader className="pb-2 px-5 pt-4">
                         <CardTitle className="text-base flex justify-between items-center">
                           <div className="flex items-center gap-2">
                             {chatlog.scenario && (
-                              <Badge variant="outline" className="font-normal">
+                                <Badge className="bg-[#EEF4FF] text-[#4582ff] dark:bg-blue-900/30 dark:text-blue-400 font-normal">
                                 {chatlog.scenario}
                               </Badge>
                             )}
-                            <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                              <div className="text-sm text-[#667085] dark:text-gray-400 flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
-                              {(chatlog as any).timestamp ? format(new Date((chatlog as any).timestamp), 'MMM d, yyyy') : 'Unknown date'}
+                                {formatTimestamp((chatlog as any).timestamp)}
                             </div>
                           </div>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="font-normal bg-white dark:bg-gray-800/60">
+                                CPR: {calculateCPR(chatlog)}
+                              </Badge>
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0"
+                                className="h-8 w-8 p-0 text-[#667085] hover:text-[#252A3A] dark:text-gray-400 dark:hover:text-white"
                             onClick={() => toggleChatlogExpansion(index)}
                           >
                             {expandedChatlogs.includes(index) ? (
@@ -1014,142 +1740,228 @@ const ReportPage: React.FC = () => {
                               <ChevronDown className="h-4 w-4" />
                             )}
                           </Button>
+                            </div>
                         </CardTitle>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          <Badge className={`${getScoreColor(chatlog.coherence, 'bg')} ${getScoreColor(chatlog.coherence, 'text')} ${getScoreColor(chatlog.coherence, 'border')} font-normal`}>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <Badge className={`${getScoreColor(chatlog.coherence, 'bg')} ${getScoreColor(chatlog.coherence, 'text')} font-normal`}>
                             Coherence: {chatlog.coherence}/5
                           </Badge>
-                          <Badge className={`${getScoreColor(chatlog.politeness, 'bg')} ${getScoreColor(chatlog.politeness, 'text')} ${getScoreColor(chatlog.politeness, 'border')} font-normal`}>
+                            <Badge className={`${getScoreColor(chatlog.politeness, 'bg')} ${getScoreColor(chatlog.politeness, 'text')} font-normal`}>
                             Politeness: {chatlog.politeness}/5
                           </Badge>
-                          <Badge className={`${getScoreColor(chatlog.relevance, 'bg')} ${getScoreColor(chatlog.relevance, 'text')} ${getScoreColor(chatlog.relevance, 'border')} font-normal`}>
+                            <Badge className={`${getScoreColor(chatlog.relevance, 'bg')} ${getScoreColor(chatlog.relevance, 'text')} font-normal`}>
                             Relevance: {chatlog.relevance}/5
                           </Badge>
-                          <Badge className={`${chatlog.resolution === 1 ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950/30 dark:text-green-400 dark:border-green-800/50' : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-800/50'} font-normal`}>
+                            <Badge className={`${chatlog.resolution === 1 
+                              ? 'bg-[#ECFDF3] text-[#22c55e] dark:bg-green-900/30 dark:text-green-400' 
+                              : 'bg-[#FFECEB] text-[#FF80B5] dark:bg-rose-900/30 dark:text-rose-400'} font-normal`}>
                             {chatlog.resolution === 1 ? 'Resolved' : 'Unresolved'}
-                          </Badge>
-                          <Badge variant="outline" className="font-normal">
-                            CPR: {calculateCPR(chatlog)}
                           </Badge>
                         </div>
                       </CardHeader>
                       {expandedChatlogs.includes(index) && (
-                        <CardContent className="pt-4">
-                          <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg">
-                            <pre className="text-sm whitespace-pre-wrap font-sans">{chatlog.chatlog}</pre>
+                          <>
+                            <Separator className="my-0" />
+                            <CardContent className="pt-4 px-5 pb-5">
+                              <div className="bg-[#F9FAFB] dark:bg-gray-800/40 p-4 rounded-lg border border-gray-100 dark:border-gray-800/60">
+                                {formatChatlogBubbles(chatlog.chatlog)}
                           </div>
                         </CardContent>
+                          </>
                       )}
                     </Card>
                   ))
                 )}
               </div>
+                
+                {filteredEvaluations.length > 0 && (
+                  <div className="flex justify-center mt-6">
+                    <div className="text-sm text-[#667085] dark:text-gray-400">
+                      Showing {filteredEvaluations.length} of {evaluationResults.length} chatlogs
+                    </div>
+                  </div>
+                )}
             </div>
           </TabsContent>
 
           {/* Configuration Tab */}
           <TabsContent value="configuration" className="p-6 focus:outline-none">
-            <div className="space-y-6 max-w-3xl mx-auto">
+              <div className="space-y-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="flex items-center justify-center w-10 h-10 bg-[#4582ff]/10 dark:bg-blue-900/20 rounded-lg text-[#4582ff] dark:text-blue-400">
+                    <Gauge className="h-5 w-5" />
+                  </div>
               <div>
-                <h2 className="text-xl font-semibold mb-4">Model Settings</h2>
-                <Card className="bg-white/60 dark:bg-gray-900/80 shadow-md border border-border/40 dark:border-gray-800">
-                  <CardHeader>
-                    <CardTitle className="text-base">AI Model</CardTitle>
-                    <CardDescription>The AI model used for evaluating the chatlogs</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg font-medium">
-                      {selectedModel || "No model specified"}
+                    <h2 className="text-xl font-bold text-[#252A3A] dark:text-white">Evaluation Configuration</h2>
+                    <p className="text-sm text-[#667085] dark:text-gray-400">
+                      Settings used for analyzing the chatlogs
+                    </p>
                     </div>
-                  </CardContent>
-                </Card>
               </div>
 
-              <div>
-                <h2 className="text-xl font-semibold mb-4">Prompt Template</h2>
-                <Card className="bg-white/60 dark:bg-gray-900/80 shadow-md border border-border/40 dark:border-gray-800">
-                  <CardHeader>
-                    <CardTitle className="text-base">Evaluation Prompt</CardTitle>
-                    <CardDescription>The prompt template used for evaluating the chatlogs</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg">
-                      <pre className="text-sm whitespace-pre-wrap font-sans overflow-auto max-h-80">{promptTemplate || "No prompt template specified"}</pre>
+                {/* Model Settings */}
+                <div className="bg-white dark:bg-gray-800/40 shadow-sm border border-gray-200/40 dark:border-gray-800/40 rounded-lg overflow-hidden">
+                  <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800">
+                    <h3 className="text-base font-medium text-[#252A3A] dark:text-white flex items-center gap-2">
+                      <div className="p-1.5 rounded-md bg-[#EEF4FF] dark:bg-blue-900/20">
+                        <LineChart className="h-4 w-4 text-[#4582ff] dark:text-blue-400" />
                     </div>
-                  </CardContent>
-            </Card>
+                      AI Model
+                    </h3>
+                  </div>
+                  <div className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="text-sm text-[#667085] dark:text-gray-400">
+                        Model used for evaluation
+                      </div>
+                      <Badge className="bg-[#EEF4FF] text-[#4582ff] dark:bg-blue-900/30 dark:text-blue-400 font-normal">
+                        {selectedModel || "Default Model"}
+                      </Badge>
+                    </div>
+                    <div className="bg-[#F9FAFB] dark:bg-gray-800/60 p-4 rounded-lg border border-gray-100 dark:border-gray-800/60">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-sm font-medium text-[#252A3A] dark:text-white">Model Details</div>
+                      </div>
+                      <div className="text-sm text-[#667085] dark:text-gray-400">
+                        {selectedModel 
+                          ? `Using ${selectedModel} for chatlog evaluation. This model was selected for its ability to analyze conversational quality and provide accurate metrics.`
+                          : "No specific model information available. Using the default evaluation model."}
+                      </div>
+                    </div>
+                  </div>
               </div>
 
-              <div>
-                <h2 className="text-xl font-semibold mb-4">Evaluation Rubric</h2>
-                <Card className="bg-white/60 dark:bg-gray-900/80 shadow-md border border-border/40 dark:border-gray-800">
-                  <CardHeader>
-                    <CardTitle className="text-base">Rubric Text</CardTitle>
-                    <CardDescription>The rubric used for evaluating the chatlogs</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg">
-                      <pre className="text-sm whitespace-pre-wrap font-sans overflow-auto max-h-80">{rubricText || "No rubric specified"}</pre>
+                {/* Prompt Template */}
+                <div className="bg-white dark:bg-gray-800/40 shadow-sm border border-gray-200/40 dark:border-gray-800/40 rounded-lg overflow-hidden">
+                  <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800">
+                    <h3 className="text-base font-medium text-[#252A3A] dark:text-white flex items-center gap-2">
+                      <div className="p-1.5 rounded-md bg-[#ECFDF3] dark:bg-green-900/20">
+                        <MessageSquare className="h-4 w-4 text-[#22c55e] dark:text-green-400" />
                     </div>
-                  </CardContent>
-            </Card>
+                      Evaluation Prompt
+                    </h3>
+                  </div>
+                  <div className="p-6">
+                    <div className="text-sm text-[#667085] dark:text-gray-400 mb-4">
+                      The prompt template used to guide the AI in evaluating chatlogs
+                    </div>
+                    <div className="bg-[#F9FAFB] dark:bg-gray-800/60 p-4 rounded-lg border border-gray-100 dark:border-gray-800/60">
+                      <pre className="text-sm whitespace-pre-wrap font-mono text-[#252A3A] dark:text-gray-300 overflow-auto max-h-80">
+                        {promptTemplate || "No prompt template specified"}
+                      </pre>
+                    </div>
+                  </div>
               </div>
 
-              <div>
-                <h2 className="text-xl font-semibold mb-4">Data Information</h2>
-                <Card className="bg-white/60 dark:bg-gray-900/80 shadow-md border border-border/40 dark:border-gray-800">
-                  <CardHeader>
-                    <CardTitle className="text-base">Dataset Statistics</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg">
-                          <div className="text-sm text-gray-500 dark:text-gray-400">Total Chatlogs</div>
-                          <div className="text-xl font-semibold">{evaluationResults.length}</div>
+                {/* Evaluation Rubric */}
+                <div className="bg-white dark:bg-gray-800/40 shadow-sm border border-gray-200/40 dark:border-gray-800/40 rounded-lg overflow-hidden">
+                  <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800">
+                    <h3 className="text-base font-medium text-[#252A3A] dark:text-white flex items-center gap-2">
+                      <div className="p-1.5 rounded-md bg-[#FFF6E9] dark:bg-amber-900/20">
+                        <CheckCircle className="h-4 w-4 text-[#D4A000] dark:text-amber-400" />
                         </div>
-                        <div className="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg">
-                          <div className="text-sm text-gray-500 dark:text-gray-400">Unique Scenarios</div>
-                          <div className="text-xl font-semibold">{[...new Set(evaluationResults.map(item => item.scenario))].filter(Boolean).length}</div>
+                      Evaluation Rubric
+                    </h3>
+                        </div>
+                  <div className="p-6">
+                    <div className="text-sm text-[#667085] dark:text-gray-400 mb-4">
+                      Criteria used to score and evaluate the chatlogs
+                      </div>
+                    <div className="bg-[#F9FAFB] dark:bg-gray-800/60 p-4 rounded-lg border border-gray-100 dark:border-gray-800/60">
+                      <pre className="text-sm whitespace-pre-wrap font-mono text-[#252A3A] dark:text-gray-300 overflow-auto max-h-80">
+                        {rubricText || "No evaluation rubric specified"}
+                      </pre>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Dataset Statistics */}
+                <div className="bg-white dark:bg-gray-800/40 shadow-sm border border-gray-200/40 dark:border-gray-800/40 rounded-lg overflow-hidden">
+                  <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800">
+                    <h3 className="text-base font-medium text-[#252A3A] dark:text-white flex items-center gap-2">
+                      <div className="p-1.5 rounded-md bg-[#FFECEB] dark:bg-rose-900/20">
+                        <BarChart className="h-4 w-4 text-[#FF80B5] dark:text-rose-400" />
+                      </div>
+                      Dataset Statistics
+                    </h3>
+                  </div>
+                  <div className="p-6">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                      <div className="bg-[#F9FAFB] dark:bg-gray-800/60 p-4 rounded-lg border border-gray-100 dark:border-gray-800/60">
+                        <div className="text-sm text-[#667085] dark:text-gray-400 mb-1">Total Chatlogs</div>
+                        <div className="text-xl font-bold text-[#252A3A] dark:text-white">{evaluationResults.length}</div>
+                      </div>
+                      <div className="bg-[#F9FAFB] dark:bg-gray-800/60 p-4 rounded-lg border border-gray-100 dark:border-gray-800/60">
+                        <div className="text-sm text-[#667085] dark:text-gray-400 mb-1">Unique Scenarios</div>
+                        <div className="text-xl font-bold text-[#252A3A] dark:text-white">
+                          {[...new Set(evaluationResults.map(item => item.scenario))].filter(Boolean).length}
                         </div>
                       </div>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Metric</TableHead>
-                            <TableHead>Min</TableHead>
-                            <TableHead>Max</TableHead>
-                            <TableHead>Average</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          <TableRow>
-                            <TableCell>Coherence</TableCell>
-                            <TableCell>{Math.min(...evaluationResults.map(r => r.coherence))}</TableCell>
-                            <TableCell>{Math.max(...evaluationResults.map(r => r.coherence))}</TableCell>
-                            <TableCell>{averageCoherence}</TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell>Politeness</TableCell>
-                            <TableCell>{Math.min(...evaluationResults.map(r => r.politeness))}</TableCell>
-                            <TableCell>{Math.max(...evaluationResults.map(r => r.politeness))}</TableCell>
-                            <TableCell>{averagePoliteness}</TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell>Relevance</TableCell>
-                            <TableCell>{Math.min(...evaluationResults.map(r => r.relevance))}</TableCell>
-                            <TableCell>{Math.max(...evaluationResults.map(r => r.relevance))}</TableCell>
-                            <TableCell>{averageRelevance}</TableCell>
-                          </TableRow>
-                        </TableBody>
-                      </Table>
+                      <div className="bg-[#F9FAFB] dark:bg-gray-800/60 p-4 rounded-lg border border-gray-100 dark:border-gray-800/60">
+                        <div className="text-sm text-[#667085] dark:text-gray-400 mb-1">Resolution Rate</div>
+                        <div className="text-xl font-bold text-[#252A3A] dark:text-white">{resolutionRate}%</div>
+                      </div>
+                      <div className="bg-[#F9FAFB] dark:bg-gray-800/60 p-4 rounded-lg border border-gray-100 dark:border-gray-800/60">
+                        <div className="text-sm text-[#667085] dark:text-gray-400 mb-1">Avg CPR Score</div>
+                        <div className="text-xl font-bold text-[#252A3A] dark:text-white">{overallCPRScore}/5</div>
+                      </div>
                     </div>
-                  </CardContent>
-            </Card>
+                    
+                    <div className="bg-[#F9FAFB] dark:bg-gray-800/60 rounded-lg border border-gray-100 dark:border-gray-800/60 overflow-hidden">
+                      <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+                        <h4 className="text-sm font-medium text-[#252A3A] dark:text-white">Metric Ranges</h4>
+                      </div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead className="bg-gray-50 dark:bg-gray-800/40">
+                            <tr>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-[#667085] dark:text-gray-400">Metric</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-[#667085] dark:text-gray-400">Min</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-[#667085] dark:text-gray-400">Max</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-[#667085] dark:text-gray-400">Average</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                            <tr>
+                              <td className="px-4 py-3 text-sm font-medium text-[#252A3A] dark:text-white">Coherence</td>
+                              <td className="px-4 py-3 text-sm text-[#667085] dark:text-gray-400">
+                                {evaluationResults.length > 0 ? Math.min(...evaluationResults.map(r => r.coherence)) : 'N/A'}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-[#667085] dark:text-gray-400">
+                                {evaluationResults.length > 0 ? Math.max(...evaluationResults.map(r => r.coherence)) : 'N/A'}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-[#667085] dark:text-gray-400">{averageCoherence}</td>
+                            </tr>
+                            <tr>
+                              <td className="px-4 py-3 text-sm font-medium text-[#252A3A] dark:text-white">Politeness</td>
+                              <td className="px-4 py-3 text-sm text-[#667085] dark:text-gray-400">
+                                {evaluationResults.length > 0 ? Math.min(...evaluationResults.map(r => r.politeness)) : 'N/A'}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-[#667085] dark:text-gray-400">
+                                {evaluationResults.length > 0 ? Math.max(...evaluationResults.map(r => r.politeness)) : 'N/A'}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-[#667085] dark:text-gray-400">{averagePoliteness}</td>
+                            </tr>
+                            <tr>
+                              <td className="px-4 py-3 text-sm font-medium text-[#252A3A] dark:text-white">Relevance</td>
+                              <td className="px-4 py-3 text-sm text-[#667085] dark:text-gray-400">
+                                {evaluationResults.length > 0 ? Math.min(...evaluationResults.map(r => r.relevance)) : 'N/A'}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-[#667085] dark:text-gray-400">
+                                {evaluationResults.length > 0 ? Math.max(...evaluationResults.map(r => r.relevance)) : 'N/A'}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-[#667085] dark:text-gray-400">{averageRelevance}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
           </div>
         </div>
           </TabsContent>
         </Tabs>
+        </div>
       </div>
     </div>
   );

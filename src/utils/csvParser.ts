@@ -1,8 +1,10 @@
 // src/utils/csvParser.ts
 
-interface ChatlogWithScenario {
+export interface ChatlogWithScenario {
   chatlog: string;
   scenario: string;
+  shift?: string;
+  dateTime?: string;
 }
 
 export const parseCSV = (csvContent: string): ChatlogWithScenario[] => {
@@ -47,13 +49,19 @@ export const parseCSV = (csvContent: string): ChatlogWithScenario[] => {
     return [];
   }
 
-  // Find the header row and locate the "Chatlog" and "Scenario" column indices
+  // Find the header row and locate the columns
   const headers = parseCSVRow(lines[0]);
   const chatlogIndex = headers.findIndex(
     (header) => header.trim().toLowerCase() === 'chatlog'
   );
   const scenarioIndex = headers.findIndex(
     (header) => header.trim().toLowerCase() === 'scenario'
+  );
+  const shiftIndex = headers.findIndex(
+    (header) => header.trim().toLowerCase() === 'shift'
+  );
+  const dateTimeIndex = headers.findIndex(
+    (header) => header.trim().toLowerCase() === 'date and time'
   );
 
   if (chatlogIndex === -1) {
@@ -97,9 +105,31 @@ export const parseCSV = (csvContent: string): ChatlogWithScenario[] => {
         }
       }
 
+      // Get shift content
+      let shiftContent = undefined;
+      if (shiftIndex !== -1 && row.length > shiftIndex && row[shiftIndex] !== undefined && row[shiftIndex] !== null) {
+        shiftContent = row[shiftIndex].trim();
+        // Remove potential surrounding quotes
+        if (shiftContent.startsWith('"') && shiftContent.endsWith('"')) {
+          shiftContent = shiftContent.substring(1, shiftContent.length - 1).replace(/""/g, '"');
+        }
+      }
+
+      // Get date and time content
+      let dateTimeContent = undefined;
+      if (dateTimeIndex !== -1 && row.length > dateTimeIndex && row[dateTimeIndex] !== undefined && row[dateTimeIndex] !== null) {
+        dateTimeContent = row[dateTimeIndex].trim();
+        // Remove potential surrounding quotes
+        if (dateTimeContent.startsWith('"') && dateTimeContent.endsWith('"')) {
+          dateTimeContent = dateTimeContent.substring(1, dateTimeContent.length - 1).replace(/""/g, '"');
+        }
+      }
+
       chatlogsWithScenarios.push({
         chatlog: chatlogContent,
-        scenario: scenarioContent
+        scenario: scenarioContent,
+        shift: shiftContent,
+        dateTime: dateTimeContent
       });
     } else {
       // console.warn(`CSV Parser: Skipping row ${i + 1}. Chatlog column missing or row too short. Row data:`, row);
