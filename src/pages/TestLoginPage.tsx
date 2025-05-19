@@ -14,6 +14,8 @@ const TestLoginPage: React.FC = () => {
       navigate('/homepage/agent');
     } else if (role === 'Team Leader') {
       navigate('/homepage/team-leader');
+    } else if (role === 'Manager') {
+      navigate('/homepage/manager');
     } else {
       navigate('/');
     }
@@ -58,10 +60,10 @@ const TestLoginPage: React.FC = () => {
               Login as Team Leader Demo
             </Button>
             <Button 
-              className="bg-gradient-to-r from-gray-400 to-gray-600 dark:from-gray-600 dark:to-gray-800 text-white py-6 w-full opacity-80 cursor-not-allowed"
-              disabled
+              className="bg-gradient-to-r from-gray-700 to-gray-900 dark:from-gray-700 dark:to-gray-900 text-white py-6 w-full"
+              onClick={() => handleSelectRole('Manager')}
             >
-              Login as Manager Demo (coming soon)
+              Login as Manager Demo
             </Button>
             <Button 
               variant="outline"

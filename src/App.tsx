@@ -24,6 +24,9 @@ import Index from './pages/Index';
 import AgentHomePage from './pages/AgentHomePage';
 import TeamLeaderHomePage from './pages/TeamLeaderHomePage';
 import TestLoginPage from './pages/TestLoginPage';
+import TeamsManagementPage from './pages/TeamsManagementPage';
+import CreateTeamPage from './pages/CreateTeamPage';
+import MyTeamPage from './pages/MyTeamPage';
 
 function App() {
   return (
@@ -159,6 +162,37 @@ function App() {
                       <ProtectedRoute>
                         <RoleProtectedRoute allowedRoles={["Agent", "Team Leader"]}>
                           <DataPage />
+                        </RoleProtectedRoute>
+                      </ProtectedRoute>
+                    }
+                  />
+                  {/* Manager Teams Management Page */}
+                  <Route
+                    path="/teams"
+                    element={
+                      <ProtectedRoute>
+                        <RoleProtectedRoute allowedRoles={["Manager", "Agent", "Team Leader"]}>
+                          <TeamsManagementPage />
+                        </RoleProtectedRoute>
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/teams/create"
+                    element={
+                      <ProtectedRoute>
+                        <RoleProtectedRoute allowedRoles={["Manager"]}>
+                          <CreateTeamPage />
+                        </RoleProtectedRoute>
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/my-team"
+                    element={
+                      <ProtectedRoute>
+                        <RoleProtectedRoute allowedRoles={["Team Leader"]}>
+                          <MyTeamPage />
                         </RoleProtectedRoute>
                       </ProtectedRoute>
                     }

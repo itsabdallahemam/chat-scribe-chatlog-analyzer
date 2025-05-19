@@ -129,7 +129,22 @@ const Header: React.FC = () => {
       icon: <FileText className="w-4 h-4" />,
       allowedRoles: ['Agent'],
       description: "Generate and view reports"
-    }
+    },
+    // Manager-specific Teams nav item
+    {
+      path: '/teams',
+      label: 'Teams',
+      icon: <Users className="w-4 h-4" />, 
+      allowedRoles: ['Manager'],
+      description: 'View and manage teams'
+    },
+    { 
+      path: '/my-team', 
+      label: 'My Team', 
+      icon: <Users className="w-4 h-4" />, 
+      allowedRoles: ['Team Leader'],
+      description: 'View and manage your team'
+    },
   ];
 
   const NavLink = ({ item, className }: { item: NavItem; className?: string }) => {
@@ -340,4 +355,4 @@ const Header: React.FC = () => {
   );
 };
 
-export default Header; 
+export default Header;
