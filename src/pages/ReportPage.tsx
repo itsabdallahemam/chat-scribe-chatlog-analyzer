@@ -60,6 +60,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import html2pdf from 'html2pdf.js';
+import { formatDate } from '../utils/dateUtils';
 
 // Utility function for score background colors
 const getScoreColor = (score: number, type: 'bg' | 'text' | 'border') => {
@@ -722,7 +723,7 @@ const ReportPage: React.FC = () => {
       
       timeData.forEach(chat => {
         const date = new Date((chat as any).timestamp);
-        const dayKey = format(date, 'yyyy-MM-dd');
+        const dayKey = formatDate(date, 'ISO_DATE_TIME').split(' ')[0];
         
         if (!dayGroups[dayKey]) {
           dayGroups[dayKey] = {count: 0, resolution: 0, totalCPR: 0};
@@ -736,7 +737,7 @@ const ReportPage: React.FC = () => {
       });
       
       // Convert to chart data format
-      const labels = Object.keys(dayGroups).map(day => format(new Date(day), 'MMM d'));
+      const labels = Object.keys(dayGroups).map(day => formatDate(day, 'WEEK_DAY'));
       const resolutionData = Object.values(dayGroups).map(group => 
         group.count > 0 ? (group.resolution / group.count) * 100 : 0
       );
@@ -814,17 +815,7 @@ const ReportPage: React.FC = () => {
 
   // Fix date display issue for chatlogs
   const formatTimestamp = (timestamp: any) => {
-    if (!timestamp) return 'Date not available';
-    
-    try {
-      const date = new Date(timestamp);
-      // Check if date is valid
-      if (isNaN(date.getTime())) return 'Invalid date';
-      return format(date, 'MMM d, yyyy • h:mm a');
-    } catch (error) {
-      console.error('Error formatting timestamp:', error);
-      return 'Date format error';
-    }
+    return formatDate(timestamp, 'FULL_DATE_TIME');
   };
 
   if (evaluationResults.length === 0) {

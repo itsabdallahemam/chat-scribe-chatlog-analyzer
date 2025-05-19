@@ -19,6 +19,8 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
 
+import { formatDate } from '../utils/dateUtils';
+
 // Define types
 interface EvaluationResultItem {
   chatlog: string;
@@ -394,17 +396,14 @@ const CPRDetailsPage: React.FC = () => {
       cell: (row: EvaluationResultItem) => {
         if (!row.dateTime) return <span className="text-[#667085] dark:text-gray-400">-</span>;
         
-        try {
-          const date = new Date(row.dateTime);
-          return (
-            <div className="text-sm text-[#252A3A] dark:text-gray-200">
-              <div>{format(date, 'MMM d, yyyy')}</div>
-              <div className="text-xs text-[#667085] dark:text-gray-400">{format(date, 'h:mm a')}</div>
+        return (
+          <div className="text-sm text-[#252A3A] dark:text-gray-200">
+            <div>{formatDate(row.dateTime, 'DATE_ONLY')}</div>
+            <div className="text-xs text-[#667085] dark:text-gray-400">
+              {formatDate(row.dateTime, 'TIME_ONLY')}
             </div>
-          );
-        } catch (e) {
-          return <span className="text-[#667085] dark:text-gray-400">{row.dateTime}</span>;
-        }
+          </div>
+        );
       },
     },
     {

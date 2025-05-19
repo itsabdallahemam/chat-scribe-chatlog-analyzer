@@ -1,5 +1,6 @@
 import { saveAs } from 'file-saver';
 import * as XLSX from 'xlsx';
+import { formatDate } from './dateUtils';
 
 interface ExportableData {
   [key: string]: any;
@@ -18,15 +19,7 @@ export const exportToCSV = (data: ExportableData[], filename: string) => {
           return value === 1 ? 'Resolved' : 'Unresolved';
         }
         if (header === 'dateTime' && value) {
-          // Format the date if it exists
-          try {
-            const date = new Date(value);
-            if (!isNaN(date.getTime())) {
-              return `"${date.toISOString().substring(0, 16).replace('T', ' ')}"`;
-            }
-          } catch (e) {
-            // If date parsing fails, return the original value
-          }
+          return `"${formatDate(value, 'ISO_DATE_TIME')}"`;
         }
         // Wrap strings in quotes and escape any existing quotes
         return typeof value === 'string' ? `"${value.replace(/"/g, '""')}"` : value;

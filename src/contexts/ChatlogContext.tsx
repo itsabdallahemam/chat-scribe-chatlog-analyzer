@@ -14,6 +14,21 @@ interface EvaluationResult {
   resolution: number;
 }
 
+interface GeneratedChatlog {
+  id: string;
+  chatlog: string;
+  scenario: string;
+  shift: string;
+  dateTime: string;
+  customerName: string;
+  coherence?: number;
+  politeness?: number;
+  relevance?: number;
+  resolution?: number;
+  escalated?: boolean;
+  evaluated: boolean;
+}
+
 interface ChatlogContextType {
   apiKey: string;
   setApiKey: (key: string) => void;
@@ -37,6 +52,8 @@ interface ChatlogContextType {
   setTestResponse: (response: string) => void;
   loadSavedChatLogs: () => Promise<void>;
   deleteChatLogById: (id: number | string) => Promise<void>;
+  generatedData: GeneratedChatlog[];
+  setGeneratedData: (data: GeneratedChatlog[]) => void;
 }
 
 const defaultPromptTemplate = `Your task is to evaluate the following customer service chatlog:
@@ -78,27 +95,22 @@ Resolution (0 or 1):
 const ChatlogContext = createContext<ChatlogContextType | undefined>(undefined);
 
 export const ChatlogProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // Change apiKey to not load from localStorage initially
-  const [apiKey, setApiKey] = useState<string>("");
-  const [selectedModel, setSelectedModel] = useState<string>(localStorage.getItem("selectedModel") || "");
+  const { user } = useAuth();
+  const [apiKey, setApiKey] = useState<string>('');
+  const [selectedModel, setSelectedModel] = useState<string>(() => {
+    const stored = localStorage.getItem("selectedModel");
+    return stored || '';
+  });
   const [modelOptions, setModelOptions] = useState<{ display_name: string; id: string }[]>([]);
-  const [promptTemplate, setPromptTemplate] = useState<string>(
-    localStorage.getItem("promptTemplate") || defaultPromptTemplate
-  );
-  const [rubricText, setRubricText] = useState<string>(
-    localStorage.getItem("rubricText") || defaultRubricText
-  );
+  const [promptTemplate, setPromptTemplate] = useState<string>(defaultPromptTemplate);
+  const [rubricText, setRubricText] = useState<string>(defaultRubricText);
   const [evaluationResults, setEvaluationResults] = useState<EvaluationResult[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [testPrompt, setTestPrompt] = useState<string>("");
-  const [testResponse, setTestResponse] = useState<string>("");
-  const { user } = useAuth();
-  
-  // Add flags to prevent infinite loop
-  const isLoadingRef = useRef(false);
-  const isSavingRef = useRef(false);
-  const manuallySetRef = useRef(false);
+  const [testPrompt, setTestPrompt] = useState<string>('');
+  const [testResponse, setTestResponse] = useState<string>('');
+  const [generatedData, setGeneratedData] = useState<GeneratedChatlog[]>([]);
+  const isLoadingRef = useRef<boolean>(false);
 
   // Load API key from session storage on mount
   useEffect(() => {
@@ -135,38 +147,35 @@ export const ChatlogProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   // Load saved chat logs from database on mount
   useEffect(() => {
-    if (!isLoadingRef.current && !isSavingRef.current) {
+    if (!isLoadingRef.current) {
       loadSavedChatLogs();
     }
   }, [user]);
 
   // Save evaluation results to database only when manually set (not from loadSavedChatLogs)
   useEffect(() => {
-    if (evaluationResults.length > 0 && manuallySetRef.current && !isSavingRef.current) {
+    if (evaluationResults.length > 0 && !isLoadingRef.current) {
       if (user) {
         // Logged in - save to server database
         const saveToServer = async () => {
           try {
-            isSavingRef.current = true;
+            isLoadingRef.current = true;
             console.log('[Context] Saving evaluations to server database');
             await saveChatLogEvaluations(evaluationResults);
-            isSavingRef.current = false;
+            isLoadingRef.current = false;
           } catch (err) {
             console.error('Error saving evaluations to server:', err);
             setError('Failed to save evaluations to server');
-            isSavingRef.current = false;
+            isLoadingRef.current = false;
           }
         };
         saveToServer();
       } else {
         // Not logged in - save to local Dexie database
-        isSavingRef.current = true;
+        isLoadingRef.current = true;
         saveChatLogs(evaluationResults);
-        isSavingRef.current = false;
+        isLoadingRef.current = false;
       }
-      
-      // Reset the manual flag after saving
-      manuallySetRef.current = false;
     }
   }, [evaluationResults, user]);
 
@@ -239,49 +248,33 @@ export const ChatlogProvider: React.FC<{ children: ReactNode }> = ({ children })
     if (rubricText) localStorage.setItem("rubricText", rubricText);
   }, [rubricText]);
 
-  // Wrap setEvaluationResults to log changes and set the manual flag
-  const setEvaluationResultsWithLog = async (results: EvaluationResult[]) => {
-    console.log('[Context] setEvaluationResultsWithLog called with', results.length, 'logs:', results);
-    try {
-      // Set the manual flag to indicate this is a user-triggered update
-      manuallySetRef.current = true;
-      
-      // Then update state with new results (only once)
-      setEvaluationResults(results);
-      console.log('[Context] Updated state with', results.length, 'logs');
-    } catch (error) {
-      console.error('[Context] Error saving evaluation results:', error);
-      setError('Failed to save evaluation results');
-    }
-  };
-
   return (
-    <ChatlogContext.Provider
-      value={{
-        apiKey,
-        setApiKey: setApiKeyWithStorage,
-        selectedModel,
-        setSelectedModel,
-        modelOptions,
-        setModelOptions,
-        promptTemplate,
-        setPromptTemplate,
-        rubricText,
-        setRubricText,
-        evaluationResults,
-        setEvaluationResults: setEvaluationResultsWithLog,
-        isLoading,
-        setIsLoading,
-        error,
-        setError,
-        testPrompt,
-        setTestPrompt,
-        testResponse,
-        setTestResponse,
-        loadSavedChatLogs,
-        deleteChatLogById,
-      }}
-    >
+    <ChatlogContext.Provider value={{
+      apiKey,
+      setApiKey: setApiKeyWithStorage,
+      selectedModel,
+      modelOptions,
+      setSelectedModel,
+      setModelOptions,
+      promptTemplate,
+      setPromptTemplate,
+      rubricText,
+      setRubricText,
+      evaluationResults,
+      setEvaluationResults,
+      isLoading,
+      setIsLoading,
+      error,
+      setError,
+      testPrompt,
+      setTestPrompt,
+      testResponse,
+      setTestResponse,
+      loadSavedChatLogs,
+      deleteChatLogById,
+      generatedData,
+      setGeneratedData
+    }}>
       {children}
     </ChatlogContext.Provider>
   );

@@ -12,7 +12,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { ChatlogProvider } from './contexts/ChatlogContext';
 import { Toaster } from './components/ui/toaster';
 import HomePage from './pages/HomePage';
-import ChatlogEvaluationPage from './pages/ChatlogEvaluationPage';
+import DataPage from './pages/DataPage';
 import DashboardPage from './pages/DashboardPage';
 import SatisfactionPage from './pages/SatisfactionPage';
 import ResolutionPage from './pages/ResolutionPage';
@@ -86,16 +86,6 @@ function App() {
                     }
                   />
                   <Route
-                    path="/evaluate"
-                    element={
-                      <ProtectedRoute>
-                        <RoleProtectedRoute allowedRoles={["Agent", "Team Leader"]}>
-                          <ChatlogEvaluationPage />
-                        </RoleProtectedRoute>
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
                     path="/dashboard"
                     element={
                       <ProtectedRoute>
@@ -160,6 +150,16 @@ function App() {
                     element={
                       <ProtectedRoute>
                         <TestLoginPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/data"
+                    element={
+                      <ProtectedRoute>
+                        <RoleProtectedRoute allowedRoles={["Agent", "Team Leader"]}>
+                          <DataPage />
+                        </RoleProtectedRoute>
                       </ProtectedRoute>
                     }
                   />

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// LOCAL MODE - LOCALHOST ONLY
+// Force localhost for local development
 const API_URL = 'http://localhost:3000/api';
 
 console.log('Using API URL:', API_URL);
@@ -10,6 +10,8 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  // No need for withCredentials when using localhost
+  withCredentials: false,
 });
 
 // Add a request interceptor to add the auth token to requests

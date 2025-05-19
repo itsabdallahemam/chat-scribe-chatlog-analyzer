@@ -7,7 +7,7 @@ import { componentTagger } from "lovable-tagger";
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
-    host: "::",
+    host: "localhost",
     port: 8080,
     cors: {
       origin: "*",
@@ -18,15 +18,9 @@ export default defineConfig(({ mode }) => ({
     },
     headers: {
       "Access-Control-Allow-Origin": "*",
-      "Content-Security-Policy": "default-src 'self' https: wss: ws:; img-src 'self' data: https: *; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self' https: wss: ws: *;",
+      "Content-Security-Policy": "default-src 'self' http: ws:; img-src 'self' data: http: *; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self' http: ws: *;",
     },
-    hmr: false, // Disable HMR to prevent frequent reloads
-    allowedHosts: [
-      'all',  // Allow any host
-      '3s058406-8080.euw.devtunnels.ms',
-      '3s058406-3000.euw.devtunnels.ms',
-      '.devtunnels.ms'  // Allow all subdomains of devtunnels.ms
-    ],
+    hmr: true, // Enable HMR for local development
   },
   plugins: [
     react(),

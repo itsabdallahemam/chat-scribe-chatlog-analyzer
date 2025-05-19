@@ -6,6 +6,7 @@ import cors from 'cors';
 import authRoutes from './routes/auth';
 import userFeatureRoutes from './routes/userFeature';
 import chatLogEvaluationRoutes from './routes/chatLogEvaluation';
+import syntheticChatLogRoutes from './routes/syntheticChatLog';
 import performanceRoutes from './routes/performance';
 import path from 'path';
 
@@ -14,13 +15,13 @@ const app = express();
 // Middleware
 app.use(cors({
   origin: [
-    'https://3s058406-8080.euw.devtunnels.ms',
-    'https://3s058406-3000.euw.devtunnels.ms',
     'http://localhost:8080',
     'http://localhost:5173',
     'http://localhost:3000'
   ],
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 // IMPORTANT: Override the default CSP that's causing the favicon.ico issue
@@ -31,31 +32,28 @@ app.use((req, res, next) => {
   // Set a more permissive CSP
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self' https: wss: ws:; img-src 'self' data: https: *; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self' https: wss: ws: *;"
+    "default-src 'self' http: ws:; img-src 'self' data: http: *; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self' http: ws: *;"
   );
   
   // Handle preflight requests properly
   const origin = req.headers.origin;
-  const allowedOrigins = [
-    'http://localhost:8080',
-    'http://localhost:5173',
-    'http://localhost:3000',
-    'https://3s058406-8080.euw.devtunnels.ms',
-    'https://3s058406-3000.euw.devtunnels.ms'
-  ];
-  
-  if (origin && allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  } else if (origin && (origin.includes('localhost') || origin.includes('devtunnels.ms'))) {
-    // Also allow any localhost or dev tunnel origin
-    res.setHeader('Access-Control-Allow-Origin', origin);
+  if (origin) {
+    // Check if the origin is in our allowed list
+    const allowedOrigins = [
+      'http://localhost:8080',
+      'http://localhost:5173',
+      'http://localhost:3000'
+    ];
+    
+    if (allowedOrigins.includes(origin) || origin.includes('localhost')) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    }
   }
   
-  res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  
-  // Handle OPTIONS requests
+  // Handle preflight requests
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
@@ -90,6 +88,7 @@ app.get('/', (req, res) => {
             <li>/api/auth</li>
             <li>/api/user-features</li>
             <li>/api/chat-log-evaluations</li>
+            <li>/api/synthetic-chat-logs</li>
             <li>/api/performance</li>
           </ul>
           <p>For the frontend application, please visit: <a href="http://localhost:8080">Chat Scribe Frontend</a></p>
@@ -103,6 +102,7 @@ app.get('/', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/user-features', userFeatureRoutes);
 app.use('/api/chat-log-evaluations', chatLogEvaluationRoutes);
+app.use('/api/synthetic-chat-logs', syntheticChatLogRoutes);
 app.use('/api/performance', performanceRoutes);
 
 // Serve a static blank favicon to prevent 404 errors

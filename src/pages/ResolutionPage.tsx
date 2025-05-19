@@ -19,6 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { format, isValid } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { formatDate } from '../utils/dateUtils';
 
 // Import Recharts components
 import {
@@ -1029,19 +1030,12 @@ const ResolutionPage: React.FC = () => {
                                               </td>
                               <td className="p-3 align-middle text-xs">
                                 {row.dateTime ? (
-                                  (() => {
-                                    try {
-                                      const date = new Date(row.dateTime);
-                                      return (
-                                        <div className="text-sm text-[#252A3A] dark:text-gray-200">
-                                          <div>{format(date, 'MMM d, yyyy')}</div>
-                                          <div className="text-xs text-[#667085] dark:text-gray-400">{format(date, 'h:mm a')}</div>
-                                        </div>
-                                      );
-                                    } catch (e) {
-                                      return <span className="text-[#667085] dark:text-gray-400">{row.dateTime}</span>;
-                                    }
-                                  })()
+                                  <div className="text-sm text-[#252A3A] dark:text-gray-200">
+                                    <div>{formatDate(row.dateTime, 'DATE_ONLY')}</div>
+                                    <div className="text-xs text-[#667085] dark:text-gray-400">
+                                      {formatDate(row.dateTime, 'TIME_ONLY')}
+                                    </div>
+                                  </div>
                                 ) : (
                                   <span className="text-[#667085] dark:text-gray-400">-</span>
                                 )}
@@ -1408,19 +1402,12 @@ const ResolutionPage: React.FC = () => {
                                               </td>
                               <td className="p-3 align-middle text-xs">
                                 {row.dateTime ? (
-                                  (() => {
-                                    try {
-                                      const date = new Date(row.dateTime);
-                                      return (
-                                        <div className="text-sm text-[#252A3A] dark:text-gray-200">
-                                          <div>{format(date, 'MMM d, yyyy')}</div>
-                                          <div className="text-xs text-[#667085] dark:text-gray-400">{format(date, 'h:mm a')}</div>
-                                        </div>
-                                      );
-                                    } catch (e) {
-                                      return <span className="text-[#667085] dark:text-gray-400">{row.dateTime}</span>;
-                                    }
-                                  })()
+                                  <div className="text-sm text-[#252A3A] dark:text-gray-200">
+                                    <div>{formatDate(row.dateTime, 'DATE_ONLY')}</div>
+                                    <div className="text-xs text-[#667085] dark:text-gray-400">
+                                      {formatDate(row.dateTime, 'TIME_ONLY')}
+                                    </div>
+                                  </div>
                                 ) : (
                                   <span className="text-[#667085] dark:text-gray-400">-</span>
                                 )}

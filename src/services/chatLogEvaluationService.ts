@@ -1,4 +1,6 @@
 import api from '../lib/axios';
+import { getUserSyntheticChatLogs } from './syntheticChatLogService';
+import { mapSyntheticToEvaluation } from './evaluationMapperService';
 
 export interface ChatLogEvaluation {
   id?: string;
@@ -23,8 +25,9 @@ export interface ChatLogEvaluation {
  */
 export const getUserChatLogEvaluations = async (): Promise<ChatLogEvaluation[]> => {
   try {
-    const response = await api.get<ChatLogEvaluation[]>('/chat-log-evaluations');
-    return response.data;
+    // Get synthetic chat logs and convert them to evaluation format
+    const syntheticLogs = await getUserSyntheticChatLogs();
+    return mapSyntheticToEvaluation(syntheticLogs);
   } catch (error) {
     console.error('Error fetching chat log evaluations:', error);
     throw error;
@@ -37,8 +40,9 @@ export const getUserChatLogEvaluations = async (): Promise<ChatLogEvaluation[]> 
  */
 export const getAgentChatLogEvaluations = async (userId: string): Promise<ChatLogEvaluation[]> => {
   try {
-    const response = await api.get<ChatLogEvaluation[]>(`/chat-log-evaluations/user/${userId}`);
-    return response.data;
+    // For now, we'll use the same synthetic data for all agents
+    const syntheticLogs = await getUserSyntheticChatLogs();
+    return mapSyntheticToEvaluation(syntheticLogs);
   } catch (error) {
     console.error(`Error fetching chat log evaluations for user ${userId}:`, error);
     throw error;

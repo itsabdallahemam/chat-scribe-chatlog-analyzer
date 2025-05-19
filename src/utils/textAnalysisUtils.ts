@@ -174,4 +174,56 @@ export const analyzeKeywords = (
     commonKeywords: convertToWordFrequencyArray(commonWordsMap),
     differentiatingKeywords
   };
+};
+
+/**
+ * Calculates BLEU score between two chatlogs to check for similarity
+ * Uses a simplified version of BLEU that focuses on n-gram overlap
+ */
+export const calculateBLEUScore = (chatlog1: string, chatlog2: string): number => {
+  if (!chatlog1 || !chatlog2) return 0;
+
+  // Normalize and tokenize the chatlogs
+  const normalize = (text: string) => {
+    return text.toLowerCase()
+      .replace(/[\[\(\]:\d\)]/g, '') // Remove timestamps and special characters
+      .replace(/agent:|customer:/gi, '') // Remove speaker labels
+      .trim()
+      .split(/\s+/); // Split into words
+  };
+
+  const tokens1 = normalize(chatlog1);
+  const tokens2 = normalize(chatlog2);
+
+  // Calculate n-gram overlap for n=1,2,3,4
+  const calculateNGramOverlap = (n: number): number => {
+    if (tokens1.length < n || tokens2.length < n) return 0;
+
+    const getNGrams = (tokens: string[], n: number) => {
+      const ngrams = new Set<string>();
+      for (let i = 0; i <= tokens.length - n; i++) {
+        ngrams.add(tokens.slice(i, i + n).join(' '));
+      }
+      return ngrams;
+    };
+
+    const ngrams1 = getNGrams(tokens1, n);
+    const ngrams2 = getNGrams(tokens2, n);
+    
+    let matches = 0;
+    for (const ngram of ngrams1) {
+      if (ngrams2.has(ngram)) matches++;
+    }
+
+    return matches / Math.max(ngrams1.size, ngrams2.size);
+  };
+
+  // Calculate BLEU score with weights for different n-grams
+  const weights = [0.4, 0.3, 0.2, 0.1]; // Weights for 1-gram to 4-gram
+  const scores = [1, 2, 3, 4].map(n => calculateNGramOverlap(n));
+  
+  // Weighted average of n-gram scores
+  const bleuScore = scores.reduce((sum, score, i) => sum + score * weights[i], 0);
+  
+  return bleuScore;
 }; 

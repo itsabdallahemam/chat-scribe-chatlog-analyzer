@@ -82,11 +82,11 @@ const Header: React.FC = () => {
       description: "Upload and analyze chatlogs"
     },
     { 
-      path: '/evaluate', 
-      label: 'Evaluate', 
-      icon: <UploadCloud className="w-4 h-4" />, 
-      allowedRoles: ['Agent'],
-      description: "Upload and evaluate new chatlogs"
+      path: '/data', 
+      label: 'Data', 
+      icon: <BarChart2 className="w-4 h-4" />, 
+      allowedRoles: ['Agent', 'Team Leader'],
+      description: "Upload and analyze chat data"
     },
     { 
       path: '/dashboard', 

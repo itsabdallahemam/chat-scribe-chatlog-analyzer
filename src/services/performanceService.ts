@@ -1,4 +1,5 @@
 import api from '../lib/axios';
+import { getUserSyntheticChatLogs } from './syntheticChatLogService';
 
 export interface PerformanceMetrics {
   coherence: number;
@@ -13,33 +14,75 @@ export interface PerformanceMetrics {
 
 export const getUserPerformanceMetrics = async (userId?: string): Promise<PerformanceMetrics> => {
   try {
-    // If userId is provided, fetch that user's metrics
-    // Otherwise get the current user's metrics
-    const endpoint = userId ? `/performance/agent/${userId}` : '/performance/me';
-    console.log('[PerformanceService] Fetching performance metrics from:', endpoint);
+    // Get synthetic chat logs
+    const syntheticLogs = await getUserSyntheticChatLogs();
     
-    // Add request info logging
-    const token = localStorage.getItem('token');
-    console.log('[PerformanceService] Authorization header present:', !!token);
-    
-    const response = await api.get<PerformanceMetrics>(endpoint);
-    console.log('[PerformanceService] API response status:', response.status);
-    console.log('[PerformanceService] API response data:', response.data);
-    return response.data;
-  } catch (error: any) {
-    console.error('[PerformanceService] Error fetching performance metrics:', error);
-    console.log('[PerformanceService] Error details:', {
-      status: error.response?.status,
-      message: error.response?.data?.message || error.message,
-      data: error.response?.data
-    });
-    
-    // Check if this is a 404 (no data found)
-    if (error.response?.status === 404 && error.response?.data?.message === 'No evaluations found for this user') {
-      console.log('[PerformanceService] No evaluations found for user - this is expected for new users');
+    if (syntheticLogs.length === 0) {
+      return {
+        coherence: 0,
+        politeness: 0,
+        relevance: 0,
+        resolution: 0,
+        averageScore: 0,
+        totalEvaluations: 0,
+        totalConversations: 0,
+        averageResponseTime: 0
+      };
     }
-    
-    // Return default values if API call fails
+
+    // Calculate metrics from synthetic logs
+    let totalCoherence = 0;
+    let totalPoliteness = 0;
+    let totalRelevance = 0;
+    let totalResolution = 0;
+    let totalResponseTime = 0;
+
+    syntheticLogs.forEach(log => {
+      try {
+        if (log.metadata) {
+          const metadata = JSON.parse(log.metadata);
+          totalCoherence += metadata.coherence || 0;
+          totalPoliteness += metadata.politeness || 0;
+          totalRelevance += metadata.relevance || 0;
+          totalResolution += metadata.resolution || 0;
+        }
+        
+        // Calculate response time in minutes
+        const startTime = new Date(log.startTime);
+        const endTime = new Date(log.endTime);
+        totalResponseTime += (endTime.getTime() - startTime.getTime()) / (1000 * 60);
+      } catch (error) {
+        console.error('Error processing log metadata:', error);
+      }
+    });
+
+    const totalLogs = syntheticLogs.length;
+    const coherence = totalCoherence / totalLogs;
+    const politeness = totalPoliteness / totalLogs;
+    const relevance = totalRelevance / totalLogs;
+    const resolution = totalResolution / totalLogs;
+    const averageResponseTime = totalResponseTime / totalLogs;
+
+    // Calculate weighted average score
+    const averageScore = (
+      (coherence * 0.25) + 
+      (politeness * 0.2) + 
+      (relevance * 0.25) + 
+      (resolution * 0.3)
+    );
+
+    return {
+      coherence,
+      politeness,
+      relevance,
+      resolution,
+      averageScore,
+      totalEvaluations: totalLogs,
+      totalConversations: totalLogs,
+      averageResponseTime
+    };
+  } catch (error: any) {
+    console.error('[PerformanceService] Error calculating performance metrics:', error);
     return {
       coherence: 0,
       politeness: 0,

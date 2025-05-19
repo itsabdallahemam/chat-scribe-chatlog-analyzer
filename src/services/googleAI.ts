@@ -50,7 +50,7 @@ const createGoogleAIClient = (apiKey: string) => {
       }
     },
 
-    testModel: async (modelId: string, prompt: string): Promise<string> => {
+    testModel: async (modelId: string, prompt: string, temperature = 0.4, maxOutputTokens = 256): Promise<string> => {
       try {
         if (!modelId || modelId.trim() === "") throw new Error("Model ID is required for testing");
         if (!prompt || prompt.trim() === "") throw new Error("Prompt is required for testing");
@@ -66,8 +66,8 @@ const createGoogleAIClient = (apiKey: string) => {
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
             generationConfig: { // Basic config for testing
-              temperature: 0.4,
-              maxOutputTokens: 256 // Keep low for quick test
+              temperature: temperature,
+              maxOutputTokens: maxOutputTokens
             }
           })
         });
@@ -256,9 +256,9 @@ export const fetchModels = async (apiKey: string) => {
   return client.fetchModels();
 };
 
-export const testModel = async (apiKey: string, modelId: string, prompt: string) => {
+export const testModel = async (apiKey: string, modelId: string, prompt: string, temperature = 0.4, maxOutputTokens = 256) => {
   const client = createGoogleAIClient(apiKey);
-  return client.testModel(modelId, prompt);
+  return client.testModel(modelId, prompt, temperature, maxOutputTokens);
 };
 
 // Renamed to avoid potential conflict if client.evaluateChatlog is preferred elsewhere
@@ -282,4 +282,145 @@ export const evaluateChatlogs = async (
 ) => {
   const client = createGoogleAIClient(apiKey);
   return client.evaluateChatlogs(modelId, promptTemplate, rubricText, chatlogs);
+};
+
+// Keep track of recently used names globally
+let recentlyUsedNames: string[] = [];
+let nameUsageCount: { [key: string]: number } = {};
+
+// Function to get a name that hasn't been used recently
+const getRotatedName = (allNames: string[], minGap: number = 7, maxGap: number = 30): string => {
+  // Filter out recently used names
+  const availableNames = allNames.filter(name => !recentlyUsedNames.includes(name));
+  
+  // If we've used all names or need to allow revisits
+  if (availableNames.length === 0) {
+    // Find names that haven't been used too frequently
+    const eligibleNames = allNames.filter(name => 
+      !nameUsageCount[name] || nameUsageCount[name] < 2
+    );
+    
+    if (eligibleNames.length > 0) {
+      const randomName = eligibleNames[Math.floor(Math.random() * eligibleNames.length)];
+      recentlyUsedNames = [randomName, ...recentlyUsedNames].slice(0, minGap);
+      nameUsageCount[randomName] = (nameUsageCount[randomName] || 0) + 1;
+      return randomName;
+    }
+    
+    // Reset tracking if all names have been used multiple times
+    if (recentlyUsedNames.length >= maxGap) {
+      recentlyUsedNames = [];
+      nameUsageCount = {};
+    }
+    
+    // Pick any name if we must
+    const randomName = allNames[Math.floor(Math.random() * allNames.length)];
+    recentlyUsedNames = [randomName, ...recentlyUsedNames].slice(0, minGap);
+    nameUsageCount[randomName] = (nameUsageCount[randomName] || 0) + 1;
+    return randomName;
+  }
+  
+  // Use a new name
+  const randomName = availableNames[Math.floor(Math.random() * availableNames.length)];
+  recentlyUsedNames = [randomName, ...recentlyUsedNames].slice(0, minGap);
+  nameUsageCount[randomName] = (nameUsageCount[randomName] || 0) + 1;
+  return randomName;
+};
+
+// Function to generate synthetic chatlog data
+export const generateSyntheticChatlog = async (
+  apiKey: string,
+  modelId: string,
+  agentName: string,
+  scenario: string,
+  behaviorPattern: string,
+  minTurns: number,
+  maxTurns: number
+): Promise<{ chatlog: string; customerName: string }> => {
+  const client = createGoogleAIClient(apiKey);
+  
+  // Define quality variations based on behavior patterns
+  const qualityGuidelines: Record<string, string> = {
+    'starts-strong-then-declines': 'Start with high coherence, politeness and relevance, then gradually decline in quality as the conversation progresses.',
+    'starts-weak-then-improves': 'Start with low coherence, politeness and relevance, then gradually improve in quality as the conversation progresses.',
+    'consistently-strong': 'Maintain high coherence, politeness and relevance throughout the entire conversation.',
+    'consistently-poor': 'Maintain low coherence, politeness and relevance throughout the entire conversation.',
+    'fluctuating-performance': 'Fluctuate between high and low quality responses throughout the conversation.'
+  };
+
+  const qualityGuideline = qualityGuidelines[behaviorPattern] || qualityGuidelines['consistently-strong'];
+  
+  // Get a random Egyptian name from the CSV file with rotation logic
+  let randomName = "Unknown Customer";
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const csvPath = path.resolve(__dirname, '../../resources/customer names/egyptian_names.csv');
+    console.log('Attempting to read CSV file from:', csvPath);
+    
+    const csvContent = fs.readFileSync(csvPath, 'utf-8');
+    const lines = csvContent.split('\n').slice(1).filter(line => line.trim()); // Skip header row and empty lines
+    if (lines.length > 0) {
+      const allNames = lines.map(line => {
+        const [firstName, lastName, fullName] = line.split(',');
+        return fullName ? fullName.trim() : `${firstName.trim()} ${lastName.trim()}`;
+      });
+      randomName = getRotatedName(allNames);
+    } else {
+      console.error('No valid names found in the CSV file');
+    }
+  } catch (error) {
+    console.error('Error reading Egyptian names CSV file:', error);
+    // Fallback to a default Egyptian name if file reading fails
+    const fallbackNames = [
+      "Omar Khaled",
+      "Rana Ali",
+      "Ahmed Saad",
+      "Nada Selim",
+      "Ibrahim Hassan"
+    ];
+    randomName = getRotatedName(fallbackNames);
+  }
+  
+  // Create prompt for generating synthetic chatlog
+  const prompt = `Generate a realistic, complete customer service chatlog transcript between a customer and an agent.
+
+The customer's name is: ${randomName}
+
+Scenario: ${scenario}
+
+**CRITICAL INSTRUCTION:** The chatlog MUST contain between ${minTurns} and ${maxTurns} total turns (a turn is one message from either the customer or the agent). **DO NOT exceed ${maxTurns} turns.**
+
+**Quality Guideline:** Structure the conversation so that it reflects the following quality profile: "${qualityGuideline}"
+
+Further Instructions:
+1. Start by outputting "CUSTOMER_NAME: ${randomName}" on the first line
+2. Then start the actual chat transcript on the next line
+3. Ensure the conversation content aligns with the chosen quality guideline above
+4. Include a timestamp before each message in the format [HH:MM:SS]
+5. For agent messages, use the format "[HH:MM:SS] Agent ${agentName}: Message"
+6. For customer messages, use the format "[HH:MM:SS] Customer: Message"
+7. Add some realistic pauses between timestamps (30 seconds to 3 minutes between messages)
+8. Occasionally add profanity from either the customer or agent for realism (but don't overdo it)
+9. Do not include any introductory text, summaries, or explanations outside the chatlog itself
+10. End the conversation naturally, either with resolution, escalation, or customer leaving
+11. Do not include any commentary or explanations outside the chat messages
+
+Generate the chatlog now, strictly adhering to the ${minTurns}-${maxTurns} turn limit and the specified quality guideline:`;
+
+  try {
+    // Using the enhanced testModel function with higher token limit for longer conversations
+    const response = await testModel(apiKey, modelId, prompt, 0.7, 2048);
+    
+    // Extract customer name and chatlog
+    const lines = response.split('\n');
+    const customerNameMatch = lines[0].match(/CUSTOMER_NAME: (.+)/);
+    const customerName = customerNameMatch ? customerNameMatch[1] : randomName;
+    const chatlog = lines.slice(1).join('\n');
+
+    return { chatlog, customerName };
+  } catch (error) {
+    console.error("Error generating synthetic chatlog:", error);
+    throw new Error(`Failed to generate synthetic chatlog: ${error instanceof Error ? error.message : String(error)}`);
+  }
 };

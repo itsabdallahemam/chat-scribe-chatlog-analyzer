@@ -17,6 +17,8 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line
 } from 'recharts';
 
+import { formatDate } from '../utils/dateUtils';
+
 // Define a type for the data used in score distribution charts
 interface ScoreDistributionData {
   name: string; // Score value (e.g., "1", "2", "3", "4", "5")
@@ -261,32 +263,14 @@ const DashboardPage: React.FC = () => {
       cell: ({ row }) => {
         if (!row.original.dateTime) return <span className="text-gray-400 dark:text-gray-600">-</span>;
         
-        // Format the date time properly
-        try {
-          const date = new Date(row.original.dateTime);
-          const formattedDate = date.toLocaleDateString(undefined, { 
-            year: 'numeric', 
-            month: 'short', 
-            day: 'numeric' 
-          });
-          const formattedTime = date.toLocaleTimeString(undefined, { 
-            hour: '2-digit', 
-            minute: '2-digit' 
-          });
-          return (
-            <div className="text-sm text-[#252A3A] dark:text-gray-200">
-              {formattedDate}<br />
-              <span className="text-xs text-[#667085] dark:text-gray-400">{formattedTime}</span>
-            </div>
-          );
-        } catch (e) {
-          // Fallback to original format if date parsing fails
-          return (
-            <div className="text-sm text-[#252A3A] dark:text-gray-200">
-              {row.original.dateTime}
-            </div>
-          );
-        }
+        return (
+          <div className="text-sm text-[#252A3A] dark:text-gray-200">
+            {formatDate(row.original.dateTime, 'DATE_ONLY')}<br />
+            <span className="text-xs text-[#667085] dark:text-gray-400">
+              {formatDate(row.original.dateTime, 'TIME_ONLY')}
+            </span>
+          </div>
+        );
       },
     },
     {
