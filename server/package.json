@@ -8,7 +8,8 @@
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "tsc",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev"
+    "prisma:migrate": "prisma migrate dev",
+    "db:clear": "ts-node src/clear-db.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.8.2",

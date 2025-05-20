@@ -25,9 +25,9 @@ export interface ChatLogEvaluation {
  */
 export const getUserChatLogEvaluations = async (): Promise<ChatLogEvaluation[]> => {
   try {
-    // Get synthetic chat logs and convert them to evaluation format
-    const syntheticLogs = await getUserSyntheticChatLogs();
-    return mapSyntheticToEvaluation(syntheticLogs);
+    // Fetch directly from evaluated chatlogs endpoint
+    const response = await api.get<ChatLogEvaluation[]>('/chat-log-evaluations');
+    return response.data;
   } catch (error) {
     console.error('Error fetching chat log evaluations:', error);
     throw error;
@@ -91,4 +91,4 @@ export const deleteAllChatLogEvaluations = async (): Promise<{ message: string }
     console.error('Error deleting all chat log evaluations:', error);
     throw error;
   }
-}; 
+};

@@ -23,6 +23,7 @@ import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
 import SyntheticDataTab from '@/components/SyntheticDataTab';
 import ConversationsTab from '@/components/ConversationsTab';
+import { AnalysisInsightsTab } from '@/components/AnalysisInsightsTab';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -38,10 +39,11 @@ interface EvaluationResultForContext {
   shift?: string;
   dateTime?: string;
   timestamp: Date;
+  id?: string;
 }
 
 // Add new type for tab options
-type TabType = "evaluate" | "synthetic" | "conversations";
+type TabType = "evaluate" | "synthetic" | "conversations" | "analysis";
 
 // Add types for conversation handling
 interface ParsedMessage {
@@ -126,13 +128,13 @@ const DataPage: React.FC = () => {
 
   // Update generatedData when evaluationResults change
   useEffect(() => {
-    if (evaluationResults.length > 0) {
+    if (evaluationResults.length > 0 && generatedData.length === 0) {
       const formattedChatlogs: GeneratedChatlog[] = evaluationResults.map(log => ({
         id: `${Date.now()}-${log.id || ''}`,
         chatlog: log.chatlog,
         scenario: log.scenario,
-        shift: 'day',
-        dateTime: format(new Date(), 'yyyy-MM-dd HH:mm'),
+        shift: log.shift || 'day',
+        dateTime: log.dateTime ? log.dateTime : '',
         customerName: 'Unknown Customer',
         coherence: log.coherence,
         politeness: log.politeness,
@@ -143,7 +145,7 @@ const DataPage: React.FC = () => {
       }));
       setGeneratedData(formattedChatlogs);
     }
-  }, [evaluationResults]);
+  }, [evaluationResults, generatedData.length]);
 
   // Load saved chatlogs when component mounts
   useEffect(() => {
@@ -596,6 +598,7 @@ const DataPage: React.FC = () => {
               shift: currentInputItem.shift || undefined,
               dateTime: currentInputItem.dateTime || undefined,
               timestamp: new Date(),
+              id: currentInputItem.id,
             });
             localSuccessfulEvals++;
             setSuccessfulEvals(localSuccessfulEvals);
@@ -819,7 +822,7 @@ const DataPage: React.FC = () => {
         />
 
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabType)} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-4">
+          <TabsList className="grid w-full grid-cols-4 mb-4">
             <TabsTrigger value="conversations" className="text-sm">
               <MessageSquare className="h-4 w-4 mr-2" />
               My Conversations
@@ -831,6 +834,10 @@ const DataPage: React.FC = () => {
             <TabsTrigger value="synthetic" className="text-sm">
               <Sparkles className="h-4 w-4 mr-2" />
               Generate Data
+            </TabsTrigger>
+            <TabsTrigger value="analysis" className="text-sm">
+              <Gauge className="h-4 w-4 mr-2" />
+              Analysis & Insights
             </TabsTrigger>
           </TabsList>
 
@@ -1139,6 +1146,10 @@ const DataPage: React.FC = () => {
           <TabsContent value="synthetic">
             <SyntheticDataTab />
           </TabsContent>
+
+          <TabsContent value="analysis">
+            <AnalysisInsightsTab generatedData={generatedData} />
+          </TabsContent>
         </Tabs>
       </div>
 
@@ -1239,4 +1250,4 @@ const DataPage: React.FC = () => {
   );
 };
 
-export default DataPage; 
+export default DataPage;

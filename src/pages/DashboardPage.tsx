@@ -86,15 +86,15 @@ const DashboardPage: React.FC = () => {
 
   if (!evaluationResults || evaluationResults.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-[80vh] bg-app-bg text-app-text">
+      <div className="flex flex-col items-center justify-center h-[80vh] bg-[#f5f7fa] dark:bg-[#161925]">
         <div className="max-w-md text-center">
-          <h3 className="text-xl font-medium mb-4">No Evaluation Results</h3>
-          <p className="text-muted-foreground mb-6">
+          <h3 className="text-xl font-medium mb-4 text-[#252A3A] dark:text-white">No Evaluation Results</h3>
+          <p className="text-[#667085] dark:text-gray-400 mb-6">
             Please upload or paste chatlogs on the home page to see evaluation results.
           </p>
           <Button 
             onClick={() => navigate('/')} 
-            className="bg-app-blue hover:bg-app-blue-light text-white"
+            className="bg-[#4582ff] hover:bg-[#4582ff]/90 text-white"
           >
             Go to Home Page
           </Button>
@@ -398,13 +398,13 @@ const DashboardPage: React.FC = () => {
 
       // Add icon based on shift name
       let icon = <Clock className="h-5 w-5 text-[#667085]" />;
-      if (shift.toLowerCase().includes('morning')) {
+      if (shift && shift.toLowerCase().includes('morning')) {
         icon = <Sun className="h-5 w-5 text-amber-500" />;
-      } else if (shift.toLowerCase().includes('afternoon')) {
+      } else if (shift && shift.toLowerCase().includes('afternoon')) {
         icon = <Sunset className="h-5 w-5 text-orange-500" />;
-      } else if (shift.toLowerCase().includes('evening')) {
+      } else if (shift && shift.toLowerCase().includes('evening')) {
         icon = <Sunset className="h-5 w-5 text-pink-500" />;
-      } else if (shift.toLowerCase().includes('night')) {
+      } else if (shift && shift.toLowerCase().includes('night')) {
         icon = <Moon className="h-5 w-5 text-indigo-500" />;
       }
 

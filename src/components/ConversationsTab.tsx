@@ -3,16 +3,18 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Bot, User, Search, BarChart, Loader2, Trash2 } from 'lucide-react';
+import { Bot, User, Search, BarChart, Loader2, Trash2, Sparkles, FileUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { getUserChatLogEvaluations, deleteAllChatLogEvaluations, deleteChatLogEvaluation } from '@/services/chatLogEvaluationService';
+import { getUserSyntheticChatLogs, deleteAllSyntheticChatLogs, deleteSyntheticChatLog } from '@/services/syntheticChatLogService';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { getRandomEgyptianName } from '@/utils/egyptianNames';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface Message {
   id: string;
@@ -37,6 +39,7 @@ interface Conversation {
     resolution: number;
   };
   unread?: boolean;
+  type: 'uploaded' | 'generated';
 }
 
 const ConversationsTab: React.FC = () => {
@@ -47,6 +50,7 @@ const ConversationsTab: React.FC = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
+  const [conversationType, setConversationType] = useState<'all' | 'uploaded' | 'generated'>('all');
 
   // Parse chatlog text into messages
   const parseChatlog = (chatlogText: string, customerName: string): Message[] => {
@@ -84,13 +88,13 @@ const ConversationsTab: React.FC = () => {
     return messages;
   };
 
-  // Load conversations from backend
+  // Load conversations from both sources
   const loadConversations = async () => {
     setLoading(true);
     try {
+      // Load uploaded conversations
       const evaluations = await getUserChatLogEvaluations();
-      const formattedLogs: Conversation[] = evaluations.map(evaluation => {
-        // Get the last message from the chatlog
+      const uploadedLogs: Conversation[] = evaluations.map(evaluation => {
         const customerName = getRandomEgyptianName();
         const messages = parseChatlog(evaluation.chatlog, customerName);
         const lastMessage = messages[messages.length - 1]?.content || '';
@@ -107,11 +111,52 @@ const ConversationsTab: React.FC = () => {
             politeness: evaluation.politeness,
             relevance: evaluation.relevance,
             resolution: evaluation.resolution
-          }
+          },
+          type: 'uploaded'
         };
       });
 
-      setConversations(formattedLogs);
+      // Load generated conversations
+      const syntheticLogs = await getUserSyntheticChatLogs();
+      const generatedLogs: Conversation[] = syntheticLogs.map(log => {
+        const customerName = getRandomEgyptianName();
+        const messages = parseChatlog(log.chatlog, customerName);
+        const lastMessage = messages[messages.length - 1]?.content || '';
+
+        // Parse metadata to get metrics
+        let metrics = {
+          coherence: 0,
+          politeness: 0,
+          relevance: 0,
+          resolution: 0
+        };
+        try {
+          if (log.metadata) {
+            const metadata = JSON.parse(log.metadata);
+            metrics = {
+              coherence: metadata.coherence || 0,
+              politeness: metadata.politeness || 0,
+              relevance: metadata.relevance || 0,
+              resolution: metadata.resolution || 0
+            };
+          }
+        } catch (error) {
+          console.error('Error parsing metadata:', error);
+        }
+
+        return {
+          id: log.id || `${Date.now()}`,
+          customerName,
+          lastMessage,
+          timestamp: log.startTime ? format(new Date(log.startTime), 'h:mm a') : format(new Date(), 'h:mm a'),
+          scenario: log.scenario,
+          chatlog: log.chatlog,
+          metrics,
+          type: 'generated'
+        };
+      });
+
+      setConversations([...uploadedLogs, ...generatedLogs]);
     } catch (error) {
       console.error('Error loading conversations:', error);
       toast({
@@ -127,7 +172,10 @@ const ConversationsTab: React.FC = () => {
   // Delete all conversations
   const handleDeleteAll = async () => {
     try {
-      await deleteAllChatLogEvaluations();
+      await Promise.all([
+        deleteAllChatLogEvaluations(),
+        deleteAllSyntheticChatLogs()
+      ]);
       setConversations([]);
       setSelectedConversation(null);
       setShowDeleteAllDialog(false);
@@ -146,9 +194,13 @@ const ConversationsTab: React.FC = () => {
   };
 
   // Delete single conversation
-  const handleDeleteConversation = async (id: string) => {
+  const handleDeleteConversation = async (id: string, type: 'uploaded' | 'generated') => {
     try {
-      await deleteChatLogEvaluation(id);
+      if (type === 'uploaded') {
+        await deleteChatLogEvaluation(id);
+      } else {
+        await deleteSyntheticChatLog(id);
+      }
       setConversations(prev => prev.filter(conv => conv.id !== id));
       if (selectedConversation === id) {
         setSelectedConversation(null);
@@ -183,12 +235,19 @@ const ConversationsTab: React.FC = () => {
     }
   }, [selectedConversation, conversations]);
 
-  // Filter conversations based on search query
-  const filteredConversations = conversations.filter(conversation =>
-    conversation.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    conversation.scenario.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    conversation.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filter conversations based on search query and type
+  const filteredConversations = conversations.filter(conversation => {
+    const matchesSearch = 
+      conversation.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      conversation.scenario.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      conversation.lastMessage.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesType = 
+      conversationType === 'all' || 
+      conversation.type === conversationType;
+
+    return matchesSearch && matchesType;
+  });
 
   // Add new function to handle right-click
   const handleContextMenu = (e: React.MouseEvent, conversation: Conversation) => {
@@ -210,7 +269,7 @@ const ConversationsTab: React.FC = () => {
     `;
     
     deleteButton.onclick = () => {
-      handleDeleteConversation(conversation.id);
+      handleDeleteConversation(conversation.id, conversation.type);
       document.body.removeChild(contextMenu);
     };
     
@@ -269,6 +328,21 @@ const ConversationsTab: React.FC = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
+              
+              <Tabs value={conversationType} onValueChange={(value) => setConversationType(value as 'all' | 'uploaded' | 'generated')} className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
+                  <TabsTrigger value="uploaded" className="text-xs">
+                    <FileUp className="h-3 w-3 mr-1" />
+                    Uploaded
+                  </TabsTrigger>
+                  <TabsTrigger value="generated" className="text-xs">
+                    <Sparkles className="h-3 w-3 mr-1" />
+                    Generated
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+
               <Button
                 variant="destructive"
                 size="sm"
@@ -280,6 +354,7 @@ const ConversationsTab: React.FC = () => {
                 Remove All Conversations
               </Button>
             </div>
+            
             <ScrollArea className="flex-1">
               {loading ? (
                 <div className="flex items-center justify-center p-8">
@@ -312,9 +387,19 @@ const ConversationsTab: React.FC = () => {
                               {conversation.timestamp}
                             </span>
                           </div>
-                          <p className="text-sm text-gray-500 truncate">
-                            {conversation.lastMessage}
-                          </p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge variant="outline" className="text-xs">
+                              {conversation.type === 'generated' ? (
+                                <Sparkles className="h-3 w-3 mr-1" />
+                              ) : (
+                                <FileUp className="h-3 w-3 mr-1" />
+                              )}
+                              {conversation.type}
+                            </Badge>
+                            <p className="text-sm text-gray-500 truncate">
+                              {conversation.lastMessage}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </button>
@@ -349,22 +434,20 @@ const ConversationsTab: React.FC = () => {
                     <BarChart className="h-4 w-4 text-gray-500" />
                   </div>
                   {/* Metrics */}
-                  {conversations.find(c => c.id === selectedConversation)?.metrics && (
-                    <div className="flex gap-2 mt-2">
-                      <Badge variant="outline" className="bg-[#8884d8]/10 text-[#8884d8]">
-                        Coherence: {Math.round((conversations.find(c => c.id === selectedConversation)?.metrics?.coherence || 0) * 20)}%
-                      </Badge>
-                      <Badge variant="outline" className="bg-[#247BA0]/10 text-[#247BA0]">
-                        Politeness: {Math.round((conversations.find(c => c.id === selectedConversation)?.metrics?.politeness || 0) * 20)}%
-                      </Badge>
-                      <Badge variant="outline" className="bg-[#22c55e]/10 text-[#22c55e]">
-                        Relevance: {Math.round((conversations.find(c => c.id === selectedConversation)?.metrics?.relevance || 0) * 20)}%
-                      </Badge>
-                      <Badge variant="outline" className="bg-[#FF80B5]/10 text-[#FF80B5]">
-                        Resolution: {Math.round((conversations.find(c => c.id === selectedConversation)?.metrics?.resolution || 0) * 100)}%
-                      </Badge>
-                    </div>
-                  )}
+                  <div className="flex gap-2 mt-2">
+                    <Badge variant="outline" className="bg-[#8884d8]/10 text-[#8884d8]">
+                      Coherence: {Math.round((conversations.find(c => c.id === selectedConversation)?.metrics?.coherence || 0) * 20)}%
+                    </Badge>
+                    <Badge variant="outline" className="bg-[#247BA0]/10 text-[#247BA0]">
+                      Politeness: {Math.round((conversations.find(c => c.id === selectedConversation)?.metrics?.politeness || 0) * 20)}%
+                    </Badge>
+                    <Badge variant="outline" className="bg-[#22c55e]/10 text-[#22c55e]">
+                      Relevance: {Math.round((conversations.find(c => c.id === selectedConversation)?.metrics?.relevance || 0) * 20)}%
+                    </Badge>
+                    <Badge variant="outline" className="bg-[#FF80B5]/10 text-[#FF80B5]">
+                      Resolution: {Math.round((conversations.find(c => c.id === selectedConversation)?.metrics?.resolution || 0) * 100)}%
+                    </Badge>
+                  </div>
                 </div>
 
                 {/* Messages Area */}
@@ -387,6 +470,7 @@ const ConversationsTab: React.FC = () => {
                             </Avatar>
                           </div>
                         )}
+                        
                         <div className={cn(
                           "flex flex-col",
                           message.isAgent ? "items-end" : "items-start"
@@ -399,6 +483,7 @@ const ConversationsTab: React.FC = () => {
                               ? <span>Agent {message.agentName}</span>
                               : <span>{message.customerName}</span>
                             }
+                            <span className="text-gray-400">{message.timestamp}</span>
                           </div>
                           <div className={cn(
                             "group relative max-w-[80%] rounded-lg px-4 py-2.5",
@@ -406,18 +491,20 @@ const ConversationsTab: React.FC = () => {
                               ? "bg-[#f1f5fd] dark:bg-[#1e2b4a] text-[#252A3A] dark:text-gray-200 rounded-tr-none"
                               : "bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200 rounded-tl-none shadow-sm"
                           )}>
-                            <div className="text-sm whitespace-pre-wrap">{message.content}</div>
+                            <div className="text-sm whitespace-pre-wrap">
+                              {message.content.replace(/^\[.*?\]\s*(?:Agent\s+[^:]+|Customer):\s*/, '')}
+                            </div>
                           </div>
+                          
                           <div className={cn(
                             "text-xs text-gray-500 mt-1 flex items-center gap-2",
                             message.isAgent ? "justify-end pl-12" : "justify-start pr-12"
                           )}>
                             <div className="flex items-center gap-1">
-                              <span>{message.timestamp}</span>
                               {message.isAgent && (
                                 <button 
                                   className="opacity-0 group-hover:opacity-100 transition-opacity ml-1"
-                                  onClick={() => navigator.clipboard.writeText(message.content)}
+                                  onClick={() => navigator.clipboard.writeText(message.content.replace(/^\[.*?\]\s*(?:Agent\s+[^:]+|Customer):\s*/, ''))}
                                 >
                                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>

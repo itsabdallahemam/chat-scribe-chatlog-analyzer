@@ -137,16 +137,15 @@ const SatisfactionPage: React.FC = () => {
 
 
   if (!evaluationResults || evaluationResults.length === 0) {
-    // ... (no results message) ...
     return (
-      <div className="flex flex-col items-center justify-center h-[80vh] bg-app-bg text-app-text">
+      <div className="flex flex-col items-center justify-center h-[80vh] bg-[#f5f7fa] dark:bg-[#161925]">
         <div className="max-w-md text-center">
-          <h1 className="text-3xl font-bold text-app-blue dark:text-white">Customer Satisfaction Insights</h1>
-          <h3 className="text-xl font-medium mb-4 mt-8">No Evaluation Results</h3>
-          <p className="text-muted-foreground mb-6">
+          <h1 className="text-3xl font-bold text-[#252A3A] dark:text-white">Customer Satisfaction Insights</h1>
+          <h3 className="text-xl font-medium mb-4 mt-8 text-[#252A3A] dark:text-white">No Evaluation Results</h3>
+          <p className="text-[#667085] dark:text-gray-400 mb-6">
             Please upload or paste chatlogs on the home page to see satisfaction insights.
           </p>
-          <Button onClick={() => navigate('/')} className="bg-app-blue hover:bg-app-blue-light text-white">
+          <Button onClick={() => navigate('/')} className="bg-[#4582ff] hover:bg-[#4582ff]/90 text-white">
             Go to Home Page
           </Button>
         </div>

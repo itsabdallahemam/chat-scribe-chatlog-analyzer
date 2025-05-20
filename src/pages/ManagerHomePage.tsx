@@ -86,7 +86,6 @@ const ManagerHomePage: React.FC = () => {
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
               <Avatar className="h-16 w-16">
-                <AvatarImage src={user?.avatar} />
                 <AvatarFallback className="text-lg">
                   {user?.fullName?.split(' ').map(n => n[0]).join('') || user?.email?.[0].toUpperCase()}
                 </AvatarFallback>
