@@ -23,6 +23,7 @@ model Agent {
   team          Team?      @relation("TeamMembers", fields: [teamId], references: [id])
   leadingTeam   Team[]     @relation("TeamLeader")
   managedTeams  Team[]     @relation("TeamManager")
+  syntheticChatLogs SyntheticChatLog[]
 }
 
 model Evaluation {
@@ -83,4 +84,22 @@ model Team {
   manager   Agent?   @relation("TeamManager", fields: [managerId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model SyntheticChatLog {
+  id                  String   @id @default(cuid())
+  userId              String
+  user                Agent    @relation(fields: [userId], references: [id])
+  agentName           String
+  shift               String
+  scenario            String
+  chatlog             String   @db.Text
+  escalated           Boolean  @default(false)
+  customerSatisfaction Int
+  performanceTrajectory String
+  startTime           DateTime
+  endTime             DateTime
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  metadata            String?  @db.Text
 }

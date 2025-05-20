@@ -7,7 +7,7 @@ import { Bot, User, Search, BarChart, Loader2, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
-import { getUserSyntheticChatLogs, deleteAllSyntheticChatLogs, deleteSyntheticChatLog } from '@/services/syntheticChatLogService';
+import { getUserChatLogEvaluations, deleteAllChatLogEvaluations, deleteChatLogEvaluation } from '@/services/chatLogEvaluationService';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -30,7 +30,7 @@ interface Conversation {
   timestamp: string;
   scenario: string;
   chatlog: string;
-  metrics?: {
+  metrics: {
     coherence: number;
     politeness: number;
     relevance: number;
@@ -88,43 +88,26 @@ const ConversationsTab: React.FC = () => {
   const loadConversations = async () => {
     setLoading(true);
     try {
-      const savedLogs = await getUserSyntheticChatLogs();
-      const formattedLogs: Conversation[] = savedLogs.map(log => {
-        // Parse metadata
-        let metrics = {
-          coherence: 0,
-          politeness: 0,
-          relevance: 0,
-          resolution: 0
-        };
-        
-        try {
-          if (log.metadata) {
-            const metadata = JSON.parse(log.metadata);
-            metrics = {
-              coherence: metadata.coherence || 0,
-              politeness: metadata.politeness || 0,
-              relevance: metadata.relevance || 0,
-              resolution: metadata.resolution || 0
-            };
-          }
-        } catch (error) {
-          console.error('Error parsing metadata:', error);
-        }
-
+      const evaluations = await getUserChatLogEvaluations();
+      const formattedLogs: Conversation[] = evaluations.map(evaluation => {
         // Get the last message from the chatlog
-        const customerName = log.customerName || getRandomEgyptianName();
-        const messages = parseChatlog(log.chatlog, customerName);
+        const customerName = getRandomEgyptianName();
+        const messages = parseChatlog(evaluation.chatlog, customerName);
         const lastMessage = messages[messages.length - 1]?.content || '';
 
         return {
-          id: log.id || `${Date.now()}`,
+          id: evaluation.id || `${Date.now()}`,
           customerName,
           lastMessage,
-          timestamp: format(log.startTime instanceof Date ? log.startTime : parseISO(log.startTime), 'h:mm a'),
-          scenario: log.scenario,
-          chatlog: log.chatlog,
-          metrics
+          timestamp: evaluation.dateTime ? format(parseISO(evaluation.dateTime), 'h:mm a') : format(new Date(), 'h:mm a'),
+          scenario: evaluation.scenario,
+          chatlog: evaluation.chatlog,
+          metrics: {
+            coherence: evaluation.coherence,
+            politeness: evaluation.politeness,
+            relevance: evaluation.relevance,
+            resolution: evaluation.resolution
+          }
         };
       });
 
@@ -144,7 +127,7 @@ const ConversationsTab: React.FC = () => {
   // Delete all conversations
   const handleDeleteAll = async () => {
     try {
-      await deleteAllSyntheticChatLogs();
+      await deleteAllChatLogEvaluations();
       setConversations([]);
       setSelectedConversation(null);
       setShowDeleteAllDialog(false);
@@ -165,7 +148,7 @@ const ConversationsTab: React.FC = () => {
   // Delete single conversation
   const handleDeleteConversation = async (id: string) => {
     try {
-      await deleteSyntheticChatLog(id);
+      await deleteChatLogEvaluation(id);
       setConversations(prev => prev.filter(conv => conv.id !== id));
       if (selectedConversation === id) {
         setSelectedConversation(null);
@@ -198,7 +181,7 @@ const ConversationsTab: React.FC = () => {
         setMessages(parsedMessages);
       }
     }
-  }, [selectedConversation]);
+  }, [selectedConversation, conversations]);
 
   // Filter conversations based on search query
   const filteredConversations = conversations.filter(conversation =>

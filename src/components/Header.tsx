@@ -137,14 +137,7 @@ const Header: React.FC = () => {
       icon: <Users className="w-4 h-4" />, 
       allowedRoles: ['Manager'],
       description: 'View and manage teams'
-    },
-    { 
-      path: '/my-team', 
-      label: 'My Team', 
-      icon: <Users className="w-4 h-4" />, 
-      allowedRoles: ['Team Leader'],
-      description: 'View and manage your team'
-    },
+    }
   ];
 
   const NavLink = ({ item, className }: { item: NavItem; className?: string }) => {

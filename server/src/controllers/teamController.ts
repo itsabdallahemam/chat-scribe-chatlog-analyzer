@@ -82,3 +82,81 @@ export const getAllTeams = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 };
+
+// Manager: Update team
+export const updateTeam = async (req: Request, res: Response) => {
+  try {
+    const { teamId, leaderId, agentIds } = req.body;
+    const managerId = (req as any).user.userId;
+
+    // Verify manager permissions
+    const manager = await prisma.agent.findUnique({ where: { id: managerId } });
+    if (!manager || manager.role !== 'Manager') {
+      return res.status(403).json({ message: 'Only managers can update teams' });
+    }
+
+    // Verify team exists and belongs to this manager
+    const existingTeam = await prisma.team.findFirst({
+      where: { id: teamId, managerId },
+      include: { agents: true }
+    });
+
+    if (!existingTeam) {
+      return res.status(404).json({ message: 'Team not found or you do not have permission to update it' });
+    }
+
+    // Start a transaction to ensure all updates are atomic
+    const updatedTeam = await prisma.$transaction(async (tx) => {
+      // Update team leader if provided
+      if (leaderId !== undefined) {
+        // First, remove the current leader's leadingTeam relation
+        if (existingTeam.leaderId) {
+          await tx.agent.update({
+            where: { id: existingTeam.leaderId },
+            data: { leadingTeam: { disconnect: { id: teamId } } }
+          });
+        }
+
+        // Then, set the new leader if provided
+        if (leaderId) {
+          await tx.agent.update({
+            where: { id: leaderId },
+            data: { leadingTeam: { connect: { id: teamId } } }
+          });
+        }
+      }
+
+      // Update team members
+      if (agentIds !== undefined) {
+        // First, disconnect all current team members
+        await tx.agent.updateMany({
+          where: { teamId: teamId },
+          data: { teamId: null }
+        });
+
+        // Then, connect the new team members
+        if (agentIds.length > 0) {
+          await tx.agent.updateMany({
+            where: { id: { in: agentIds } },
+            data: { teamId: teamId }
+          });
+        }
+      }
+
+      // Return the updated team with all relations
+      return tx.team.findUnique({
+        where: { id: teamId },
+        include: {
+          leader: true,
+          agents: true,
+          manager: true
+        }
+      });
+    });
+
+    res.json(updatedTeam);
+  } catch (error) {
+    console.error('Update team error:', error);
+    res.status(500).json({ message: 'Failed to update team' });
+  }
+};

@@ -105,10 +105,10 @@ export const LoginForm: React.FC = () => {
                 Team Leader Demo
               </Button>
               <Button
-                className="bg-gradient-to-r from-gray-400 to-gray-600 dark:from-gray-600 dark:to-gray-800 text-white py-4 w-full opacity-80 cursor-not-allowed"
-                disabled
+                className="bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-blue-500 dark:to-cyan-500 text-white py-4 w-full"
+                onClick={() => { setTestUser('Manager'); navigate('/homepage/manager'); }}
               >
-                Manager Demo (coming soon)
+                Manager Demo
               </Button>
             </CollapsibleContent>
           </Collapsible>

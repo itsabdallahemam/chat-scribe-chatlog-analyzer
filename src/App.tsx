@@ -26,7 +26,7 @@ import TeamLeaderHomePage from './pages/TeamLeaderHomePage';
 import TestLoginPage from './pages/TestLoginPage';
 import TeamsManagementPage from './pages/TeamsManagementPage';
 import CreateTeamPage from './pages/CreateTeamPage';
-import MyTeamPage from './pages/MyTeamPage';
+import ManagerHomePage from './pages/ManagerHomePage';
 
 function App() {
   return (
@@ -68,6 +68,16 @@ function App() {
                       </ProtectedRoute>
                     } 
                   />
+                  <Route 
+                    path="/homepage/manager" 
+                    element={
+                      <ProtectedRoute>
+                        <RoleProtectedRoute allowedRoles={["Manager"]}>
+                          <ManagerHomePage />
+                        </RoleProtectedRoute>
+                      </ProtectedRoute>
+                    } 
+                  />
 
                   {/* Protected routes */}
                   <Route
@@ -92,7 +102,7 @@ function App() {
                     path="/dashboard"
                     element={
                       <ProtectedRoute>
-                        <RoleProtectedRoute allowedRoles={["Agent", "Team Leader"]}>
+                        <RoleProtectedRoute allowedRoles={["Agent", "Team Leader", "Manager"]}>
                           <DashboardPage />
                         </RoleProtectedRoute>
                       </ProtectedRoute>
@@ -102,7 +112,7 @@ function App() {
                     path="/satisfaction"
                     element={
                       <ProtectedRoute>
-                        <RoleProtectedRoute allowedRoles={["Agent", "Team Leader"]}>
+                        <RoleProtectedRoute allowedRoles={["Agent", "Team Leader", "Manager"]}>
                           <SatisfactionPage />
                         </RoleProtectedRoute>
                       </ProtectedRoute>
@@ -112,7 +122,7 @@ function App() {
                     path="/cpr-details"
                     element={
                       <ProtectedRoute>
-                        <RoleProtectedRoute allowedRoles={["Agent", "Team Leader"]}>
+                        <RoleProtectedRoute allowedRoles={["Agent", "Team Leader", "Manager"]}>
                           <CPRDetailsPage />
                         </RoleProtectedRoute>
                       </ProtectedRoute>
@@ -122,7 +132,7 @@ function App() {
                     path="/resolution"
                     element={
                       <ProtectedRoute>
-                        <RoleProtectedRoute allowedRoles={["Agent", "Team Leader"]}>
+                        <RoleProtectedRoute allowedRoles={["Agent", "Team Leader", "Manager"]}>
                           <ResolutionPage />
                         </RoleProtectedRoute>
                       </ProtectedRoute>
@@ -132,7 +142,7 @@ function App() {
                     path="/report"
                     element={
                       <ProtectedRoute>
-                        <RoleProtectedRoute allowedRoles={["Agent", "Team Leader"]}>
+                        <RoleProtectedRoute allowedRoles={["Agent", "Team Leader", "Manager"]}>
                           <ReportPage />
                         </RoleProtectedRoute>
                       </ProtectedRoute>
@@ -160,7 +170,7 @@ function App() {
                     path="/data"
                     element={
                       <ProtectedRoute>
-                        <RoleProtectedRoute allowedRoles={["Agent", "Team Leader"]}>
+                        <RoleProtectedRoute allowedRoles={["Agent", "Team Leader", "Manager"]}>
                           <DataPage />
                         </RoleProtectedRoute>
                       </ProtectedRoute>
@@ -183,16 +193,6 @@ function App() {
                       <ProtectedRoute>
                         <RoleProtectedRoute allowedRoles={["Manager"]}>
                           <CreateTeamPage />
-                        </RoleProtectedRoute>
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/my-team"
-                    element={
-                      <ProtectedRoute>
-                        <RoleProtectedRoute allowedRoles={["Team Leader"]}>
-                          <MyTeamPage />
                         </RoleProtectedRoute>
                       </ProtectedRoute>
                     }

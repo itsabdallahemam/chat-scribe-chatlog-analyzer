@@ -20,31 +20,127 @@ import {
   ArrowUpRight
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import api from '@/lib/axios';
+
+interface TeamMember {
+  id: string;
+  name: string;
+  email: string;
+  performance: number;
+  avatar: string;
+}
+
+interface Notification {
+  id: string;
+  type: 'performance' | 'agent' | 'report';
+  message: string;
+  date: string;
+  read: boolean;
+}
+
+interface TeamMetrics {
+  overallScore: number;
+  resolutionRate: number;
+  responseTime: number;
+  scoreChange: number;
+  resolutionChange: number;
+  responseChange: number;
+  coherence: number;
+  politeness: number;
+  relevance: number;
+  satisfaction: number;
+}
+
+interface TeamMetricsResponse {
+  overallScore: number;
+  resolutionRate: number;
+  responseTime: number;
+  scoreChange: number;
+  resolutionChange: number;
+  responseChange: number;
+  coherence: number;
+  politeness: number;
+  relevance: number;
+  satisfaction: number;
+}
+
+interface Agent {
+  id: string;
+  fullName: string;
+  email: string;
+  role: string;
+  createdAt: string;
+  updatedAt: string;
+  teamId: string;
+}
 
 const TeamLeaderHomePage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [animateHero, setAnimateHero] = useState(false);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [teamMetrics, setTeamMetrics] = useState<TeamMetrics | null>(null);
+  const [loading, setLoading] = useState(true);
   
   // Start animation after component mounts
   useEffect(() => {
     setAnimateHero(true);
   }, []);
 
-  // Mock team members - would come from a database in real implementation
-  const teamMembers = [
-    { id: 1, name: "Alex Johnson", email: "alex@example.com", performance: 92, avatar: "A" },
-    { id: 2, name: "Jamie Lee", email: "jamie@example.com", performance: 87, avatar: "J" },
-    { id: 3, name: "Casey Morgan", email: "casey@example.com", performance: 78, avatar: "C" },
-    { id: 4, name: "Taylor Smith", email: "taylor@example.com", performance: 94, avatar: "T" },
-  ];
+  // Fetch real data from your model
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch team members
+        const teamResponse = await api.get<Agent[]>('/auth/team/agents');
+        const teamData = teamResponse.data;
+        
+        // Transform the data to match our TeamMember interface
+        const transformedTeamMembers = teamData.map((agent) => ({
+          id: agent.id,
+          name: agent.fullName,
+          email: agent.email,
+          performance: 0, // This will be updated when we implement performance metrics
+          avatar: agent.fullName.charAt(0).toUpperCase()
+        }));
+        
+        setTeamMembers(transformedTeamMembers);
+        
+        // Fetch team metrics
+        const metricsResponse = await api.get<TeamMetricsResponse>('/auth/team/metrics');
+        const metricsData = metricsResponse.data;
+        
+        // Transform metrics data
+        const transformedMetrics: TeamMetrics = {
+          overallScore: metricsData.overallScore || 0,
+          resolutionRate: metricsData.resolutionRate || 0,
+          responseTime: metricsData.responseTime || 0,
+          scoreChange: metricsData.scoreChange || 0,
+          resolutionChange: metricsData.resolutionChange || 0,
+          responseChange: metricsData.responseChange || 0,
+          coherence: metricsData.coherence || 0,
+          politeness: metricsData.politeness || 0,
+          relevance: metricsData.relevance || 0,
+          satisfaction: metricsData.satisfaction || 0
+        };
+        
+        setTeamMetrics(transformedMetrics);
+        
+        // TODO: Implement notifications when the endpoint is ready
+        // const notificationData = await fetchNotifications();
+        // setNotifications(notificationData);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Mock notifications
-  const notifications = [
-    { id: 1, type: 'performance', message: 'Team performance increased by 4.2%', date: '2025-01-15T14:32:00', read: false },
-    { id: 2, type: 'agent', message: 'Taylor Smith achieved a new personal best', date: '2025-01-14T09:15:00', read: false },
-    { id: 3, type: 'report', message: 'Monthly team report is now available', date: '2025-01-13T16:47:00', read: true },
-  ];
+    fetchData();
+  }, []);
 
   const quickLinks = [
     {
@@ -135,47 +231,81 @@ const TeamLeaderHomePage: React.FC = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-                  <div className="bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-xl">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-emerald-700 dark:text-emerald-400 font-medium">Overall Score</span>
-                      <span className="bg-emerald-100 dark:bg-emerald-800/40 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded text-xs">+3.8%</span>
-                    </div>
-                    <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">88%</div>
-                    <div className="text-xs text-emerald-600/70 dark:text-emerald-500/70 mt-1">Team Average</div>
+                {loading ? (
+                  <div className="flex items-center justify-center h-[200px]">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div>
                   </div>
-                  
-                  <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-blue-700 dark:text-blue-400 font-medium">Resolution Rate</span>
-                      <span className="bg-blue-100 dark:bg-blue-800/40 text-blue-700 dark:text-blue-400 px-2 py-0.5 rounded text-xs">+2.5%</span>
+                ) : teamMetrics ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-4">
+                    <div className="bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-xl">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-emerald-700 dark:text-emerald-400 font-medium">CPR Score</span>
+                        <span className={`${teamMetrics.scoreChange >= 0 ? 'bg-green-100 dark:bg-green-800/40 text-green-700 dark:text-green-400' : 'bg-red-100 dark:bg-red-800/40 text-red-700 dark:text-red-400'} px-2 py-0.5 rounded text-xs`}>
+                          {teamMetrics.scoreChange >= 0 ? '+' : ''}{teamMetrics.scoreChange}%
+                        </span>
+                      </div>
+                      <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">{teamMetrics.overallScore}%</div>
+                      <div className="text-xs text-emerald-600/70 dark:text-emerald-500/70 mt-1">Team Average</div>
                     </div>
-                    <div className="text-2xl font-bold text-blue-700 dark:text-blue-400">92%</div>
-                    <div className="text-xs text-blue-600/70 dark:text-blue-500/70 mt-1">Last 30 days</div>
-                  </div>
-                  
-                  <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-xl">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-amber-700 dark:text-amber-400 font-medium">Response Time</span>
-                      <span className="bg-green-100 dark:bg-green-800/40 text-green-700 dark:text-green-400 px-2 py-0.5 rounded text-xs">-12%</span>
+                    
+                    <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-blue-700 dark:text-blue-400 font-medium">Resolution Rate</span>
+                        <span className={`${teamMetrics.resolutionChange >= 0 ? 'bg-green-100 dark:bg-green-800/40 text-green-700 dark:text-green-400' : 'bg-red-100 dark:bg-red-800/40 text-red-700 dark:text-red-400'} px-2 py-0.5 rounded text-xs`}>
+                          {teamMetrics.resolutionChange >= 0 ? '+' : ''}{teamMetrics.resolutionChange}%
+                        </span>
+                      </div>
+                      <div className="text-2xl font-bold text-blue-700 dark:text-blue-400">{teamMetrics.resolutionRate}%</div>
+                      <div className="text-xs text-blue-600/70 dark:text-blue-500/70 mt-1">Last 30 days</div>
                     </div>
-                    <div className="text-2xl font-bold text-amber-700 dark:text-amber-400">1.4<span className="text-sm font-normal ml-1">min</span></div>
-                    <div className="text-xs text-amber-600/70 dark:text-amber-500/70 mt-1">Average</div>
+                    
+                    <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-xl">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-purple-700 dark:text-purple-400 font-medium">Satisfaction</span>
+                        <span className="bg-purple-100 dark:bg-purple-800/40 text-purple-700 dark:text-purple-400 px-2 py-0.5 rounded text-xs">
+                          {teamMetrics.satisfaction}%
+                        </span>
+                      </div>
+                      <div className="text-2xl font-bold text-purple-700 dark:text-purple-400">{teamMetrics.satisfaction}%</div>
+                      <div className="text-xs text-purple-600/70 dark:text-purple-500/70 mt-1">Customer Rating</div>
+                    </div>
+                    
+                    <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-xl">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-amber-700 dark:text-amber-400 font-medium">Response Time</span>
+                        <span className={`${teamMetrics.responseChange <= 0 ? 'bg-green-100 dark:bg-green-800/40 text-green-700 dark:text-green-400' : 'bg-red-100 dark:bg-red-800/40 text-red-700 dark:text-red-400'} px-2 py-0.5 rounded text-xs`}>
+                          {teamMetrics.responseChange >= 0 ? '+' : ''}{teamMetrics.responseChange}%
+                        </span>
+                      </div>
+                      <div className="text-2xl font-bold text-amber-700 dark:text-amber-400">{teamMetrics.responseTime}<span className="text-sm font-normal ml-1">min</span></div>
+                      <div className="text-xs text-amber-600/70 dark:text-amber-500/70 mt-1">Average</div>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="text-center text-gray-500 dark:text-gray-400 py-8">
+                    No performance data available
+                  </div>
+                )}
                 
-                {/* Fake chart area */}
+                {/* Chart area - Replace with your actual chart component */}
                 <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 h-[140px] sm:h-[180px] w-full relative overflow-hidden mt-2">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="text-gray-400 dark:text-gray-500 text-sm">Team Performance Trend</div>
-                      <div className="flex justify-center gap-4 mt-2">
-                        <LineChart className="h-6 w-6 text-emerald-500 dark:text-emerald-400" />
-                        <BarChart className="h-6 w-6 text-blue-500 dark:text-blue-400" />
-                        <PieChart className="h-6 w-6 text-purple-500 dark:text-purple-400" />
+                  {loading ? (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div>
+                    </div>
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="text-gray-400 dark:text-gray-500 text-sm">Team Performance Trend</div>
+                        {/* TODO: Replace with your actual chart component */}
+                        <div className="flex justify-center gap-4 mt-2">
+                          <LineChart className="h-6 w-6 text-emerald-500 dark:text-emerald-400" />
+                          <BarChart className="h-6 w-6 text-blue-500 dark:text-blue-400" />
+                          <PieChart className="h-6 w-6 text-purple-500 dark:text-purple-400" />
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )}
                 </div>
                 
                 <div className="mt-4 flex justify-center sm:hidden">
@@ -187,12 +317,12 @@ const TeamLeaderHomePage: React.FC = () => {
               </CardContent>
             </Card>
             
-            {/* Team Members */}
+            {/* My Team */}
             <Card className="border-0 shadow-md dark:bg-gray-800/50">
               <CardHeader className="pb-2">
                 <div className="flex justify-between items-center">
                   <div>
-                    <CardTitle className="text-xl">Team Members</CardTitle>
+                    <CardTitle className="text-xl">My Team</CardTitle>
                     <CardDescription>Agent performance overview</CardDescription>
                   </div>
                   <Button variant="outline" size="sm" onClick={() => navigate('/agents')} className="text-xs">
@@ -202,44 +332,54 @@ const TeamLeaderHomePage: React.FC = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {teamMembers.map((member) => (
-                    <div 
-                      key={member.id} 
-                      className="flex items-center justify-between p-3 bg-white hover:bg-gray-50 dark:bg-gray-800/60 dark:hover:bg-gray-800 rounded-lg transition-colors border border-gray-100 dark:border-gray-700"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="rounded-full bg-gradient-to-br from-green-500 to-cyan-500 dark:from-green-400 dark:to-cyan-400 text-white flex items-center justify-center w-9 h-9 font-medium">
-                          {member.avatar}
-                        </div>
-                        <div>
-                          <div className="text-sm font-medium">{member.name}</div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                            {member.email}
+                {loading ? (
+                  <div className="flex items-center justify-center h-[200px]">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div>
+                  </div>
+                ) : teamMembers.length > 0 ? (
+                  <div className="space-y-3">
+                    {teamMembers.map((member) => (
+                      <div 
+                        key={member.id} 
+                        className="flex items-center justify-between p-3 bg-white hover:bg-gray-50 dark:bg-gray-800/60 dark:hover:bg-gray-800 rounded-lg transition-colors border border-gray-100 dark:border-gray-700"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="rounded-full bg-gradient-to-br from-green-500 to-cyan-500 dark:from-green-400 dark:to-cyan-400 text-white flex items-center justify-center w-9 h-9 font-medium">
+                            {member.avatar}
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium">{member.name}</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              {member.email}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className={`
-                          text-sm font-medium px-2.5 py-1 rounded-full
-                          ${member.performance >= 90 ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 
-                            member.performance >= 80 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 
-                            'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'}
-                        `}>
-                          {member.performance}%
+                        <div className="flex items-center gap-3">
+                          <div className={`
+                            text-sm font-medium px-2.5 py-1 rounded-full
+                            ${member.performance >= 90 ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 
+                              member.performance >= 80 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 
+                              'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'}
+                          `}>
+                            {member.performance}%
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1.5"
+                            onClick={() => navigate(`/agent/${member.id}`)}
+                          >
+                            <ArrowUpRight className="h-4 w-4" />
+                          </Button>
                         </div>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1.5"
-                          onClick={() => navigate(`/agent/${member.id}`)}
-                        >
-                          <ArrowUpRight className="h-4 w-4" />
-                        </Button>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center text-gray-500 dark:text-gray-400 py-8">
+                    No team members found
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -248,130 +388,83 @@ const TeamLeaderHomePage: React.FC = () => {
           <div className="space-y-6">
             {/* Quick Links */}
             <Card className="border-0 shadow-md dark:bg-gray-800/50">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Quick Links</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 pb-4">
-                {quickLinks.map((link, index) => (
-                  <Button 
-                    key={index}
-                    variant="outline" 
-                    className="w-full justify-start text-left h-auto py-2.5 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/60"
-                    onClick={() => navigate(link.path)}
-                  >
-                    <div className={`rounded p-1.5 mr-3 bg-gradient-to-r ${link.gradient} text-white`}>
-                      {link.icon}
-                    </div>
-                    <div>
-                      <div className="font-medium text-sm">{link.title}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{link.description}</div>
-                    </div>
-                  </Button>
-                ))}
-              </CardContent>
-            </Card>
-            
-            {/* Organization Stats */}
-            <Card className="border-0 shadow-md dark:bg-gray-800/50">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg">Organization Stats</CardTitle>
-                <CardDescription>Your team's ranking</CardDescription>
+              <CardHeader>
+                <CardTitle className="text-xl">Quick Links</CardTitle>
+                <CardDescription>Access key features quickly</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3 mb-3">
-                  <div className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-900/10 dark:to-yellow-900/10 rounded-lg p-3 border border-amber-100 dark:border-amber-900/30">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Award className="h-4 w-4 text-amber-500" />
-                      <span className="text-sm font-medium text-amber-700 dark:text-amber-400">Team Ranking</span>
-                    </div>
-                    <div className="flex items-end justify-between">
-                      <div className="text-2xl font-bold text-amber-700 dark:text-amber-400">2nd</div>
-                      <div className="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 px-1.5 py-0.5 rounded flex items-center">
-                        <TrendingUp className="h-3 w-3 mr-0.5" /> Up 1 position
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-white dark:bg-gray-800/60 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                    <div className="flex justify-between items-center">
-                      <div className="text-sm text-gray-500 dark:text-gray-400">Organization Average</div>
-                      <div className="text-sm font-medium">82%</div>
-                    </div>
-                    <div className="flex justify-between items-center mt-1">
-                      <div className="text-sm text-gray-500 dark:text-gray-400">Your Team</div>
-                      <div className="text-sm font-medium text-green-600 dark:text-green-400">88%</div>
-                    </div>
-                    <div className="mt-2 h-2 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-green-500 to-emerald-500 dark:from-green-400 dark:to-emerald-400 rounded-full" style={{ width: '88%' }}></div>
-                    </div>
-                  </div>
-                </div>
-                
-                <Button 
-                  variant="outline" 
-                  className="w-full text-sm border-gray-200 dark:border-gray-700"
-                  onClick={() => navigate('/report')}
-                >
-                  View Full Reports
-                </Button>
-              </CardContent>
-            </Card>
-            
-            {/* Notifications */}
-            <Card className="border-0 shadow-md dark:bg-gray-800/50">
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-center">
-                  <CardTitle className="text-lg">Notifications</CardTitle>
-                  <div className="bg-blue-100 dark:bg-blue-900/30 rounded-full px-2 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-400">
-                    {notifications.filter(n => !n.read).length} New
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {notifications.map((notification) => (
-                    <div 
-                      key={notification.id} 
-                      className={`p-2.5 rounded-lg border ${notification.read 
-                        ? 'bg-white dark:bg-gray-800/60 border-gray-200 dark:border-gray-700' 
-                        : 'bg-blue-50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30'}`}
+                <div className="grid grid-cols-1 gap-3">
+                  {quickLinks.map((link, index) => (
+                    <Link
+                      key={index}
+                      to={link.path}
+                      className={`group relative overflow-hidden rounded-lg bg-gradient-to-r ${link.gradient} p-0.5 transition-all hover:scale-[1.02]`}
                     >
-                      <div className="flex gap-3">
-                        <div className={`rounded-full p-1.5 ${
-                          notification.type === 'performance' 
-                            ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' 
-                            : notification.type === 'agent' 
-                            ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
-                            : 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
-                        }`}>
-                          {notification.type === 'performance' ? (
-                            <TrendingUp className="h-3.5 w-3.5" />
-                          ) : notification.type === 'agent' ? (
-                            <CircleUser className="h-3.5 w-3.5" />
-                          ) : (
-                            <FileText className="h-3.5 w-3.5" />
-                          )}
+                      <div className="relative flex items-center gap-3 rounded-md bg-white dark:bg-gray-800 p-3">
+                        <div className={`rounded-lg bg-gradient-to-r ${link.gradient} p-2 text-white`}>
+                          {link.icon}
                         </div>
                         <div className="flex-1">
-                          <div className="text-sm">{notification.message}</div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                            {new Date(notification.date).toLocaleDateString()} 
-                            {!notification.read && (
-                              <span className="inline-block ml-2 w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full"></span>
-                            )}
+                          <h3 className="font-medium text-gray-900 dark:text-gray-100">{link.title}</h3>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">{link.description}</p>
+                        </div>
+                        <ArrowRight className="h-4 w-4 text-gray-400 transition-transform group-hover:translate-x-1" />
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Notifications */}
+            <Card className="border-0 shadow-md dark:bg-gray-800/50">
+              <CardHeader>
+                <CardTitle className="text-xl">Recent Notifications</CardTitle>
+                <CardDescription>Stay updated with team activities</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="flex items-center justify-center h-[200px]">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div>
+                  </div>
+                ) : notifications.length > 0 ? (
+                  <div className="space-y-3">
+                    {notifications.map((notification) => (
+                      <div 
+                        key={notification.id}
+                        className={`p-3 rounded-lg border ${
+                          notification.read 
+                            ? 'bg-white dark:bg-gray-800/60 border-gray-100 dark:border-gray-700' 
+                            : 'bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-800'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className={`mt-1 rounded-full p-1 ${
+                            notification.type === 'performance' 
+                              ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
+                              : notification.type === 'agent'
+                              ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                              : 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
+                          }`}>
+                            {notification.type === 'performance' && <TrendingUp className="h-4 w-4" />}
+                            {notification.type === 'agent' && <Users className="h-4 w-4" />}
+                            {notification.type === 'report' && <FileText className="h-4 w-4" />}
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm text-gray-900 dark:text-gray-100">{notification.message}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              {new Date(notification.date).toLocaleDateString()}
+                            </p>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-                
-                <div className="mt-3 flex justify-center">
-                  <Button variant="ghost" size="sm" className="text-xs">
-                    View All Notifications
-                    <ArrowRight className="ml-1 h-3 w-3" />
-                  </Button>
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center text-gray-500 dark:text-gray-400 py-8">
+                    No notifications available
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
