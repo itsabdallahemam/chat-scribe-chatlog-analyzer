@@ -110,7 +110,7 @@ interface TimelineData {
 }
 
 const SyntheticDataTab: React.FC = () => {
-  const { selectedModel, apiKey, promptTemplate, rubricText, setEvaluationResults, setGeneratedData, evaluationResults } = useChatlog();
+  const { selectedModel, apiKey, promptTemplate, rubricText, setEvaluationResults, setGeneratedData, evaluationResults, deleteChatLogById } = useChatlog();
   const { user } = useAuth();
   const { toast } = useToast();
   
@@ -139,6 +139,7 @@ const SyntheticDataTab: React.FC = () => {
   const [startTime, setStartTime] = useState<number | null>(null);
   const [pauseStartTime, setPauseStartTime] = useState<number | null>(null);
   const [totalPausedTime, setTotalPausedTime] = useState<number>(0);
+  const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
   
   // Chart data state
   const [chartData, setChartData] = useState<{
@@ -206,12 +207,34 @@ const SyntheticDataTab: React.FC = () => {
   const [lastProgressUpdate, setLastProgressUpdate] = useState<{ time: number; value: number } | null>(null);
   const [progressRate, setProgressRate] = useState<number>(0);
 
-  // Load saved synthetic chat logs when component mounts
+  // Load saved synthetic chat logs on mount
   useEffect(() => {
-    if (user) {
+    if (isInitialLoad) {
       loadSavedSyntheticChatLogs();
+      setIsInitialLoad(false);
     }
-  }, [user]);
+  }, [isInitialLoad]);
+
+  // Update generated data when evaluation results change
+  useEffect(() => {
+    if (evaluationResults.length > 0 && generatedData.length === 0) {
+      const formattedChatlogs: GeneratedChatlog[] = evaluationResults.map(log => ({
+        id: `${Date.now()}-${log.id || ''}`,
+        chatlog: log.chatlog,
+        scenario: log.scenario,
+        shift: 'day', // Default to 'day' shift since it's not in EvaluationResult
+        dateTime: format(new Date(), 'yyyy-MM-dd HH:mm'), // Use current date/time since it's not in EvaluationResult
+        customerName: 'Unknown Customer',
+        coherence: log.coherence,
+        politeness: log.politeness,
+        relevance: log.relevance,
+        resolution: log.resolution,
+        escalated: log.resolution === 0,
+        evaluated: true
+      }));
+      setGeneratedDataState(formattedChatlogs);
+    }
+  }, [evaluationResults, generatedData.length]);
 
   const loadSavedSyntheticChatLogs = async () => {
     try {
@@ -241,13 +264,13 @@ const SyntheticDataTab: React.FC = () => {
               ? new Date(log.startTime)
               : log.startTime;
             
-            // Format the date to ISO string
+            // Format the date to match the format used in new chatlogs
             dateTimeStr = startTime instanceof Date 
-              ? startTime.toISOString()
-              : new Date().toISOString(); // Fallback to current date if invalid
+              ? format(startTime, 'yyyy-MM-dd HH:mm')
+              : format(new Date(), 'yyyy-MM-dd HH:mm'); // Fallback to current date if invalid
           } catch (error) {
             console.error('Error parsing date:', error);
-            dateTimeStr = new Date().toISOString(); // Fallback to current date
+            dateTimeStr = format(new Date(), 'yyyy-MM-dd HH:mm'); // Fallback to current date
           }
 
           return {
@@ -858,13 +881,29 @@ const SyntheticDataTab: React.FC = () => {
   };
 
   // Add batch actions
-  const handleBatchDelete = () => {
-    setGeneratedDataState(prev => prev.filter(chatlog => !selectedChatlogs.includes(chatlog.id)));
-    setSelectedChatlogs([]);
-    toast({
-      title: "Chatlogs Deleted",
-      description: `${selectedChatlogs.length} chatlog(s) have been deleted.`
-    });
+  const handleBatchDelete = async () => {
+    try {
+      // Delete each selected chatlog from the database
+      for (const id of selectedChatlogs) {
+        await deleteChatLogById(id);
+      }
+      
+      // Update local state
+      setGeneratedDataState(prev => prev.filter(chatlog => !selectedChatlogs.includes(chatlog.id)));
+      setSelectedChatlogs([]);
+      
+      toast({
+        title: "Chatlogs Deleted",
+        description: `${selectedChatlogs.length} chatlog(s) have been deleted.`
+      });
+    } catch (error) {
+      console.error('Error deleting chatlogs:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete some chatlogs. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleBatchCopy = async () => {
@@ -953,6 +992,100 @@ const SyntheticDataTab: React.FC = () => {
           color: '#252A3A',
           usePointStyle: true,
           pointStyle: 'circle'
+        }
+      }
+    }
+  };
+
+  // Add new function to process time distribution data
+  const getTimeDistributionData = (logs: GeneratedChatlog[]) => {
+    const timeSlots = {
+      'Morning (6AM-12PM)': 0,
+      'Afternoon (12PM-6PM)': 0,
+      'Evening (6PM-12AM)': 0,
+      'Night (12AM-6AM)': 0
+    };
+
+    logs.forEach(log => {
+      try {
+        const date = parseISO(log.dateTime);
+        const hour = date.getHours();
+        
+        if (hour >= 6 && hour < 12) {
+          timeSlots['Morning (6AM-12PM)']++;
+        } else if (hour >= 12 && hour < 18) {
+          timeSlots['Afternoon (12PM-6PM)']++;
+        } else if (hour >= 18 && hour < 24) {
+          timeSlots['Evening (6PM-12AM)']++;
+        } else {
+          timeSlots['Night (12AM-6AM)']++;
+        }
+      } catch (error) {
+        console.error('Error processing date:', error);
+      }
+    });
+
+    return {
+      labels: Object.keys(timeSlots),
+      datasets: [{
+        label: 'Number of Conversations',
+        data: Object.values(timeSlots),
+        backgroundColor: [
+          'rgba(255, 159, 64, 0.2)',  // Morning
+          'rgba(75, 192, 192, 0.2)',  // Afternoon
+          'rgba(54, 162, 235, 0.2)',  // Evening
+          'rgba(153, 102, 255, 0.2)'  // Night
+        ],
+        borderColor: [
+          'rgba(255, 159, 64, 1)',
+          'rgba(75, 192, 192, 1)',
+          'rgba(54, 162, 235, 1)',
+          'rgba(153, 102, 255, 1)'
+        ],
+        borderWidth: 1
+      }]
+    };
+  };
+
+  // Add time distribution chart options
+  const timeDistributionOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+        labels: {
+          color: '#252A3A',
+          usePointStyle: true,
+          pointStyle: 'circle'
+        }
+      },
+      title: {
+        display: true,
+        text: 'Conversation Distribution by Time of Day',
+        color: '#252A3A',
+        font: {
+          size: 16
+        }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        grid: {
+          color: 'rgba(0, 0, 0, 0.1)',
+        },
+        ticks: {
+          color: '#252A3A',
+          precision: 0
+        }
+      },
+      x: {
+        grid: {
+          color: 'rgba(0, 0, 0, 0.1)',
+        },
+        ticks: {
+          color: '#252A3A'
         }
       }
     }
@@ -1271,6 +1404,21 @@ const SyntheticDataTab: React.FC = () => {
             {/* Results Section */}
             {generatedData.length > 0 && (
               <>
+                {/* Time Distribution Chart */}
+                <Card className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm">
+                  <CardHeader>
+                    <CardTitle className="flex items-center text-base text-[#252A3A] dark:text-white">
+                      <div className="p-2 rounded-full bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 mr-2">
+                        <Clock className="h-4 w-4" />
+                      </div>
+                      <span>Time Distribution</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="h-[300px]">
+                    <Bar data={getTimeDistributionData(generatedData)} options={timeDistributionOptions} />
+                  </CardContent>
+                </Card>
+
                 {/* Performance Timeline */}
                 <Card className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm">
                   <CardHeader>
@@ -1406,7 +1554,14 @@ const SyntheticDataTab: React.FC = () => {
                               {/* Existing badges */}
                               <Badge variant="outline" className="bg-gray-50 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
                                 <Clock className="h-3 w-3 mr-1" />
-                                {format(parseISO(item.dateTime), 'MMM d, h:mm a')}
+                                {(() => {
+                                  try {
+                                    return format(parseISO(item.dateTime), 'MMM d, h:mm a');
+                                  } catch (error) {
+                                    console.error('Error formatting date:', error);
+                                    return 'Invalid date';
+                                  }
+                                })()}
                               </Badge>
                               {item.evaluated && (
                                 <>

@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import HomePage from './HomePage';
 import AgentHomePage from './AgentHomePage';
 import TeamLeaderHomePage from './TeamLeaderHomePage';
+import ManagerHomePage from './ManagerHomePage';
 
 const Index: React.FC = () => {
   const { user, loading } = useAuth();
@@ -33,6 +34,8 @@ const Index: React.FC = () => {
       return <AgentHomePage />;
     case 'Team Leader':
       return <TeamLeaderHomePage />;
+    case 'Manager':
+      return <ManagerHomePage />;
     default:
       console.log('Unknown role, falling back to public homepage');
       return <HomePage />;

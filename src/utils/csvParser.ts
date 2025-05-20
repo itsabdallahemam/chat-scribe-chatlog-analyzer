@@ -1,6 +1,7 @@
 // src/utils/csvParser.ts
 
 export interface ChatlogWithScenario {
+  id?: string;
   chatlog: string;
   scenario: string;
   shift?: string;

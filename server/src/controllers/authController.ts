@@ -264,4 +264,35 @@ export const deleteUser = async (req: Request, res: Response) => {
     console.error('Delete user error:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
-}; 
+};
+
+// Get all agents in the team of the current team leader
+export const getTeamAgents = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.userId;
+    // Find the team where the current user is the leader
+    const team = await prisma.team.findFirst({
+      where: { leaderId: userId },
+      include: {
+        agents: {
+          select: {
+            id: true,
+            email: true,
+            fullName: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true,
+            teamId: true,
+          },
+        },
+      },
+    });
+    if (!team) {
+      return res.status(404).json({ message: 'No team found for this leader' });
+    }
+    res.json(team.agents);
+  } catch (error) {
+    console.error('Get team agents error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};

@@ -129,6 +129,14 @@ const Header: React.FC = () => {
       icon: <FileText className="w-4 h-4" />,
       allowedRoles: ['Agent'],
       description: "Generate and view reports"
+    },
+    // Manager-specific Teams nav item
+    {
+      path: '/teams',
+      label: 'Teams',
+      icon: <Users className="w-4 h-4" />, 
+      allowedRoles: ['Manager'],
+      description: 'View and manage teams'
     }
   ];
 
@@ -340,4 +348,4 @@ const Header: React.FC = () => {
   );
 };
 
-export default Header; 
+export default Header;

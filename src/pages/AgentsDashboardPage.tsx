@@ -42,6 +42,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from '@/contexts/AuthContext';
 
 // Interface for agent with performance metrics
 interface AgentWithMetrics extends UserType {
@@ -72,6 +73,7 @@ interface DateRange {
 
 const AgentsDashboardPage: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [agents, setAgents] = useState<AgentWithMetrics[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -110,9 +112,16 @@ const AgentsDashboardPage: React.FC = () => {
     const fetchAgents = async () => {
       try {
         setLoading(true);
-        const response = await api.get<UserType[]>('/auth/users');
-        // Filter out team leaders, only show agents
-        const agentsList = response.data.filter(user => user.role === 'Agent');
+        let agentsList: UserType[] = [];
+        if (user?.role === 'Team Leader') {
+          // Fetch only agents in the team
+          const response = await api.get<UserType[]>('/auth/team/agents');
+          agentsList = response.data;
+        } else {
+          // Fetch all agents (for admin or other roles)
+          const response = await api.get<UserType[]>('/auth/users');
+          agentsList = response.data.filter(u => u.role === 'Agent');
+        }
         
         // Fetch performance metrics for each agent
         const agentsWithMetrics = await Promise.all(
@@ -188,7 +197,7 @@ const AgentsDashboardPage: React.FC = () => {
     };
 
     fetchAgents();
-  }, []);
+  }, [user]);
 
   // Toggle sort direction or set a new sort field
   const handleSort = (field: SortField) => {
@@ -530,7 +539,7 @@ const AgentsDashboardPage: React.FC = () => {
                 <PopoverContent className="w-auto p-0" align="start">
                   <DateRangePicker
                     date={dateRange}
-                    onSelect={setDateRange}
+                    onSelect={(range) => setDateRange({ from: range.from, to: range.to ?? range.from })}
                   />
                 </PopoverContent>
               </Popover>
@@ -816,4 +825,4 @@ const AgentsDashboardPage: React.FC = () => {
   );
 };
 
-export default AgentsDashboardPage; 
+export default AgentsDashboardPage;

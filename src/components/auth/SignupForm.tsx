@@ -18,7 +18,13 @@ export const SignupForm: React.FC = () => {
     e.preventDefault();
     try {
       await signup(email, password, name, role);
-      navigate('/');
+      if (role === 'Manager') {
+        navigate('/'); // Index will redirect to ManagerHomePage
+      } else if (role === 'Team Leader') {
+        navigate('/'); // Index will redirect to TeamLeaderHomePage
+      } else {
+        navigate('/'); // Index will redirect to AgentHomePage
+      }
     } catch (error) {
       console.error('Signup failed:', error);
     }

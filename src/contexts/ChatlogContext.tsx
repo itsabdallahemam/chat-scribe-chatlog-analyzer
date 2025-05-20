@@ -4,7 +4,7 @@ import api from "@/lib/axios";
 import { useAuth } from './AuthContext';
 import { getUserChatLogEvaluations, saveChatLogEvaluations, deleteChatLogEvaluation, ChatLogEvaluation } from "@/services/chatLogEvaluationService";
 
-interface EvaluationResult {
+export interface EvaluationResult {
   id?: number | string;
   chatlog: string;
   scenario: string;
@@ -12,9 +12,12 @@ interface EvaluationResult {
   politeness: number;
   relevance: number;
   resolution: number;
+  shift?: string;
+  dateTime?: string;
+  timestamp?: Date;
 }
 
-interface GeneratedChatlog {
+export interface GeneratedChatlog {
   id: string;
   chatlog: string;
   scenario: string;
@@ -194,14 +197,15 @@ export const ChatlogProvider: React.FC<{ children: ReactNode }> = ({ children })
         savedLogs = await getAllChatLogs();
       }
       
-      console.log('[Context] loadSavedChatLogs fetched', savedLogs.length, 'logs:', savedLogs);
-      if (savedLogs.length > 0) {
+      // Only update if we have new data
+      if (savedLogs.length > 0 && JSON.stringify(savedLogs) !== JSON.stringify(evaluationResults)) {
+        console.log('[Context] loadSavedChatLogs fetched', savedLogs.length, 'logs');
         setEvaluationResults(savedLogs);
-        console.log('[Context] setEvaluationResults called with', savedLogs.length, 'logs');
-      } else {
+      } else if (savedLogs.length === 0 && evaluationResults.length > 0) {
+        console.log('[Context] Clearing evaluation results as no logs found');
         setEvaluationResults([]);
-        console.log('[Context] setEvaluationResults called with 0 logs (empty array)');
       }
+      
       isLoadingRef.current = false;
     } catch (error) {
       console.error('Error loading saved chat logs:', error);

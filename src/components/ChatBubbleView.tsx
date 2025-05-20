@@ -29,7 +29,7 @@ const ChatBubbleView: React.FC<ChatBubbleViewProps> = ({ chatlogText }) => {
         line = line.substring(timestampMatch[0].length).trim();
       }
       
-      // Process different formats of speaker prefixes
+      // Process different formats of speaker prefixes and clean up the message
       if (line.toLowerCase().startsWith('customer:')) {
         return { 
           speaker: 'Customer', 
@@ -37,9 +37,12 @@ const ChatBubbleView: React.FC<ChatBubbleViewProps> = ({ chatlogText }) => {
           timestamp 
         };
       } else if (line.toLowerCase().startsWith('agent:')) {
+        // Remove "Agent" prefix and any agent name
+        const text = line.substring('agent:'.length).trim();
+        const cleanText = text.replace(/^Agent\s+[^:]+:\s*/, '').trim();
         return { 
           speaker: 'Agent', 
-          text: line.substring('agent:'.length).trim(),
+          text: cleanText,
           timestamp 
         };
       } else if (line.match(/^\s*Customer\s*[:-]/i)) {
@@ -49,9 +52,12 @@ const ChatBubbleView: React.FC<ChatBubbleViewProps> = ({ chatlogText }) => {
           timestamp 
         };
       } else if (line.match(/^\s*Agent\s*[:-]/i)) {
+        // Remove "Agent" prefix and any agent name
+        const text = line.replace(/^\s*Agent\s*[:-]/i, '').trim();
+        const cleanText = text.replace(/^[^:]+:\s*/, '').trim();
         return { 
           speaker: 'Agent', 
-          text: line.replace(/^\s*Agent\s*[:-]/i, '').trim(),
+          text: cleanText,
           timestamp 
         };
       }

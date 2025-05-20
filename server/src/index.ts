@@ -8,6 +8,7 @@ import userFeatureRoutes from './routes/userFeature';
 import chatLogEvaluationRoutes from './routes/chatLogEvaluation';
 import syntheticChatLogRoutes from './routes/syntheticChatLog';
 import performanceRoutes from './routes/performance';
+import teamRoutes from './routes/team';
 import path from 'path';
 
 const app = express();
@@ -90,6 +91,7 @@ app.get('/', (req, res) => {
             <li>/api/chat-log-evaluations</li>
             <li>/api/synthetic-chat-logs</li>
             <li>/api/performance</li>
+            <li>/api/team</li>
           </ul>
           <p>For the frontend application, please visit: <a href="http://localhost:8080">Chat Scribe Frontend</a></p>
         </div>
@@ -104,6 +106,7 @@ app.use('/api/user-features', userFeatureRoutes);
 app.use('/api/chat-log-evaluations', chatLogEvaluationRoutes);
 app.use('/api/synthetic-chat-logs', syntheticChatLogRoutes);
 app.use('/api/performance', performanceRoutes);
+app.use('/api/team', teamRoutes);
 
 // Serve a static blank favicon to prevent 404 errors
 app.get('/favicon.ico', (req, res) => {
@@ -121,4 +124,4 @@ const PORT = Number(process.env.PORT) || 3000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
   console.log(`Share with others at: http://192.168.1.42:${PORT}`);
-}); 
+});
